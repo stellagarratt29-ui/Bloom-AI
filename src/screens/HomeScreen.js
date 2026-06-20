@@ -5,7 +5,7 @@ import {
   SafeAreaView, StyleSheet,
 } from 'react-native';
 import { C } from '../constants/colors';
-import { NUDGE_MESSAGES } from '../constants/data';
+import { NUDGE_MESSAGES, DAILY_TIPS } from '../constants/data';
 import { useApp } from '../context/AppContext';
 import TaskRow from '../components/TaskRow';
 import IdeaCaptureModal from '../components/IdeaCaptureModal';
@@ -20,34 +20,39 @@ const PRIORITY_CFG = {
   low:    { label: 'Low',    text: C.muted, bg: '#EDEBE7'    },
 };
 
-function greeting() {
+function greeting(name) {
   const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 21) return 'Good evening';
-  return 'Good night';
+  const base =
+    h < 12 ? 'Good morning' :
+    h < 17 ? 'Good afternoon' :
+    h < 21 ? 'Good evening' : 'Good night';
+  return name ? `${base}, ${name}` : base;
 }
 
 export default function HomeScreen({ navigation }) {
   const {
     buddy, momentum,
-    tasks, addTask, toggleTask,
+    tasks, addTask, toggleTask, deleteTask,
     ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
     selectedHobbies, hobbyProgress,
+    userName,
   } = useApp();
 
-  const [inputText, setInputText]       = useState('');
-  const [priority, setPriority]         = useState('medium');
-  const [showCapture, setShowCapture]   = useState(false);
-  const [showDistract, setShowDistract] = useState(false);
-  const [showDump, setShowDump]         = useState(false);
-  const [showHobby, setShowHobby]       = useState(false);
+  const [inputText, setInputText]         = useState('');
+  const [priority, setPriority]           = useState('medium');
+  const [showCapture, setShowCapture]     = useState(false);
+  const [showDistract, setShowDistract]   = useState(false);
+  const [showDump, setShowDump]           = useState(false);
+  const [showHobby, setShowHobby]         = useState(false);
   const [dumpDismissed, setDumpDismissed] = useState(false);
-  const hobbyShownRef                   = useRef(false);
-  const [toast, setToast]               = useState(null);
-  const [nudge]                         = useState(() => NUDGE_MESSAGES[Math.floor(Math.random() * NUDGE_MESSAGES.length)]);
-  const inputRef                        = useRef(null);
+  const [showTip, setShowTip]             = useState(true);
+  const hobbyShownRef                     = useRef(false);
+  const [toast, setToast]                 = useState(null);
+  const [nudge]                           = useState(() => NUDGE_MESSAGES[Math.floor(Math.random() * NUDGE_MESSAGES.length)]);
+  const inputRef                          = useRef(null);
+
   const isMorning = new Date().getHours() < 12;
+  const todayTip  = DAILY_TIPS[new Date().getDay()];
 
   const pendingTasks = tasks.filter(t => !t.done);
   const pendingCount = pendingTasks.length;
@@ -56,8 +61,7 @@ export default function HomeScreen({ navigation }) {
 
   const handleToggleTask = (id) => {
     toggleTask(id);
-    // Show hobby modal once when all tasks become done
-    const afterToggle = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    const afterToggle  = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
     const stillPending = afterToggle.filter(t => !t.done).length;
     if (stillPending === 0 && afterToggle.length > 0 && !hobbyShownRef.current) {
       hobbyShownRef.current = true;
@@ -74,13 +78,6 @@ export default function HomeScreen({ navigation }) {
     if (count === 3) setTimeout(() => setShowCapture(true), 400);
   };
 
-  const handleDumpDone = ({ tasks: dumpTasks, ideas: dumpIdeas }) => {
-    dumpTasks.forEach(t => addTask(t, 'medium'));
-    dumpIdeas.forEach(idea => saveIdea(idea, "When you have some free time, explore this!"));
-    setShowDump(false);
-    setDumpDismissed(true);
-  };
-
   const handleSaveIdea = (text, returnCondition) => {
     saveIdea(text, returnCondition);
     setShowCapture(false);
@@ -88,13 +85,18 @@ export default function HomeScreen({ navigation }) {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleStartSprint = (task) => {
-    navigation.navigate('Sprint', { task });
-  };
+  const handleStartSprint = (task) => navigation.navigate('Sprint', { task });
 
   const handleAlternative = () => {
     setShowDistract(false);
     navigation.navigate('Grow');
+  };
+
+  const handleDumpDone = ({ tasks: dumpTasks, ideas: dumpIdeas }) => {
+    dumpTasks.forEach(t => addTask(t, 'medium'));
+    dumpIdeas.forEach(idea => saveIdea(idea, "When you have some free time, revisit this!"));
+    setShowDump(false);
+    setDumpDismissed(true);
   };
 
   return (
@@ -108,10 +110,7 @@ export default function HomeScreen({ navigation }) {
       <DistractionModal
         visible={showDistract}
         pendingTask={pendingTasks[0]}
-        onStartTask={() => {
-          setShowDistract(false);
-          if (pendingTasks[0]) handleStartSprint(pendingTasks[0]);
-        }}
+        onStartTask={() => { setShowDistract(false); if (pendingTasks[0]) handleStartSprint(pendingTasks[0]); }}
         onAlternative={handleAlternative}
         onIgnore={() => setShowDistract(false)}
       />
@@ -125,7 +124,7 @@ export default function HomeScreen({ navigation }) {
         selectedHobbies={selectedHobbies}
         hobbyProgress={hobbyProgress}
         surfacedIdea={ideas.find(i => !i.surfaced) ?? null}
-        onStartHobby={(id) => { setShowHobby(false); navigation.navigate('Grow'); }}
+        onStartHobby={() => { setShowHobby(false); navigation.navigate('Grow'); }}
         onExploreIdea={(idea) => { promoteIdea(idea); setShowHobby(false); }}
         onDismiss={() => setShowHobby(false)}
       />
@@ -139,9 +138,9 @@ export default function HomeScreen({ navigation }) {
         >
           {/* ── Header ── */}
           <View style={s.headerRow}>
-            <TouchableOpacity style={s.distractBtn} onPress={() => setShowDistract(true)}>
-              <Text style={s.distractEmoji}>🌀</Text>
-              <Text style={s.distractLabel}>Distracted?</Text>
+            <TouchableOpacity style={s.headerBtn} onPress={() => setShowDistract(true)}>
+              <Text style={s.headerBtnEmoji}>🌀</Text>
+              <Text style={s.headerBtnLabel}>Distracted?</Text>
             </TouchableOpacity>
 
             <View style={s.buddyCenter}>
@@ -149,19 +148,19 @@ export default function HomeScreen({ navigation }) {
               <Text style={s.buddyName}>{buddy?.name ?? 'Buddy'}</Text>
             </View>
 
-            <TouchableOpacity style={s.ideaBtn} onPress={() => setShowCapture(true)}>
-              <Text style={s.ideaEmoji}>💡</Text>
-              <Text style={s.ideaLabel}>Idea</Text>
+            <TouchableOpacity style={[s.headerBtn, s.ideaBtn]} onPress={() => setShowCapture(true)}>
+              <Text style={s.headerBtnEmoji}>💡</Text>
+              <Text style={[s.headerBtnLabel, { color: C.peach }]}>Idea</Text>
             </TouchableOpacity>
           </View>
 
           {/* ── Greeting ── */}
-          <Text style={s.greetingBig}>{greeting()}!</Text>
+          <Text style={s.greetingBig}>{greeting(userName)}!</Text>
           <Text style={s.greetingSub}>What matters today?</Text>
 
           {/* ── Morning brain dump card ── */}
           {isMorning && !dumpDismissed && (
-            <TouchableOpacity style={s.dumpCard} onPress={() => setShowDump(true)}>
+            <TouchableOpacity style={s.dumpCard} onPress={() => setShowDump(true)} activeOpacity={0.85}>
               <View style={s.dumpLeft}>
                 <Text style={s.dumpEmoji}>🧠</Text>
                 <View>
@@ -173,7 +172,18 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
           )}
 
-          {/* ── Section ── */}
+          {/* ── Daily tip ── */}
+          {showTip && (
+            <View style={s.tipCard}>
+              <Text style={s.tipEmoji}>{todayTip.emoji}</Text>
+              <Text style={s.tipText}>{todayTip.text}</Text>
+              <TouchableOpacity style={s.tipClose} onPress={() => setShowTip(false)}>
+                <Text style={s.tipCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ── Task section ── */}
           <View style={s.sectionRow}>
             <Text style={s.sectionLabel}>TODAY'S FOCUS</Text>
             <View style={s.sectionRight}>
@@ -199,6 +209,7 @@ export default function HomeScreen({ navigation }) {
                 task={t}
                 onToggle={() => handleToggleTask(t.id)}
                 onStartSprint={handleStartSprint}
+                onDelete={deleteTask}
               />
             ))
           )}
@@ -309,24 +320,38 @@ const s = StyleSheet.create({
   buddyCenter: { alignItems: 'center' },
   buddyName: { fontSize: 11, fontWeight: '700', color: C.sage, marginTop: 6, letterSpacing: 1.4, textTransform: 'uppercase' },
 
-  distractBtn: {
+  headerBtn: {
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#F5F0EB', borderWidth: 1.5, borderColor: C.border,
     borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10, width: 60,
   },
-  distractEmoji: { fontSize: 18 },
-  distractLabel: { fontSize: 9, fontWeight: '700', color: C.muted, marginTop: 2, letterSpacing: 0.5 },
-
-  ideaBtn: {
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.peachPale, borderWidth: 1.5, borderColor: C.peachLight,
-    borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10, width: 60,
-  },
-  ideaEmoji: { fontSize: 18 },
-  ideaLabel: { fontSize: 9, fontWeight: '700', color: C.peach, marginTop: 2, letterSpacing: 0.5 },
+  ideaBtn: { backgroundColor: C.peachPale, borderColor: C.peachLight },
+  headerBtnEmoji: { fontSize: 18 },
+  headerBtnLabel: { fontSize: 9, fontWeight: '700', color: C.muted, marginTop: 2, letterSpacing: 0.5 },
 
   greetingBig: { fontSize: 30, fontWeight: '700', color: C.forest, letterSpacing: -0.5 },
-  greetingSub: { fontSize: 17, color: C.sage, marginTop: 4, marginBottom: 24 },
+  greetingSub: { fontSize: 17, color: C.sage, marginTop: 4, marginBottom: 18 },
+
+  dumpCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: C.white, borderRadius: 16, padding: 16,
+    marginBottom: 12, borderWidth: 1.5, borderColor: C.sageLight,
+  },
+  dumpLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dumpEmoji: { fontSize: 28 },
+  dumpTitle: { fontSize: 15, fontWeight: '700', color: C.forest, marginBottom: 2 },
+  dumpSub: { fontSize: 12, color: C.muted },
+  dumpArrow: { fontSize: 18, color: C.sage, fontWeight: '700' },
+
+  tipCard: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    backgroundColor: C.peachPale, borderRadius: 14, padding: 14,
+    marginBottom: 18, borderWidth: 1, borderColor: C.peachLight, gap: 10,
+  },
+  tipEmoji: { fontSize: 20, marginTop: 1 },
+  tipText: { flex: 1, fontSize: 13, color: C.forest, lineHeight: 20 },
+  tipClose: { padding: 2 },
+  tipCloseText: { fontSize: 12, color: C.muted },
 
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.8 },
@@ -337,17 +362,6 @@ const s = StyleSheet.create({
   ideaPillText: { fontSize: 12, fontWeight: '600', color: C.peach },
 
   empty: { fontSize: 15, color: C.muted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },
-
-  dumpCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: C.white, borderRadius: 16, padding: 16,
-    marginBottom: 18, borderWidth: 1.5, borderColor: C.sageLight,
-  },
-  dumpLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  dumpEmoji: { fontSize: 28 },
-  dumpTitle: { fontSize: 15, fontWeight: '700', color: C.forest, marginBottom: 2 },
-  dumpSub: { fontSize: 12, color: C.muted },
-  dumpArrow: { fontSize: 18, color: C.sage, fontWeight: '700' },
 
   addCard: {
     backgroundColor: C.white, borderRadius: 16, padding: 14,

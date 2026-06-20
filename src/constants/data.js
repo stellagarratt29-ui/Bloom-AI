@@ -96,3 +96,13 @@ export const NUDGE_MESSAGES = [
 ];
 
 export const POINTS = { low: 5, medium: 10, high: 20, hobbyStep: 15, sprint: 10 };
+
+export const DAILY_TIPS = [
+  { emoji: '🎯', text: 'Pick just ONE thing that really matters today. Do that first — everything else is a bonus.' },
+  { emoji: '⏱️', text: "Set a timer for 10 minutes and just start. You'll almost always keep going once you're in it." },
+  { emoji: '💧', text: 'Drink a glass of water before you open any apps. Hydration is the cheapest performance upgrade.' },
+  { emoji: '🧠', text: "Your brain is at its sharpest in the morning. Use that window for your hardest task." },
+  { emoji: '🌿', text: 'Rest is productive. A short break now makes the next hour sharper — not lazier.' },
+  { emoji: '📵', text: 'Try keeping your phone face-down for the first 30 minutes. Watch how much calmer you feel.' },
+  { emoji: '✍️', text: 'Write one sentence about why today matters to you. It takes 10 seconds and sets your whole tone.' },
+];

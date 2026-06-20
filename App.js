@@ -93,8 +93,20 @@ function MainTabs() {
   );
 }
 
+function SplashScreen() {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#FAF8F4', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontSize: 56 }}>🌸</Text>
+      <Text style={{ fontSize: 28, fontWeight: '700', color: '#2D4A35', marginTop: 14 }}>Bloom</Text>
+      <Text style={{ fontSize: 14, color: '#8A9B8C', marginTop: 6 }}>Gentle guidance. Real progress.</Text>
+    </View>
+  );
+}
+
 function RootNavigator() {
-  const { hasOnboarded, finishOnboarding } = useApp();
+  const { loaded, hasOnboarded, finishOnboarding } = useApp();
+
+  if (!loaded) return <SplashScreen />;
 
   if (!hasOnboarded) {
     return <OnboardingScreen onFinish={finishOnboarding} />;

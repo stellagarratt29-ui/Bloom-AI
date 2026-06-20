@@ -1,40 +1,108 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BUDDIES, POINTS } from '../constants/data';
 
 const AppContext = createContext(null);
+const STORAGE_KEY = '@bloom_v1';
 
-let _tid = 1;
-const makeTask = (text, priority) => ({ id: _tid++, text, priority, done: false });
+const uid = () => Date.now() + Math.floor(Math.random() * 10000);
+const makeTask = (text, priority) => ({ id: uid(), text, priority, done: false });
+const makeIdea = (text, returnCondition) => ({ id: uid(), text, returnCondition, surfaced: false });
+const makeGoal = (text) => ({ id: uid(), text });
 
-let _iid = 1;
-const makeIdea = (text, returnCondition) => ({ id: _iid++, text, returnCondition, surfaced: false });
+const todayStr = () => new Date().toISOString().slice(0, 10);
 
-let _gid = 1;
-const makeGoal = (text) => ({ id: _gid++, text });
+function daysBetween(a, b) {
+  return Math.floor((new Date(b) - new Date(a)) / 86400000);
+}
+
+function rotateDailyPoints(dp, days) {
+  let result = [...dp];
+  for (let i = 0; i < Math.min(days, 7); i++) {
+    result = [...result.slice(1), 0];
+  }
+  return result;
+}
+
+const DEFAULT_TASKS = [
+  { id: 1, text: 'Work on my passion project', priority: 'high', done: false },
+  { id: 2, text: 'Go for a 20-minute walk', priority: 'medium', done: false },
+  { id: 3, text: 'Read for 15 minutes', priority: 'low', done: false },
+];
 
 export function AppProvider({ children }) {
-  const [hasOnboarded, setHasOnboarded] = useState(false);
-  const [buddy, setBuddy] = useState(BUDDIES[0]);
-  const [tasks, setTasks] = useState([
-    makeTask('Work on my passion project', 'high'),
-    makeTask('Go for a 20-minute walk', 'medium'),
-    makeTask('Read for 15 minutes', 'low'),
-  ]);
-  const [ideas, setIdeas] = useState([]);
+  const [loaded, setLoaded]                 = useState(false);
+  const [hasOnboarded, setHasOnboarded]     = useState(false);
+  const [buddy, setBuddy]                   = useState(BUDDIES[0]);
+  const [tasks, setTasks]                   = useState(DEFAULT_TASKS);
+  const [ideas, setIdeas]                   = useState([]);
   const [selectedHobbies, setSelectedHobbies] = useState([]);
-  const [hobbyProgress, setHobbyProgress] = useState({});
-  const [totalPoints, setTotalPoints] = useState(0);
-  // Rolling 7-day points: index 6 = today, 0 = 6 days ago
-  const [dailyPoints, setDailyPoints] = useState([0, 0, 0, 0, 0, 0, 0]);
-  const [goals, setGoals] = useState([]);
+  const [hobbyProgress, setHobbyProgress]   = useState({});
+  const [totalPoints, setTotalPoints]       = useState(0);
+  const [dailyPoints, setDailyPoints]       = useState([0, 0, 0, 0, 0, 0, 0]);
+  const [goals, setGoals]                   = useState([]);
   const [monthlyGoalTarget, setMonthlyGoalTarget] = useState(250);
-  const [userName, setUserName] = useState('');
-  const sessionTaskCount = useRef(0);
+  const [userName, setUserName]             = useState('');
+  const [lastActiveDay, setLastActiveDay]   = useState(todayStr());
+  const sessionTaskCount                    = useRef(0);
 
+  // ── Load from storage on mount ────────────────────────────────────────────
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then(raw => {
+        if (raw) {
+          try {
+            const s = JSON.parse(raw);
+            if (s.hasOnboarded)     setHasOnboarded(true);
+            if (s.buddy)            setBuddy(BUDDIES.find(b => b.id === s.buddy) ?? BUDDIES[0]);
+            if (s.tasks)            setTasks(s.tasks);
+            if (s.ideas)            setIdeas(s.ideas);
+            if (s.selectedHobbies)  setSelectedHobbies(s.selectedHobbies);
+            if (s.hobbyProgress)    setHobbyProgress(s.hobbyProgress);
+            if (s.totalPoints)      setTotalPoints(s.totalPoints);
+            if (s.userName)         setUserName(s.userName);
+            if (s.goals)            setGoals(s.goals);
+            if (s.monthlyGoalTarget) setMonthlyGoalTarget(s.monthlyGoalTarget);
+
+            // Roll over daily points if new day(s) have passed
+            const today = todayStr();
+            if (s.lastActiveDay && s.lastActiveDay !== today) {
+              const diff = daysBetween(s.lastActiveDay, today);
+              setDailyPoints(rotateDailyPoints(s.dailyPoints ?? [0,0,0,0,0,0,0], diff));
+            } else if (s.dailyPoints) {
+              setDailyPoints(s.dailyPoints);
+            }
+            setLastActiveDay(today);
+          } catch (_) {}
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  // ── Persist to storage (debounced) ────────────────────────────────────────
+  const saveTimer = useRef(null);
+  useEffect(() => {
+    if (!loaded) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+        hasOnboarded,
+        buddy: buddy?.id,
+        tasks, ideas, selectedHobbies, hobbyProgress,
+        totalPoints, dailyPoints, goals,
+        monthlyGoalTarget, userName, lastActiveDay: todayStr(),
+      })).catch(() => {});
+    }, 600);
+  }, [loaded, hasOnboarded, buddy, tasks, ideas, selectedHobbies, hobbyProgress,
+      totalPoints, dailyPoints, goals, monthlyGoalTarget, userName]);
+
+  // ── Derived ───────────────────────────────────────────────────────────────
   const momentum = Math.min(100, Math.round(
     dailyPoints.reduce((a, b) => a + b, 0) / (7 * 40) * 100
   ));
 
+  // ── Actions ───────────────────────────────────────────────────────────────
   const addPoints = useCallback((pts) => {
     setTotalPoints(p => p + pts);
     setDailyPoints(prev => {
@@ -47,7 +115,7 @@ export function AppProvider({ children }) {
   const addTask = useCallback((text, priority) => {
     setTasks(prev => [...prev, makeTask(text, priority)]);
     sessionTaskCount.current += 1;
-    return sessionTaskCount.current; // caller checks for 3-task trigger
+    return sessionTaskCount.current;
   }, []);
 
   const toggleTask = useCallback((id) => {
@@ -58,6 +126,10 @@ export function AppProvider({ children }) {
       return { ...t, done: nowDone };
     }));
   }, [addPoints]);
+
+  const deleteTask = useCallback((id) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   const saveIdea = useCallback((text, returnCondition) => {
     setIdeas(prev => [makeIdea(text, returnCondition), ...prev]);
@@ -95,17 +167,19 @@ export function AppProvider({ children }) {
     setGoals(prev => prev.filter(g => g.id !== id));
   }, []);
 
-  const finishOnboarding = useCallback((buddyId, hobbyIds) => {
+  const finishOnboarding = useCallback((buddyId, hobbyIds, name) => {
     setBuddy(BUDDIES.find(b => b.id === buddyId) ?? BUDDIES[0]);
     setSelectedHobbies(hobbyIds);
+    if (name) setUserName(name);
     setHasOnboarded(true);
   }, []);
 
   return (
     <AppContext.Provider value={{
+      loaded,
       hasOnboarded, finishOnboarding,
       buddy, setBuddy,
-      tasks, addTask, toggleTask,
+      tasks, addTask, toggleTask, deleteTask,
       ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
