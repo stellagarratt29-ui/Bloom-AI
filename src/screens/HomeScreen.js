@@ -46,7 +46,7 @@ export default function HomeScreen({ navigation }) {
     ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
     selectedHobbies, hobbyProgress,
     userName, dailyPoints, currentStreak,
-    latestMilestone, dismissMilestone,
+    latestMilestone, dismissMilestone, addPoints,
   } = useApp();
 
   const [inputText, setInputText]         = useState('');
@@ -58,12 +58,16 @@ export default function HomeScreen({ navigation }) {
   const [dumpDismissed, setDumpDismissed] = useState(false);
   const [showTip, setShowTip]             = useState(true);
   const [showAllDone, setShowAllDone]     = useState(false);
+  const [reflectionDone, setReflectionDone] = useState(false);
+  const [reflectionMood, setReflectionMood] = useState(null);
   const hobbyShownRef                     = useRef(false);
   const [toast, setToast]                 = useState(null);
   const [nudge]                           = useState(() => NUDGE_MESSAGES[Math.floor(Math.random() * NUDGE_MESSAGES.length)]);
   const inputRef                          = useRef(null);
 
-  const isMorning = new Date().getHours() < 12;
+  const hour      = new Date().getHours();
+  const isMorning = hour < 12;
+  const isEvening = hour >= 18;
   const todayTip  = DAILY_TIPS[new Date().getDay()];
 
   const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
@@ -108,6 +112,18 @@ export default function HomeScreen({ navigation }) {
     setShowCapture(false);
     setToast(returnCondition);
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const REFLECTION_MOODS = [
+    { emoji: '😊', label: 'Good',  pts: 5, msg: "That's wonderful — keep building on that!" },
+    { emoji: '😐', label: 'Okay',  pts: 5, msg: "Steady days matter just as much. Well done showing up." },
+    { emoji: '😔', label: 'Tough', pts: 5, msg: "Tough days are part of it. You're still here — that counts." },
+  ];
+
+  const handleReflect = (mood) => {
+    setReflectionMood(mood.emoji);
+    addPoints(mood.pts);
+    setTimeout(() => setReflectionDone(true), 2000);
   };
 
   const handleStartSprint = (task) => navigation.navigate('Sprint', { task });
@@ -390,6 +406,33 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
+          {/* ── Evening reflection ── */}
+          {isEvening && !reflectionDone && (
+            <View style={s.reflectCard}>
+              {reflectionMood ? (
+                <View style={s.reflectThanks}>
+                  <Text style={s.reflectThanksEmoji}>{reflectionMood}</Text>
+                  <Text style={s.reflectThanksText}>
+                    {REFLECTION_MOODS.find(m => m.emoji === reflectionMood)?.msg}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={s.reflectTitle}>How's your day going?</Text>
+                  <View style={s.reflectRow}>
+                    {REFLECTION_MOODS.map(m => (
+                      <TouchableOpacity key={m.emoji} style={s.reflectBtn} onPress={() => handleReflect(m)}>
+                        <Text style={s.reflectEmoji}>{m.emoji}</Text>
+                        <Text style={s.reflectLabel}>{m.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={s.reflectNote}>+5 pts for checking in</Text>
+                </>
+              )}
+            </View>
+          )}
+
           {/* ── Toast ── */}
           {toast && (
             <View style={s.toast}>
@@ -550,6 +593,24 @@ const s = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 28,
   },
   allDoneBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
+
+  reflectCard: {
+    backgroundColor: C.white, borderRadius: 18, padding: 18,
+    marginBottom: 14, borderWidth: 1, borderColor: C.border,
+  },
+  reflectTitle: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 14, textAlign: 'center' },
+  reflectRow: { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
+  reflectBtn: {
+    alignItems: 'center', backgroundColor: C.cream,
+    borderRadius: 14, padding: 14, minWidth: 72,
+    borderWidth: 1.5, borderColor: C.border,
+  },
+  reflectEmoji: { fontSize: 28, marginBottom: 4 },
+  reflectLabel: { fontSize: 12, fontWeight: '600', color: C.muted },
+  reflectNote: { fontSize: 11, color: C.muted, textAlign: 'center', fontStyle: 'italic' },
+  reflectThanks: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  reflectThanksEmoji: { fontSize: 32, flexShrink: 0 },
+  reflectThanksText: { flex: 1, fontSize: 14, color: C.forest, lineHeight: 21, fontStyle: 'italic' },
 
   addCard: {
     backgroundColor: C.white, borderRadius: 16, padding: 14,
