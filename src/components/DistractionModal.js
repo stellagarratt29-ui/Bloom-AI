@@ -12,7 +12,7 @@ export default function DistractionModal({ visible, pendingTask, onStartTask, on
           <Text style={s.emoji}>🌀</Text>
           <Text style={s.title}>Looks like you've been in a loop.</Text>
           <Text style={s.body}>
-            That's okay — it happens to everyone. Want to spend just 15 minutes on something that matters?
+            That's okay — it happens to everyone. Want to spend just 10 focused minutes on something that matters?
           </Text>
 
           {pendingTask && (

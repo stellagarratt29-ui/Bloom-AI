@@ -21,6 +21,9 @@ const HOW_TO_BREAKDOWNS = {
   learn:    ['Find the best free/paid resource for this skill', 'Commit to 20 minutes of practice daily', 'Join a community of people learning the same thing', 'Build something small with what you\'ve learned', 'Teach someone else — it locks in the knowledge'],
   health:   ['Start with just 10 minutes of movement today', 'Prep one healthy meal this week', 'Sleep 30 minutes earlier than usual tonight', 'Drink water before every meal this week', 'Walk instead of sitting for your next break'],
   creative: ['Do one tiny creative act today — even 5 minutes', 'Share your work with one person, however rough', 'Study someone whose work you love', 'Give yourself permission to make something bad', 'Finish something — don\'t start something new yet'],
+  travel:   ['Research one destination that excites you right now', 'Open a dedicated travel savings pot today', 'Find someone who\'s been there and message them', 'Set a departure date — even a rough one', 'Book just the first thing: a flight, hotel, or activity'],
+  social:   ['Reach out to one person you\'ve been meaning to contact', 'Schedule something specific — not "sometime soon"', 'Join one community or group this week', 'Show up to one event even if you don\'t feel like it', 'Ask one honest question in a conversation today'],
+  career:   ['Update your CV or portfolio with one recent thing', 'Reach out to one person in the role you want', 'Apply to one opportunity — done is better than perfect', 'Identify the one skill gap holding you back most', 'Shadow or interview someone already doing what you want'],
   default:  ['Write down exactly what success looks like', 'Do one small thing toward this goal today', 'Tell someone about this goal to make it real', 'Set a calendar reminder to check in next week', 'Ask: what would make this feel effortless?'],
 };
 
@@ -30,6 +33,9 @@ function getBreakdown(goalText) {
   if (t.includes('learn') || t.includes('study') || t.includes('skill') || t.includes('course') || t.includes('degree')) return HOW_TO_BREAKDOWNS.learn;
   if (t.includes('fit') || t.includes('health') || t.includes('weight') || t.includes('run') || t.includes('gym') || t.includes('sleep')) return HOW_TO_BREAKDOWNS.health;
   if (t.includes('write') || t.includes('draw') || t.includes('paint') || t.includes('music') || t.includes('creat') || t.includes('art')) return HOW_TO_BREAKDOWNS.creative;
+  if (t.includes('travel') || t.includes('trip') || t.includes('visit') || t.includes('holiday') || t.includes('vacation') || t.includes('abroad')) return HOW_TO_BREAKDOWNS.travel;
+  if (t.includes('friend') || t.includes('social') || t.includes('connect') || t.includes('relation') || t.includes('network') || t.includes('meet')) return HOW_TO_BREAKDOWNS.social;
+  if (t.includes('job') || t.includes('career') || t.includes('promot') || t.includes('business') || t.includes('work') || t.includes('hire')) return HOW_TO_BREAKDOWNS.career;
   return HOW_TO_BREAKDOWNS.default;
 }
 

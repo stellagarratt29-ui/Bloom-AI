@@ -6,9 +6,9 @@ import { C } from '../constants/colors';
 import { HOBBIES } from '../constants/data';
 
 const MOODS = [
-  { id: 'energized', label: 'Energized', emoji: '⚡', hobbies: ['coding', 'fitness', 'guitar'] },
-  { id: 'calm',      label: 'Calm',      emoji: '🌿', hobbies: ['drawing', 'writing', 'cooking'] },
-  { id: 'tired',     label: 'Tired',     emoji: '😌', hobbies: ['drawing', 'writing', 'guitar'] },
+  { id: 'energized', label: 'Energized', emoji: '⚡', hobbies: ['coding', 'fitness', 'guitar', 'photography', 'language'] },
+  { id: 'calm',      label: 'Calm',      emoji: '🌿', hobbies: ['drawing', 'writing', 'cooking', 'reading', 'journaling', 'meditation'] },
+  { id: 'tired',     label: 'Tired',     emoji: '😌', hobbies: ['meditation', 'reading', 'journaling', 'drawing', 'writing'] },
 ];
 
 function getSuggestion(mood, selectedHobbies, hobbyProgress) {

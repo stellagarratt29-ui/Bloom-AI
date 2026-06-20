@@ -66,7 +66,10 @@ export default function HomeScreen({ navigation }) {
   const isMorning = new Date().getHours() < 12;
   const todayTip  = DAILY_TIPS[new Date().getDay()];
 
-  const pendingTasks = tasks.filter(t => !t.done);
+  const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+  const pendingTasks = tasks
+    .filter(t => !t.done)
+    .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1));
   const doneTasks    = tasks.filter(t => t.done);
   const pendingCount = pendingTasks.length;
   const allDone      = tasks.length > 0 && pendingCount === 0;
