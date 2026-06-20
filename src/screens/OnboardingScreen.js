@@ -9,6 +9,19 @@ import BuddyAvatar from '../components/BuddyAvatar';
 
 const STEPS = ['welcome', 'name', 'buddy', 'hobbies', 'ready'];
 
+function StepDots({ current, total }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginBottom: 32 }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <View key={i} style={{
+          width: i === current ? 20 : 7, height: 7, borderRadius: 4,
+          backgroundColor: i === current ? C.sage : i < current ? C.sageMid : C.border,
+        }} />
+      ))}
+    </View>
+  );
+}
+
 export default function OnboardingScreen({ onFinish }) {
   const [step, setStep]               = useState(0);
   const [name, setName]               = useState('');
@@ -49,6 +62,7 @@ export default function OnboardingScreen({ onFinish }) {
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={s.center}>
+            <StepDots current={0} total={4} />
             <Text style={s.nameEmoji}>👋</Text>
             <Text style={s.stepTitle}>What should we call you?</Text>
             <Text style={s.stepSub}>Just your first name is perfect.</Text>
@@ -79,6 +93,7 @@ export default function OnboardingScreen({ onFinish }) {
     return (
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scroll}>
+          <StepDots current={1} total={4} />
           <Text style={s.stepTitle}>Choose your companion</Text>
           <Text style={s.stepSub}>They'll cheer you on — and never judge you.</Text>
           <View style={s.buddyGrid}>
@@ -107,6 +122,7 @@ export default function OnboardingScreen({ onFinish }) {
     return (
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scroll}>
+          <StepDots current={2} total={4} />
           <Text style={s.stepTitle}>What do you want to build?</Text>
           <Text style={s.stepSub}>Pick up to 3 things. We'll grow them together, one small step at a time.</Text>
           <View style={s.hobbyGrid}>
@@ -146,6 +162,7 @@ export default function OnboardingScreen({ onFinish }) {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.center}>
+        <StepDots current={3} total={4} />
         <BuddyAvatar buddy={buddy} momentum={50} size={100} />
         <Text style={[s.buddyName, { marginTop: 16, fontSize: 22 }]}>{buddy.name} is ready!</Text>
         <Text style={s.readyBody}>

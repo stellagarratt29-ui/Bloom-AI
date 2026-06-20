@@ -24,17 +24,18 @@ function moodLabel(m) {
 }
 
 function WeekChart({ dailyPoints }) {
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const todayDow = new Date().getDay(); // 0=Sun
+  const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const today  = new Date();
   const maxPts = Math.max(...dailyPoints, 1);
-  const BAR_H = 52;
+  const BAR_H  = 52;
   return (
     <View style={s.chartRow}>
       {dailyPoints.map((pts, i) => {
-        const dayIdx = (todayDow - 6 + i + 7) % 7;
-        const label = days[dayIdx === 0 ? 6 : dayIdx - 1];
+        const date = new Date(today);
+        date.setDate(date.getDate() - (6 - i));
+        const label   = DAY_LABELS[date.getDay()];
         const isToday = i === 6;
-        const barH = Math.max(4, Math.round((pts / maxPts) * BAR_H));
+        const barH    = Math.max(4, Math.round((pts / maxPts) * BAR_H));
         return (
           <View key={i} style={s.chartCol}>
             <View style={[s.chartBarWrap, { height: BAR_H }]}>

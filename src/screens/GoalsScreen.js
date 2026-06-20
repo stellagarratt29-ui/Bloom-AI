@@ -117,7 +117,17 @@ export default function GoalsScreen() {
           <View style={s.progressTrack}>
             <View style={[s.progressFill, { width: `${pct}%` }]} />
           </View>
-          <Text style={s.progressPct}>{pct}% there · Keep going 🌱</Text>
+          <Text style={s.progressPct}>
+            {pct === 0
+              ? 'Every task you complete earns points 🌱'
+              : pct >= 100
+              ? 'Goal reached! You crushed it this month 🎉'
+              : pct >= 67
+              ? `${pct}% there · Almost there! 🌸`
+              : pct >= 34
+              ? `${pct}% there · Building real momentum ⚡`
+              : `${pct}% there · Keep going, every point counts 💪`}
+          </Text>
         </View>
 
         {/* Vision Board */}

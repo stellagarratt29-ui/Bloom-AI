@@ -3,9 +3,9 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { C } from '../constants/colors';
 
 const PRIORITY = {
-  high:   { label: 'High',   text: C.peach, bg: C.peachLight },
-  medium: { label: 'Medium', text: C.sage,  bg: C.sageLight  },
-  low:    { label: 'Low',    text: C.muted, bg: '#EDEBE7'    },
+  high:   { label: 'High',   text: C.peach, bg: C.peachLight, accent: C.peach   },
+  medium: { label: 'Medium', text: C.sage,  bg: C.sageLight,  accent: C.sage    },
+  low:    { label: 'Low',    text: C.muted, bg: '#EDEBE7',    accent: C.sageMid },
 };
 
 export default function TaskRow({ task, onToggle, onStartSprint, onDelete }) {
@@ -27,7 +27,7 @@ export default function TaskRow({ task, onToggle, onStartSprint, onDelete }) {
   }
 
   return (
-    <View style={s.row}>
+    <View style={[s.row, { borderLeftColor: task.done ? C.border : p.accent, borderLeftWidth: 3 }]}>
       <TouchableOpacity style={s.check} onPress={onToggle} activeOpacity={0.7}>
         <View style={[s.circle, task.done && s.circleDone]}>
           {task.done && <Text style={s.tick}>✓</Text>}

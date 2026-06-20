@@ -62,12 +62,15 @@ export default function HomeScreen({ navigation }) {
   const todayPts     = dailyPoints?.[6] ?? 0;
 
   const handleToggleTask = (id) => {
+    const taskBeingToggled = tasks.find(t => t.id === id);
+    const willBecomeDone   = taskBeingToggled && !taskBeingToggled.done;
     toggleTask(id);
-    const afterToggle  = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
-    const stillPending = afterToggle.filter(t => !t.done).length;
-    if (stillPending === 0 && afterToggle.length > 0 && !hobbyShownRef.current) {
-      hobbyShownRef.current = true;
-      setTimeout(() => setShowHobby(true), 600);
+    if (willBecomeDone) {
+      const remainingPending = pendingTasks.filter(t => t.id !== id).length;
+      if (remainingPending === 0 && !hobbyShownRef.current) {
+        hobbyShownRef.current = true;
+        setTimeout(() => setShowHobby(true), 600);
+      }
     }
   };
 
@@ -202,6 +205,18 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
+          {/* ── Task progress bar ── */}
+          {tasks.length > 0 && (
+            <View style={s.taskProgress}>
+              <View style={s.taskProgressTrack}>
+                <View style={[s.taskProgressFill, { width: `${Math.round((doneTasks.length / tasks.length) * 100)}%` }]} />
+              </View>
+              <Text style={s.taskProgressLabel}>
+                {doneTasks.length}/{tasks.length} done
+              </Text>
+            </View>
+          )}
+
           {tasks.length === 0 ? (
             <View style={s.emptyState}>
               <Text style={s.emptyEmoji}>🌱</Text>
@@ -319,8 +334,24 @@ export default function HomeScreen({ navigation }) {
             </View>
           )}
 
+          {/* ── All done celebration ── */}
+          {allDone && !surfaceIdea && (
+            <View style={s.allDoneCard}>
+              <Text style={s.allDoneEmoji}>🌸</Text>
+              <Text style={s.allDoneTitle}>
+                {userName ? `Amazing, ${userName}!` : 'Amazing!'}
+              </Text>
+              <Text style={s.allDoneSub}>
+                You've done everything on your list today.{todayPts > 0 ? ` That's ${todayPts} pts earned!` : ''}
+              </Text>
+              <TouchableOpacity style={s.allDoneBtn} onPress={() => navigation.navigate('Grow')}>
+                <Text style={s.allDoneBtnText}>Explore your hobbies →</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* ── Gentle nudge ── */}
-          {!surfaceIdea && (
+          {!surfaceIdea && !allDone && (
             <View style={s.nudgeCard}>
               <View style={s.nudgeTop}>
                 <Text style={s.nudgeIcon}>🌱</Text>
@@ -408,6 +439,24 @@ const s = StyleSheet.create({
 
   todayPts: { alignSelf: 'center', backgroundColor: C.sagePale, borderRadius: 20, paddingVertical: 5, paddingHorizontal: 14, marginTop: 4, marginBottom: 8 },
   todayPtsText: { fontSize: 13, fontWeight: '700', color: C.sage },
+
+  taskProgress: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  taskProgressTrack: { flex: 1, height: 6, backgroundColor: C.sageLight, borderRadius: 3, overflow: 'hidden' },
+  taskProgressFill: { height: 6, backgroundColor: C.sage, borderRadius: 3 },
+  taskProgressLabel: { fontSize: 12, color: C.muted, fontWeight: '600', width: 54, textAlign: 'right' },
+
+  allDoneCard: {
+    backgroundColor: C.sagePale, borderRadius: 20, padding: 24,
+    alignItems: 'center', borderWidth: 1, borderColor: C.sageLight, marginBottom: 12,
+  },
+  allDoneEmoji: { fontSize: 48, marginBottom: 10 },
+  allDoneTitle: { fontSize: 22, fontWeight: '700', color: C.forest, marginBottom: 6 },
+  allDoneSub: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 22, marginBottom: 18 },
+  allDoneBtn: {
+    backgroundColor: C.sage, borderRadius: 14,
+    paddingVertical: 12, paddingHorizontal: 28,
+  },
+  allDoneBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
 
   addCard: {
     backgroundColor: C.white, borderRadius: 16, padding: 14,
