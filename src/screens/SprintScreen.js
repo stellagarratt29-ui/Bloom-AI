@@ -40,7 +40,8 @@ function CircleTimer({ progress }) {
 
 export default function SprintScreen({ route, navigation }) {
   const task = route?.params?.task ?? null;
-  const { buddy, momentum, addPoints } = useApp();
+  const { buddy, momentum, addPoints, toggleTask } = useApp();
+  const [taskMarkedDone, setTaskMarkedDone] = useState(false);
 
   const [timeLeft, setTimeLeft]     = useState(SPRINT_DURATION);
   const [running, setRunning]       = useState(false);
@@ -82,6 +83,14 @@ export default function SprintScreen({ route, navigation }) {
 
   const progress = 1 - timeLeft / SPRINT_DURATION;
 
+  const handleMarkDone = () => {
+    if (task && !taskMarkedDone) {
+      toggleTask(task.id);
+      setTaskMarkedDone(true);
+    }
+    navigation.goBack();
+  };
+
   if (done) {
     return (
       <SafeAreaView style={s.safe}>
@@ -95,11 +104,16 @@ export default function SprintScreen({ route, navigation }) {
           <View style={s.pointsBadge}>
             <Text style={s.pointsBadgeText}>+10 pts — Sprint bonus! ⚡</Text>
           </View>
-          <TouchableOpacity style={s.primaryBtn} onPress={() => navigation.goBack()}>
-            <Text style={s.primaryBtnText}>Back to today →</Text>
+          {task && !task.done && (
+            <TouchableOpacity style={s.primaryBtn} onPress={handleMarkDone}>
+              <Text style={s.primaryBtnText}>✓ Mark "{task.text.slice(0, 24)}{task.text.length > 24 ? '…' : ''}" as done</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={task && !task.done ? s.secondaryBtn : s.primaryBtn} onPress={() => navigation.goBack()}>
+            <Text style={task && !task.done ? s.secondaryBtnText : s.primaryBtnText}>Back to today →</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.secondaryBtn} onPress={reset}>
-            <Text style={s.secondaryBtnText}>Start another sprint</Text>
+          <TouchableOpacity style={s.ghostBtn} onPress={reset}>
+            <Text style={s.ghostBtnText}>Start another sprint</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -209,6 +223,8 @@ const s = StyleSheet.create({
     borderRadius: 16, borderWidth: 2, borderColor: C.sage,
   },
   secondaryBtnText: { color: C.sage, fontWeight: '600', fontSize: 16 },
+  ghostBtn: { marginTop: 4, paddingVertical: 10 },
+  ghostBtnText: { fontSize: 15, color: C.muted },
   resetBtn: { paddingVertical: 8 },
   resetBtnText: { fontSize: 14, color: C.muted },
 

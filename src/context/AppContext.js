@@ -10,7 +10,8 @@ const makeTask = (text, priority) => ({ id: uid(), text, priority, done: false }
 const makeIdea = (text, returnCondition) => ({ id: uid(), text, returnCondition, surfaced: false });
 const makeGoal = (text) => ({ id: uid(), text });
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr  = () => new Date().toISOString().slice(0, 10);
+const monthStr  = () => new Date().toISOString().slice(0, 7);
 
 function daysBetween(a, b) {
   return Math.floor((new Date(b) - new Date(a)) / 86400000);
@@ -39,6 +40,7 @@ export function AppProvider({ children }) {
   const [selectedHobbies, setSelectedHobbies] = useState([]);
   const [hobbyProgress, setHobbyProgress]   = useState({});
   const [totalPoints, setTotalPoints]       = useState(0);
+  const [monthlyPoints, setMonthlyPoints]   = useState(0);
   const [dailyPoints, setDailyPoints]       = useState([0, 0, 0, 0, 0, 0, 0]);
   const [goals, setGoals]                   = useState([]);
   const [monthlyGoalTarget, setMonthlyGoalTarget] = useState(250);
@@ -60,6 +62,12 @@ export function AppProvider({ children }) {
             if (s.selectedHobbies)  setSelectedHobbies(s.selectedHobbies);
             if (s.hobbyProgress)    setHobbyProgress(s.hobbyProgress);
             if (s.totalPoints)      setTotalPoints(s.totalPoints);
+            // Reset monthly points if a new month has started
+            if (s.lastActiveMonth && s.lastActiveMonth !== monthStr()) {
+              setMonthlyPoints(0);
+            } else if (s.monthlyPoints) {
+              setMonthlyPoints(s.monthlyPoints);
+            }
             if (s.userName)         setUserName(s.userName);
             if (s.goals)            setGoals(s.goals);
             if (s.monthlyGoalTarget) setMonthlyGoalTarget(s.monthlyGoalTarget);
@@ -90,8 +98,9 @@ export function AppProvider({ children }) {
         hasOnboarded,
         buddy: buddy?.id,
         tasks, ideas, selectedHobbies, hobbyProgress,
-        totalPoints, dailyPoints, goals,
-        monthlyGoalTarget, userName, lastActiveDay: todayStr(),
+        totalPoints, monthlyPoints, dailyPoints, goals,
+        monthlyGoalTarget, userName,
+        lastActiveDay: todayStr(), lastActiveMonth: monthStr(),
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, buddy, tasks, ideas, selectedHobbies, hobbyProgress,
@@ -105,6 +114,7 @@ export function AppProvider({ children }) {
   // ── Actions ───────────────────────────────────────────────────────────────
   const addPoints = useCallback((pts) => {
     setTotalPoints(p => p + pts);
+    setMonthlyPoints(p => p + pts);
     setDailyPoints(prev => {
       const next = [...prev];
       next[6] = (next[6] || 0) + pts;
@@ -129,6 +139,10 @@ export function AppProvider({ children }) {
 
   const deleteTask = useCallback((id) => {
     setTasks(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const clearDoneTasks = useCallback(() => {
+    setTasks(prev => prev.filter(t => !t.done));
   }, []);
 
   const saveIdea = useCallback((text, returnCondition) => {
@@ -179,11 +193,11 @@ export function AppProvider({ children }) {
       loaded,
       hasOnboarded, finishOnboarding,
       buddy, setBuddy,
-      tasks, addTask, toggleTask, deleteTask,
+      tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
       ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
-      totalPoints, momentum, addPoints,
+      totalPoints, monthlyPoints, dailyPoints, momentum, addPoints,
       goals, addGoal, deleteGoal, monthlyGoalTarget, setMonthlyGoalTarget,
       userName, setUserName,
     }}>

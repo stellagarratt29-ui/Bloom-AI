@@ -23,8 +23,34 @@ function moodLabel(m) {
   return 'Resting 😴';
 }
 
+function WeekChart({ dailyPoints }) {
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const todayDow = new Date().getDay(); // 0=Sun
+  const maxPts = Math.max(...dailyPoints, 1);
+  const BAR_H = 52;
+  return (
+    <View style={s.chartRow}>
+      {dailyPoints.map((pts, i) => {
+        const dayIdx = (todayDow - 6 + i + 7) % 7;
+        const label = days[dayIdx === 0 ? 6 : dayIdx - 1];
+        const isToday = i === 6;
+        const barH = Math.max(4, Math.round((pts / maxPts) * BAR_H));
+        return (
+          <View key={i} style={s.chartCol}>
+            <View style={[s.chartBarWrap, { height: BAR_H }]}>
+              <View style={[s.chartBar, { height: barH }, isToday && s.chartBarToday]} />
+            </View>
+            <Text style={[s.chartLabel, isToday && s.chartLabelToday]}>{label}</Text>
+            {pts > 0 && <Text style={s.chartPts}>{pts}</Text>}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function BuddyScreen({ navigation }) {
-  const { buddy, setBuddy, totalPoints, momentum } = useApp();
+  const { buddy, setBuddy, totalPoints, momentum, dailyPoints } = useApp();
 
   return (
     <SafeAreaView style={s.safe}>
@@ -59,8 +85,10 @@ export default function BuddyScreen({ navigation }) {
           </View>
           <MomentumBar value={momentum} />
           <Text style={s.cardNote}>
-            Your 7-day rolling effort score. Missing a day nudges it down slightly — it never resets to zero.
+            7-day rolling effort score. It never resets to zero — missing a day just nudges it gently down.
           </Text>
+          <Text style={[s.cardTitle, { marginTop: 16, marginBottom: 8, fontSize: 12, color: C.muted, letterSpacing: 1 }]}>THIS WEEK</Text>
+          <WeekChart dailyPoints={dailyPoints ?? [0,0,0,0,0,0,0]} />
         </View>
 
         {/* Points */}
@@ -145,6 +173,15 @@ const s = StyleSheet.create({
   },
   momentumFill: { height: 10, backgroundColor: C.sage, borderRadius: 5 },
   momentumValue: { fontSize: 28, fontWeight: '700', color: C.sage },
+
+  chartRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingTop: 4 },
+  chartCol: { flex: 1, alignItems: 'center' },
+  chartBarWrap: { justifyContent: 'flex-end', width: '100%', alignItems: 'center' },
+  chartBar: { width: 14, backgroundColor: C.sageLight, borderRadius: 4 },
+  chartBarToday: { backgroundColor: C.sage },
+  chartLabel: { fontSize: 10, color: C.muted, marginTop: 4, fontWeight: '600' },
+  chartLabelToday: { color: C.sage },
+  chartPts: { fontSize: 9, color: C.muted, marginTop: 1 },
 
   pointsValue: { fontSize: 28, fontWeight: '700', color: C.peach },
   pointsBreakdown: { gap: 6 },

@@ -82,10 +82,10 @@ function GoalCard({ goal, onDelete, onAddStep }) {
 }
 
 export default function GoalsScreen() {
-  const { totalPoints, momentum, goals, addGoal, deleteGoal, monthlyGoalTarget, addTask } = useApp();
+  const { totalPoints, monthlyPoints, goals, addGoal, deleteGoal, monthlyGoalTarget, addTask } = useApp();
   const [newGoal, setNewGoal] = useState('');
 
-  const pct = Math.min(100, Math.round((totalPoints / monthlyGoalTarget) * 100));
+  const pct = Math.min(100, Math.round((monthlyPoints / monthlyGoalTarget) * 100));
 
   const handleAddGoal = () => {
     if (!newGoal.trim()) return;
@@ -107,7 +107,7 @@ export default function GoalsScreen() {
           <View style={s.monthTop}>
             <View>
               <Text style={s.monthLabel}>THIS MONTH</Text>
-              <Text style={s.monthPoints}>{totalPoints} pts</Text>
+              <Text style={s.monthPoints}>{monthlyPoints} pts</Text>
             </View>
             <View style={s.monthTarget}>
               <Text style={s.monthTargetLabel}>Target</Text>

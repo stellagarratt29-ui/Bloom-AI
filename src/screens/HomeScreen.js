@@ -32,10 +32,10 @@ function greeting(name) {
 export default function HomeScreen({ navigation }) {
   const {
     buddy, momentum,
-    tasks, addTask, toggleTask, deleteTask,
+    tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
     ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
     selectedHobbies, hobbyProgress,
-    userName,
+    userName, dailyPoints,
   } = useApp();
 
   const [inputText, setInputText]         = useState('');
@@ -55,9 +55,11 @@ export default function HomeScreen({ navigation }) {
   const todayTip  = DAILY_TIPS[new Date().getDay()];
 
   const pendingTasks = tasks.filter(t => !t.done);
+  const doneTasks    = tasks.filter(t => t.done);
   const pendingCount = pendingTasks.length;
   const allDone      = tasks.length > 0 && pendingCount === 0;
   const surfaceIdea  = allDone ? ideas.find(i => !i.surfaced) : null;
+  const todayPts     = dailyPoints?.[6] ?? 0;
 
   const handleToggleTask = (id) => {
     toggleTask(id);
@@ -201,17 +203,50 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           {tasks.length === 0 ? (
-            <Text style={s.empty}>Nothing here yet — add your first task below!</Text>
+            <View style={s.emptyState}>
+              <Text style={s.emptyEmoji}>🌱</Text>
+              <Text style={s.empty}>Nothing here yet!{'\n'}Add your first task below.</Text>
+            </View>
           ) : (
-            tasks.map(t => (
-              <TaskRow
-                key={t.id}
-                task={t}
-                onToggle={() => handleToggleTask(t.id)}
-                onStartSprint={handleStartSprint}
-                onDelete={deleteTask}
-              />
-            ))
+            <>
+              {pendingTasks.map(t => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  onToggle={() => handleToggleTask(t.id)}
+                  onStartSprint={handleStartSprint}
+                  onDelete={deleteTask}
+                />
+              ))}
+
+              {doneTasks.length > 0 && (
+                <>
+                  <View style={s.doneSeparator}>
+                    <View style={s.doneLine} />
+                    <Text style={s.doneLabel}>Done ({doneTasks.length})</Text>
+                    <View style={s.doneLine} />
+                    <TouchableOpacity onPress={clearDoneTasks} style={s.clearBtn}>
+                      <Text style={s.clearBtnText}>Clear all</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {doneTasks.map(t => (
+                    <TaskRow
+                      key={t.id}
+                      task={t}
+                      onToggle={() => handleToggleTask(t.id)}
+                      onStartSprint={handleStartSprint}
+                      onDelete={deleteTask}
+                    />
+                  ))}
+                </>
+              )}
+
+              {todayPts > 0 && (
+                <View style={s.todayPts}>
+                  <Text style={s.todayPtsText}>⚡ {todayPts} pts earned today</Text>
+                </View>
+              )}
+            </>
           )}
 
           {/* ── Add task ── */}
@@ -361,7 +396,18 @@ const s = StyleSheet.create({
   ideaPill: { backgroundColor: C.peachPale, borderWidth: 1, borderColor: C.peachLight, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
   ideaPillText: { fontSize: 12, fontWeight: '600', color: C.peach },
 
-  empty: { fontSize: 15, color: C.muted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },
+  emptyState: { alignItems: 'center', paddingVertical: 24 },
+  emptyEmoji: { fontSize: 36, marginBottom: 8 },
+  empty: { fontSize: 15, color: C.muted, fontStyle: 'italic', textAlign: 'center', lineHeight: 22 },
+
+  doneSeparator: { flexDirection: 'row', alignItems: 'center', marginVertical: 10, gap: 8 },
+  doneLine: { flex: 1, height: 1, backgroundColor: C.border },
+  doneLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1 },
+  clearBtn: { paddingHorizontal: 8, paddingVertical: 2 },
+  clearBtnText: { fontSize: 12, color: C.muted, fontWeight: '600' },
+
+  todayPts: { alignSelf: 'center', backgroundColor: C.sagePale, borderRadius: 20, paddingVertical: 5, paddingHorizontal: 14, marginTop: 4, marginBottom: 8 },
+  todayPtsText: { fontSize: 13, fontWeight: '700', color: C.sage },
 
   addCard: {
     backgroundColor: C.white, borderRadius: 16, padding: 14,
