@@ -7,7 +7,7 @@ import { C } from '../constants/colors';
 import { BUDDIES, HOBBIES } from '../constants/data';
 import BuddyAvatar from '../components/BuddyAvatar';
 
-const STEPS = ['welcome', 'name', 'buddy', 'hobbies', 'ready'];
+const STEPS = ['welcome', 'name', 'buddy', 'hobbies', 'goal', 'ready'];
 
 function StepDots({ current, total }) {
   return (
@@ -27,6 +27,7 @@ export default function OnboardingScreen({ onFinish }) {
   const [name, setName]               = useState('');
   const [selectedBuddy, setSelectedBuddy] = useState(BUDDIES[0].id);
   const [selectedHobbies, setSelectedHobbies] = useState([]);
+  const [bigGoal, setBigGoal]         = useState('');
 
   const next = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
 
@@ -62,7 +63,7 @@ export default function OnboardingScreen({ onFinish }) {
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={s.center}>
-            <StepDots current={0} total={4} />
+            <StepDots current={0} total={5} />
             <Text style={s.nameEmoji}>👋</Text>
             <Text style={s.stepTitle}>What should we call you?</Text>
             <Text style={s.stepSub}>Just your first name is perfect.</Text>
@@ -93,7 +94,7 @@ export default function OnboardingScreen({ onFinish }) {
     return (
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scroll}>
-          <StepDots current={1} total={4} />
+          <StepDots current={1} total={5} />
           <Text style={s.stepTitle}>Choose your companion</Text>
           <Text style={s.stepSub}>They'll cheer you on — and never judge you.</Text>
           <View style={s.buddyGrid}>
@@ -122,7 +123,7 @@ export default function OnboardingScreen({ onFinish }) {
     return (
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scroll}>
-          <StepDots current={2} total={4} />
+          <StepDots current={2} total={5} />
           <Text style={s.stepTitle}>What do you want to build?</Text>
           <Text style={s.stepSub}>Pick up to 3 things. We'll grow them together, one small step at a time.</Text>
           <View style={s.hobbyGrid}>
@@ -158,11 +159,43 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
+  // ── Goal ──────────────────────────────────────────────────────────────────
+  if (STEPS[step] === 'goal') {
+    return (
+      <SafeAreaView style={s.safe}>
+        <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={s.center}>
+            <StepDots current={3} total={5} />
+            <Text style={s.nameEmoji}>🎯</Text>
+            <Text style={s.stepTitle}>What's one big goal for this year?</Text>
+            <Text style={s.stepSub}>Don't overthink it — whatever comes to mind first is perfect.</Text>
+            <TextInput
+              style={s.nameInput}
+              placeholder="e.g. Learn to play guitar…"
+              placeholderTextColor={C.muted}
+              value={bigGoal}
+              onChangeText={setBigGoal}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={next}
+              autoCapitalize="sentences"
+            />
+            <TouchableOpacity style={s.primaryBtn} onPress={next}>
+              <Text style={s.primaryBtnText}>
+                {bigGoal.trim() ? 'Set this goal →' : 'Skip for now →'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
   // ── Ready ─────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.center}>
-        <StepDots current={3} total={4} />
+        <StepDots current={4} total={5} />
         <BuddyAvatar buddy={buddy} momentum={50} size={100} />
         <Text style={[s.buddyName, { marginTop: 16, fontSize: 22 }]}>{buddy.name} is ready!</Text>
         <Text style={s.readyBody}>
@@ -170,7 +203,7 @@ export default function OnboardingScreen({ onFinish }) {
             ? `You and ${buddy.name} are going to do great things together, ${name.trim()}. One small step at a time.`
             : `You and ${buddy.name} are going to do great things together. One small step at a time.`}
         </Text>
-        <TouchableOpacity style={s.primaryBtn} onPress={() => onFinish(selectedBuddy, selectedHobbies, name.trim())}>
+        <TouchableOpacity style={s.primaryBtn} onPress={() => onFinish(selectedBuddy, selectedHobbies, name.trim(), bigGoal.trim())}>
           <Text style={s.primaryBtnText}>Start blooming 🌸</Text>
         </TouchableOpacity>
       </View>

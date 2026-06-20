@@ -211,10 +211,11 @@ export function AppProvider({ children }) {
 
   const dismissMilestone = useCallback(() => setLatestMilestone(null), []);
 
-  const finishOnboarding = useCallback((buddyId, hobbyIds, name) => {
+  const finishOnboarding = useCallback((buddyId, hobbyIds, name, goal) => {
     setBuddy(BUDDIES.find(b => b.id === buddyId) ?? BUDDIES[0]);
     setSelectedHobbies(hobbyIds);
     if (name) setUserName(name);
+    if (goal) setGoals([makeGoal(goal)]);
     setHasOnboarded(true);
   }, []);
 
