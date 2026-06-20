@@ -23,6 +23,19 @@ function moodLabel(m) {
   return 'Resting 😴';
 }
 
+function buddyMessage(buddy, momentum, totalPoints, hour, streak) {
+  const name = buddy?.name ?? 'I';
+  if (streak >= 7) return `${streak} days in a row — you're incredible. ${name} is so proud of you.`;
+  if (streak >= 3) return `${streak} days running! Every day you show up, you grow stronger.`;
+  if (momentum >= 80) return `You're glowing right now! ${name} can feel your energy from here.`;
+  if (momentum >= 60) return `${name} thinks you're doing brilliantly. Keep that momentum going!`;
+  if (momentum >= 35) return `Steady progress is real progress. ${name} sees every bit of your effort.`;
+  if (hour >= 21) return `Rest well tonight. Tomorrow, ${name} will be right here waiting for you.`;
+  if (hour < 9)  return `Good morning! ${name} is excited to see what you'll do today.`;
+  if (totalPoints === 0) return `${name} is ready whenever you are. No rush — just begin.`;
+  return `${totalPoints} pts and counting! ${name} is rooting for you every step of the way.`;
+}
+
 function WeekChart({ dailyPoints }) {
   const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   const today  = new Date();
@@ -51,7 +64,7 @@ function WeekChart({ dailyPoints }) {
 }
 
 export default function BuddyScreen({ navigation }) {
-  const { buddy, setBuddy, totalPoints, momentum, dailyPoints } = useApp();
+  const { buddy, setBuddy, totalPoints, momentum, dailyPoints, currentStreak } = useApp();
 
   return (
     <SafeAreaView style={s.safe}>
@@ -78,11 +91,28 @@ export default function BuddyScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Buddy speech bubble */}
+        <View style={s.speechCard}>
+          <BuddyAvatar buddy={buddy} momentum={momentum} size={44} />
+          <View style={s.speechBubble}>
+            <Text style={s.speechText}>
+              {buddyMessage(buddy, momentum, totalPoints, new Date().getHours(), currentStreak ?? 0)}
+            </Text>
+          </View>
+        </View>
+
         {/* Momentum */}
         <View style={s.card}>
           <View style={s.cardRow}>
             <Text style={s.cardTitle}>Momentum Score</Text>
-            <Text style={s.momentumValue}>{momentum}</Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={s.momentumValue}>{momentum}</Text>
+              {(currentStreak ?? 0) > 0 && (
+                <View style={s.streakBadge}>
+                  <Text style={s.streakText}>🔥 {currentStreak} day{currentStreak !== 1 ? 's' : ''}</Text>
+                </View>
+              )}
+            </View>
           </View>
           <MomentumBar value={momentum} />
           <Text style={s.cardNote}>
@@ -159,6 +189,24 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.sageLight,
   },
   moodText: { fontSize: 14, fontWeight: '600', color: C.sage },
+
+  speechCard: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    marginBottom: 18,
+  },
+  speechBubble: {
+    flex: 1, backgroundColor: C.white, borderRadius: 16,
+    padding: 14, borderWidth: 1, borderColor: C.border,
+    borderTopLeftRadius: 4,
+  },
+  speechText: { fontSize: 15, color: C.forest, lineHeight: 23, fontStyle: 'italic' },
+
+  streakBadge: {
+    marginTop: 4, backgroundColor: '#FFF3E0', borderRadius: 12,
+    paddingVertical: 2, paddingHorizontal: 8,
+    borderWidth: 1, borderColor: '#FFB74D',
+  },
+  streakText: { fontSize: 11, fontWeight: '700', color: '#E65100' },
 
   card: {
     backgroundColor: C.white, borderRadius: 18, padding: 18,

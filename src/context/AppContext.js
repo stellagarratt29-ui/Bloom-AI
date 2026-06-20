@@ -46,6 +46,8 @@ export function AppProvider({ children }) {
   const [monthlyGoalTarget, setMonthlyGoalTarget] = useState(250);
   const [userName, setUserName]             = useState('');
   const [lastActiveDay, setLastActiveDay]   = useState(todayStr());
+  const [currentStreak, setCurrentStreak]   = useState(0);
+  const streakRef                           = useRef({ lastDay: '', count: 0 });
   const sessionTaskCount                    = useRef(0);
 
   // ── Load from storage on mount ────────────────────────────────────────────
@@ -71,6 +73,10 @@ export function AppProvider({ children }) {
             if (s.userName)         setUserName(s.userName);
             if (s.goals)            setGoals(s.goals);
             if (s.monthlyGoalTarget) setMonthlyGoalTarget(s.monthlyGoalTarget);
+            if (s.currentStreak) {
+              setCurrentStreak(s.currentStreak);
+              streakRef.current = { lastDay: s.lastStreakDay ?? '', count: s.currentStreak };
+            }
 
             // Roll over daily points if new day(s) have passed
             const today = todayStr();
@@ -99,12 +105,13 @@ export function AppProvider({ children }) {
         buddy: buddy?.id,
         tasks, ideas, selectedHobbies, hobbyProgress,
         totalPoints, monthlyPoints, dailyPoints, goals,
-        monthlyGoalTarget, userName,
+        monthlyGoalTarget, userName, currentStreak,
+        lastStreakDay: streakRef.current.lastDay,
         lastActiveDay: todayStr(), lastActiveMonth: monthStr(),
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, buddy, tasks, ideas, selectedHobbies, hobbyProgress,
-      totalPoints, dailyPoints, goals, monthlyGoalTarget, userName]);
+      totalPoints, monthlyPoints, dailyPoints, goals, monthlyGoalTarget, userName, currentStreak]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const momentum = Math.min(100, Math.round(
@@ -132,7 +139,18 @@ export function AppProvider({ children }) {
     setTasks(prev => prev.map(t => {
       if (t.id !== id) return t;
       const nowDone = !t.done;
-      if (nowDone) addPoints(POINTS[t.priority] ?? 10);
+      if (nowDone) {
+        addPoints(POINTS[t.priority] ?? 10);
+        const today = todayStr();
+        if (streakRef.current.lastDay !== today) {
+          const diff = streakRef.current.lastDay
+            ? daysBetween(streakRef.current.lastDay, today)
+            : 999;
+          const newCount = diff === 1 ? streakRef.current.count + 1 : 1;
+          streakRef.current = { lastDay: today, count: newCount };
+          setCurrentStreak(newCount);
+        }
+      }
       return { ...t, done: nowDone };
     }));
   }, [addPoints]);
@@ -198,6 +216,7 @@ export function AppProvider({ children }) {
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
       totalPoints, monthlyPoints, dailyPoints, momentum, addPoints,
+      currentStreak,
       goals, addGoal, deleteGoal, monthlyGoalTarget, setMonthlyGoalTarget,
       userName, setUserName,
     }}>

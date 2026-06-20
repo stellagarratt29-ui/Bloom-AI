@@ -5,8 +5,10 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
-import { SPRINT_DURATION, SPRINT_SOUNDS, ENCOURAGEMENTS } from '../constants/data';
+import { SPRINT_SOUNDS, ENCOURAGEMENTS } from '../constants/data';
 import { useApp } from '../context/AppContext';
+
+const DURATION_OPTIONS = [5, 10, 15, 25];
 import BuddyAvatar from '../components/BuddyAvatar';
 
 function formatTime(secs) {
@@ -44,9 +46,10 @@ export default function SprintScreen({ route, navigation }) {
   const { buddy, momentum, addPoints, toggleTask } = useApp();
   const [taskMarkedDone, setTaskMarkedDone] = useState(false);
 
-  const [timeLeft, setTimeLeft]     = useState(SPRINT_DURATION);
-  const [running, setRunning]       = useState(false);
-  const [done, setDone]             = useState(false);
+  const [selectedMins, setSelectedMins] = useState(15);
+  const [timeLeft, setTimeLeft]         = useState(15 * 60);
+  const [running, setRunning]           = useState(false);
+  const [done, setDone]                 = useState(false);
   const [sound, setSound]           = useState('none');
   const [encourageIdx, setEncourage] = useState(0);
   const intervalRef                  = useRef(null);
@@ -87,9 +90,16 @@ export default function SprintScreen({ route, navigation }) {
   );
 
   const toggle = () => setRunning(r => !r);
-  const reset  = () => { setRunning(false); setTimeLeft(SPRINT_DURATION); setDone(false); };
+  const reset  = () => { setRunning(false); setTimeLeft(selectedMins * 60); setDone(false); };
 
-  const progress = 1 - timeLeft / SPRINT_DURATION;
+  const handlePickDuration = (mins) => {
+    if (!running && timeLeft === selectedMins * 60) {
+      setSelectedMins(mins);
+      setTimeLeft(mins * 60);
+    }
+  };
+
+  const progress = 1 - timeLeft / (selectedMins * 60);
 
   const handleMarkDone = () => {
     if (task && !taskMarkedDone) {
@@ -107,7 +117,7 @@ export default function SprintScreen({ route, navigation }) {
           <Text style={s.doneEmoji}>🎉</Text>
           <Text style={s.doneTitle}>Sprint complete!</Text>
           <Text style={s.doneSub}>
-            You did 15 focused minutes. That's real progress — and {buddy?.name} noticed.
+            You did {selectedMins} focused minutes. That's real progress — and {buddy?.name} noticed.
           </Text>
           <View style={s.pointsBadge}>
             <Text style={s.pointsBadgeText}>+10 pts — Sprint bonus! ⚡</Text>
@@ -144,21 +154,39 @@ export default function SprintScreen({ route, navigation }) {
           </View>
         )}
 
+        {/* Duration picker — only when timer hasn't started */}
+        {!running && timeLeft === selectedMins * 60 && !done && (
+          <View style={s.durationRow}>
+            <Text style={s.durationLabel}>Duration</Text>
+            {DURATION_OPTIONS.map(mins => (
+              <TouchableOpacity
+                key={mins}
+                style={[s.durationChip, selectedMins === mins && s.durationChipActive]}
+                onPress={() => handlePickDuration(mins)}
+              >
+                <Text style={[s.durationChipText, selectedMins === mins && s.durationChipTextActive]}>
+                  {mins}m
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Timer */}
         <View style={s.timerWrapper}>
           <CircleTimer progress={progress} />
           <View style={s.timerCenter}>
             <Text style={s.timerText}>{formatTime(timeLeft)}</Text>
-            <Text style={s.timerLabel}>{running ? 'in flow' : timeLeft === SPRINT_DURATION ? 'ready' : 'paused'}</Text>
+            <Text style={s.timerLabel}>{running ? 'in flow' : timeLeft === selectedMins * 60 ? 'ready' : 'paused'}</Text>
           </View>
         </View>
 
         {/* Controls */}
         <View style={s.controls}>
           <TouchableOpacity style={s.primaryBtn} onPress={toggle}>
-            <Text style={s.primaryBtnText}>{running ? '⏸ Pause' : timeLeft === SPRINT_DURATION ? '⚡ Start Sprint' : '▶ Resume'}</Text>
+            <Text style={s.primaryBtnText}>{running ? '⏸ Pause' : timeLeft === selectedMins * 60 ? '⚡ Start Sprint' : '▶ Resume'}</Text>
           </TouchableOpacity>
-          {timeLeft < SPRINT_DURATION && (
+          {timeLeft < selectedMins * 60 && (
             <TouchableOpacity style={s.resetBtn} onPress={reset}>
               <Text style={s.resetBtnText}>Reset</Text>
             </TouchableOpacity>
@@ -206,9 +234,22 @@ const s = StyleSheet.create({
   taskChip: {
     alignSelf: 'center', backgroundColor: C.sagePale,
     borderRadius: 20, paddingVertical: 8, paddingHorizontal: 18,
-    borderWidth: 1, borderColor: C.sageLight, marginBottom: 28,
+    borderWidth: 1, borderColor: C.sageLight, marginBottom: 16,
   },
   taskChipText: { fontSize: 14, fontWeight: '600', color: C.forest },
+
+  durationRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, marginBottom: 20,
+  },
+  durationLabel: { fontSize: 12, fontWeight: '700', color: C.muted, letterSpacing: 1 },
+  durationChip: {
+    paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20,
+    backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
+  },
+  durationChipActive: { backgroundColor: C.sage, borderColor: C.sage },
+  durationChipText: { fontSize: 14, fontWeight: '700', color: C.muted },
+  durationChipTextActive: { color: C.white },
 
   timerWrapper: {
     alignItems: 'center', justifyContent: 'center',

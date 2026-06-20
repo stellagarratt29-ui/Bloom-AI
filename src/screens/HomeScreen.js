@@ -29,13 +29,23 @@ function greeting(name) {
   return name ? `${base}, ${name}` : base;
 }
 
+function greetingSub(pendingCount, doneTasks, allDone) {
+  const h = new Date().getHours();
+  if (allDone) return "You've done everything — well done today!";
+  if (doneTasks > 0 && h >= 17) return `${doneTasks} done so far. Keep that going!`;
+  if (h >= 21) return "Rest is part of the process. Take it easy.";
+  if (h < 12) return "What matters most today?";
+  if (pendingCount > 4) return "Big list — just pick one to start.";
+  return "You've got this.";
+}
+
 export default function HomeScreen({ navigation }) {
   const {
     buddy, momentum,
     tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
     ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
     selectedHobbies, hobbyProgress,
-    userName, dailyPoints,
+    userName, dailyPoints, currentStreak,
   } = useApp();
 
   const [inputText, setInputText]         = useState('');
@@ -168,8 +178,15 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           {/* ── Greeting ── */}
-          <Text style={s.greetingBig}>{greeting(userName)}!</Text>
-          <Text style={s.greetingSub}>What matters today?</Text>
+          <View style={s.greetingRow}>
+            <Text style={s.greetingBig}>{greeting(userName)}!</Text>
+            {(currentStreak ?? 0) >= 2 && (
+              <View style={s.streakPill}>
+                <Text style={s.streakPillText}>🔥 {currentStreak}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={s.greetingSub}>{greetingSub(pendingCount, doneTasks.length, allDone)}</Text>
 
           {/* ── Morning brain dump card ── */}
           {isMorning && !dumpDismissed && (
@@ -410,8 +427,15 @@ const s = StyleSheet.create({
   headerBtnEmoji: { fontSize: 18 },
   headerBtnLabel: { fontSize: 9, fontWeight: '700', color: C.muted, marginTop: 2, letterSpacing: 0.5 },
 
+  greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   greetingBig: { fontSize: 30, fontWeight: '700', color: C.forest, letterSpacing: -0.5 },
   greetingSub: { fontSize: 17, color: C.sage, marginTop: 4, marginBottom: 18 },
+  streakPill: {
+    backgroundColor: '#FFF3E0', borderRadius: 20,
+    paddingVertical: 3, paddingHorizontal: 10,
+    borderWidth: 1, borderColor: '#FFB74D',
+  },
+  streakPillText: { fontSize: 13, fontWeight: '700', color: '#E65100' },
 
   dumpCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
