@@ -5,7 +5,7 @@ import {
   SafeAreaView, StyleSheet,
 } from 'react-native';
 import { C } from '../constants/colors';
-import { NUDGE_MESSAGES, DAILY_TIPS } from '../constants/data';
+import { NUDGE_MESSAGES, DAILY_TIPS, HOBBIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
 import TaskRow from '../components/TaskRow';
 import IdeaCaptureModal from '../components/IdeaCaptureModal';
@@ -46,6 +46,7 @@ export default function HomeScreen({ navigation }) {
     ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
     selectedHobbies, hobbyProgress,
     userName, dailyPoints, currentStreak,
+    latestMilestone, dismissMilestone,
   } = useApp();
 
   const [inputText, setInputText]         = useState('');
@@ -188,6 +189,20 @@ export default function HomeScreen({ navigation }) {
           </View>
           <Text style={s.greetingSub}>{greetingSub(pendingCount, doneTasks.length, allDone)}</Text>
 
+          {/* ── Milestone celebration ── */}
+          {latestMilestone && (
+            <View style={s.milestoneCard}>
+              <Text style={s.milestoneEmoji}>🏆</Text>
+              <View style={s.milestoneText}>
+                <Text style={s.milestoneTitle}>{latestMilestone} points reached!</Text>
+                <Text style={s.milestoneSub}>You're on a roll — keep going!</Text>
+              </View>
+              <TouchableOpacity style={s.milestoneDismiss} onPress={dismissMilestone}>
+                <Text style={s.milestoneDismissText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* ── Morning brain dump card ── */}
           {isMorning && !dumpDismissed && (
             <TouchableOpacity style={s.dumpCard} onPress={() => setShowDump(true)} activeOpacity={0.85}>
@@ -241,6 +256,34 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
           )}
+
+          {/* ── Hobby next-step quick-add ── */}
+          {(() => {
+            const activeHobbies = HOBBIES.filter(h =>
+              selectedHobbies.includes(h.id) && (hobbyProgress[h.id] ?? 0) < h.steps.length
+            );
+            if (!activeHobbies.length) return null;
+            return (
+              <View style={s.hobbyQuickSection}>
+                <Text style={s.hobbyQuickLabel}>NEXT HOBBY STEPS</Text>
+                {activeHobbies.map(h => {
+                  const nextStep = h.steps[hobbyProgress[h.id] ?? 0];
+                  return (
+                    <TouchableOpacity
+                      key={h.id}
+                      style={s.hobbyQuickChip}
+                      onPress={() => addTask(nextStep, 'medium')}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={s.hobbyQuickEmoji}>{h.emoji}</Text>
+                      <Text style={s.hobbyQuickText} numberOfLines={2}>{nextStep}</Text>
+                      <Text style={s.hobbyQuickAdd}>+ Add</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            );
+          })()}
 
           {tasks.length === 0 ? (
             <View style={s.emptyState}>
@@ -515,6 +558,29 @@ const s = StyleSheet.create({
   priorityLabel: { fontSize: 12, color: C.muted, fontWeight: '500', marginRight: 2 },
   chip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1.5 },
   chipText: { fontSize: 12, fontWeight: '600' },
+
+  milestoneCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#FFF8E1', borderRadius: 16, padding: 14,
+    marginBottom: 14, borderWidth: 1, borderColor: '#FFD54F',
+  },
+  milestoneEmoji: { fontSize: 28, flexShrink: 0 },
+  milestoneText: { flex: 1 },
+  milestoneTitle: { fontSize: 15, fontWeight: '700', color: '#5D4037' },
+  milestoneSub: { fontSize: 13, color: '#8D6E63', marginTop: 2 },
+  milestoneDismiss: { padding: 4 },
+  milestoneDismissText: { fontSize: 13, color: '#BCAAA4' },
+
+  hobbyQuickSection: { marginBottom: 12 },
+  hobbyQuickLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.5, marginBottom: 8 },
+  hobbyQuickChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: C.sagePale, borderRadius: 12, padding: 12,
+    marginBottom: 6, borderWidth: 1, borderColor: C.sageLight,
+  },
+  hobbyQuickEmoji: { fontSize: 20, flexShrink: 0 },
+  hobbyQuickText: { flex: 1, fontSize: 13, color: C.forest, lineHeight: 18 },
+  hobbyQuickAdd: { fontSize: 13, fontWeight: '700', color: C.sage, flexShrink: 0 },
 
   toast: {
     flexDirection: 'row', alignItems: 'center',

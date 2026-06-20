@@ -59,6 +59,56 @@ export const HOBBIES = [
       'Make the same dish twice and improve it',
     ],
   },
+  {
+    id: 'meditation', name: 'Meditation', emoji: '🧘',
+    steps: [
+      'Sit quietly and focus on your breath for 5 minutes',
+      'Try a guided 10-minute meditation (YouTube or app)',
+      'Meditate for 10 minutes without guidance',
+      'Build a 5-day meditation streak',
+      'Complete a 20-minute sitting — fully present',
+    ],
+  },
+  {
+    id: 'reading', name: 'Reading', emoji: '📚',
+    steps: [
+      'Read for 15 uninterrupted minutes today',
+      'Finish a full chapter without picking up your phone',
+      'Read for 30 minutes every day this week',
+      'Finish an entire book',
+      'Write a 3-sentence reflection on what you read',
+    ],
+  },
+  {
+    id: 'photography', name: 'Photography', emoji: '📷',
+    steps: [
+      'Take 10 photos of everyday things with intention',
+      'Learn about composition: rule of thirds',
+      'Shoot in natural light and notice the difference',
+      'Edit one photo and share it somewhere',
+      'Create a small photo series around a single theme',
+    ],
+  },
+  {
+    id: 'journaling', name: 'Journaling', emoji: '📓',
+    steps: [
+      'Write 3 things you\'re grateful for today',
+      'Fill one full page without stopping to edit',
+      'Write about a challenge and what you learned from it',
+      'Journal every morning for 5 days in a row',
+      'Read back an old entry and write a reply to past-you',
+    ],
+  },
+  {
+    id: 'language', name: 'Language', emoji: '🌍',
+    steps: [
+      'Learn 10 common words in your target language',
+      'Complete your first 3 Duolingo or app lessons',
+      'Watch a short YouTube video in that language',
+      'Have a simple conversation (even with a chatbot)',
+      'Understand a full sentence you heard naturally',
+    ],
+  },
 ];
 
 export const BUDDIES = [

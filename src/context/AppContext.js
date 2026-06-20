@@ -4,6 +4,7 @@ import { BUDDIES, POINTS } from '../constants/data';
 
 const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v1';
+const MILESTONES = [25, 50, 100, 250, 500, 1000];
 
 const uid = () => Date.now() + Math.floor(Math.random() * 10000);
 const makeTask = (text, priority) => ({ id: uid(), text, priority, done: false });
@@ -48,6 +49,7 @@ export function AppProvider({ children }) {
   const [lastActiveDay, setLastActiveDay]   = useState(todayStr());
   const [currentStreak, setCurrentStreak]   = useState(0);
   const streakRef                           = useRef({ lastDay: '', count: 0 });
+  const [latestMilestone, setLatestMilestone] = useState(null);
   const sessionTaskCount                    = useRef(0);
 
   // ── Load from storage on mount ────────────────────────────────────────────
@@ -120,7 +122,12 @@ export function AppProvider({ children }) {
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const addPoints = useCallback((pts) => {
-    setTotalPoints(p => p + pts);
+    setTotalPoints(prev => {
+      const next = prev + pts;
+      const crossed = MILESTONES.filter(m => prev < m && next >= m);
+      if (crossed.length) setLatestMilestone(crossed[crossed.length - 1]);
+      return next;
+    });
     setMonthlyPoints(p => p + pts);
     setDailyPoints(prev => {
       const next = [...prev];
@@ -199,6 +206,8 @@ export function AppProvider({ children }) {
     setGoals(prev => prev.filter(g => g.id !== id));
   }, []);
 
+  const dismissMilestone = useCallback(() => setLatestMilestone(null), []);
+
   const finishOnboarding = useCallback((buddyId, hobbyIds, name) => {
     setBuddy(BUDDIES.find(b => b.id === buddyId) ?? BUDDIES[0]);
     setSelectedHobbies(hobbyIds);
@@ -216,7 +225,7 @@ export function AppProvider({ children }) {
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
       totalPoints, monthlyPoints, dailyPoints, momentum, addPoints,
-      currentStreak,
+      currentStreak, latestMilestone, dismissMilestone,
       goals, addGoal, deleteGoal, monthlyGoalTarget, setMonthlyGoalTarget,
       userName, setUserName,
     }}>
