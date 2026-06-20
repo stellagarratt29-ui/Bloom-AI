@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  SafeAreaView, StyleSheet,
+  SafeAreaView, StyleSheet, Alert,
 } from 'react-native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
@@ -39,7 +39,7 @@ function getBreakdown(goalText) {
   return HOW_TO_BREAKDOWNS.default;
 }
 
-function GoalCard({ goal, onDelete, onAddStep }) {
+function GoalCard({ goal, onDelete, onAddStep, onAchieve }) {
   const [expanded, setExpanded] = useState(false);
   const [showHow, setShowHow]   = useState(false);
   const breakdown = getBreakdown(goal.text);
@@ -68,6 +68,10 @@ function GoalCard({ goal, onDelete, onAddStep }) {
         </TouchableOpacity>
       )}
 
+      <TouchableOpacity style={s.achieveBtn} onPress={() => onAchieve?.(goal)}>
+        <Text style={s.achieveBtnText}>✓ Mark as achieved · +50 pts</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={s.howBtn} onPress={() => setShowHow(h => !h)}>
         <Text style={s.howBtnText}>How do I actually do this? {showHow ? '▲' : '▼'}</Text>
       </TouchableOpacity>
@@ -88,7 +92,7 @@ function GoalCard({ goal, onDelete, onAddStep }) {
 }
 
 export default function GoalsScreen() {
-  const { totalPoints, monthlyPoints, goals, addGoal, deleteGoal, monthlyGoalTarget, addTask } = useApp();
+  const { totalPoints, monthlyPoints, goals, addGoal, deleteGoal, monthlyGoalTarget, addTask, addPoints } = useApp();
   const [newGoal, setNewGoal] = useState('');
 
   const pct = Math.min(100, Math.round((monthlyPoints / monthlyGoalTarget) * 100));
@@ -100,6 +104,20 @@ export default function GoalsScreen() {
   };
 
   const handleAddStep = (text) => addTask(text, 'medium');
+
+  const handleAchieve = (goal) => {
+    Alert.alert(
+      '🎉 Mark as achieved?',
+      `"${goal.text.length > 60 ? goal.text.slice(0, 60) + '…' : goal.text}"`,
+      [
+        { text: 'Not yet', style: 'cancel' },
+        {
+          text: 'Yes! I did it! 🎉',
+          onPress: () => { deleteGoal(goal.id); addPoints(50); },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={s.safe}>
@@ -175,6 +193,7 @@ export default function GoalsScreen() {
               goal={g}
               onDelete={deleteGoal}
               onAddStep={handleAddStep}
+              onAchieve={handleAchieve}
             />
           ))
         )}
@@ -241,8 +260,15 @@ const s = StyleSheet.create({
   actionAdd: { fontSize: 12, fontWeight: '600', color: C.sage, flexShrink: 0 },
   showMore: { fontSize: 13, color: C.sage, fontWeight: '600', paddingVertical: 8 },
 
-  howBtn: {
+  achieveBtn: {
     marginTop: 12, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: C.border,
+    alignItems: 'center',
+  },
+  achieveBtnText: { fontSize: 13, fontWeight: '700', color: C.sage },
+
+  howBtn: {
+    paddingVertical: 10,
     borderTopWidth: 1, borderTopColor: C.border,
   },
   howBtnText: { fontSize: 13, fontWeight: '600', color: C.peach },

@@ -40,9 +40,18 @@ export default function HobbiesScreen() {
 
         {isOpen && (
           <View style={s.steps}>
+            {complete && (
+              <View style={s.completeBanner}>
+                <Text style={s.completeBannerEmoji}>🎉</Text>
+                <View style={s.completeBannerText}>
+                  <Text style={s.completeBannerTitle}>Journey complete!</Text>
+                  <Text style={s.completeBannerSub}>All {hobby.steps.length} steps done. Amazing work.</Text>
+                </View>
+              </View>
+            )}
             {hobby.steps.map((step, i) => {
               const done = i < progress;
-              const next = i === progress;
+              const next = i === progress && !complete;
               return (
                 <TouchableOpacity
                   key={i}
@@ -143,6 +152,15 @@ const s = StyleSheet.create({
   chevron: { fontSize: 12, color: C.muted, flexShrink: 0 },
 
   steps: { borderTopWidth: 1, borderTopColor: C.border, paddingVertical: 8 },
+  completeBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: C.peachPale, margin: 12, borderRadius: 14,
+    padding: 14, borderWidth: 1, borderColor: C.peachLight,
+  },
+  completeBannerEmoji: { fontSize: 28, flexShrink: 0 },
+  completeBannerText: { flex: 1 },
+  completeBannerTitle: { fontSize: 15, fontWeight: '700', color: C.peach },
+  completeBannerSub: { fontSize: 12, color: C.muted, marginTop: 2 },
   step: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 12, paddingHorizontal: 16, gap: 12 },
   stepDone: { opacity: 0.6 },
   stepNext: { backgroundColor: C.sagePale },
