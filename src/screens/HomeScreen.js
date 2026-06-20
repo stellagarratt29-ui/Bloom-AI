@@ -46,6 +46,7 @@ export default function HomeScreen({ navigation }) {
   const [showHobby, setShowHobby]         = useState(false);
   const [dumpDismissed, setDumpDismissed] = useState(false);
   const [showTip, setShowTip]             = useState(true);
+  const [showAllDone, setShowAllDone]     = useState(false);
   const hobbyShownRef                     = useRef(false);
   const [toast, setToast]                 = useState(null);
   const [nudge]                           = useState(() => NUDGE_MESSAGES[Math.floor(Math.random() * NUDGE_MESSAGES.length)]);
@@ -102,6 +103,13 @@ export default function HomeScreen({ navigation }) {
     dumpIdeas.forEach(idea => saveIdea(idea, "When you have some free time, revisit this!"));
     setShowDump(false);
     setDumpDismissed(true);
+    const parts = [];
+    if (dumpTasks.length)  parts.push(`${dumpTasks.length} task${dumpTasks.length !== 1 ? 's' : ''} added`);
+    if (dumpIdeas.length)  parts.push(`${dumpIdeas.length} idea${dumpIdeas.length !== 1 ? 's' : ''} saved`);
+    if (parts.length) {
+      setToast(parts.join(' · '));
+      setTimeout(() => setToast(null), 3500);
+    }
   };
 
   return (
@@ -244,7 +252,7 @@ export default function HomeScreen({ navigation }) {
                       <Text style={s.clearBtnText}>Clear all</Text>
                     </TouchableOpacity>
                   </View>
-                  {doneTasks.map(t => (
+                  {(showAllDone ? doneTasks : doneTasks.slice(0, 3)).map(t => (
                     <TaskRow
                       key={t.id}
                       task={t}
@@ -253,6 +261,13 @@ export default function HomeScreen({ navigation }) {
                       onDelete={deleteTask}
                     />
                   ))}
+                  {doneTasks.length > 3 && (
+                    <TouchableOpacity style={s.showMoreDone} onPress={() => setShowAllDone(v => !v)}>
+                      <Text style={s.showMoreDoneText}>
+                        {showAllDone ? 'Show less ▲' : `Show ${doneTasks.length - 3} more ▼`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </>
               )}
 
@@ -436,6 +451,8 @@ const s = StyleSheet.create({
   doneLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1 },
   clearBtn: { paddingHorizontal: 8, paddingVertical: 2 },
   clearBtnText: { fontSize: 12, color: C.muted, fontWeight: '600' },
+  showMoreDone: { alignItems: 'center', paddingVertical: 8 },
+  showMoreDoneText: { fontSize: 13, color: C.sage, fontWeight: '600' },
 
   todayPts: { alignSelf: 'center', backgroundColor: C.sagePale, borderRadius: 20, paddingVertical: 5, paddingHorizontal: 14, marginTop: 4, marginBottom: 8 },
   todayPtsText: { fontSize: 13, fontWeight: '700', color: C.sage },

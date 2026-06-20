@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, SafeAreaView,
   StyleSheet, ScrollView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { SPRINT_DURATION, SPRINT_SOUNDS, ENCOURAGEMENTS } from '../constants/data';
 import { useApp } from '../context/AppContext';
@@ -77,6 +78,13 @@ export default function SprintScreen({ route, navigation }) {
       clearInterval(encourageRef.current);
     };
   }, [running]);
+
+  // Pause timer if user navigates away
+  useFocusEffect(
+    useCallback(() => {
+      return () => setRunning(false);
+    }, [])
+  );
 
   const toggle = () => setRunning(r => !r);
   const reset  = () => { setRunning(false); setTimeLeft(SPRINT_DURATION); setDone(false); };

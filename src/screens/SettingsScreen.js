@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  SafeAreaView, StyleSheet, Switch,
+  SafeAreaView, StyleSheet, Switch, Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { C } from '../constants/colors';
 import { BUDDIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
@@ -17,6 +18,24 @@ export default function SettingsScreen({ navigation }) {
     monthlyGoalTarget, setMonthlyGoalTarget,
     momentum,
   } = useApp();
+
+  const handleReset = () => {
+    Alert.alert(
+      'Reset Bloom?',
+      'This will clear all your tasks, goals, points, and progress. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset everything',
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('@bloom_v1');
+            Alert.alert('Done', 'Bloom has been reset. Restart the app to start fresh.');
+          },
+        },
+      ]
+    );
+  };
 
   const [nameInput, setNameInput] = useState(userName);
   const [notificationsOn, setNotificationsOn] = useState(false);
@@ -148,8 +167,11 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* App info */}
+        {/* App info + reset */}
         <Text style={s.appInfo}>Bloom v1.0 · Made with care 🌿</Text>
+        <TouchableOpacity style={s.resetBtn} onPress={handleReset}>
+          <Text style={s.resetBtnText}>Reset all data</Text>
+        </TouchableOpacity>
         <View style={{ height: 48 }} />
       </ScrollView>
     </SafeAreaView>
@@ -231,4 +253,6 @@ const s = StyleSheet.create({
   premiumItem: { fontSize: 13, color: C.forest, lineHeight: 22 },
 
   appInfo: { fontSize: 12, color: C.muted, textAlign: 'center', marginBottom: 12 },
+  resetBtn: { alignItems: 'center', paddingVertical: 10, marginBottom: 8 },
+  resetBtnText: { fontSize: 13, color: C.muted, textDecorationLine: 'underline' },
 });
