@@ -23,6 +23,19 @@ function moodLabel(m) {
   return 'Resting 😴';
 }
 
+const LEVELS = [
+  { min: 0,    label: 'Seedling',   emoji: '🌱', next: 50   },
+  { min: 50,   label: 'Sprout',     emoji: '🌿', next: 150  },
+  { min: 150,  label: 'Bloom',      emoji: '🌸', next: 300  },
+  { min: 300,  label: 'Garden',     emoji: '🌺', next: 500  },
+  { min: 500,  label: 'Forest',     emoji: '🌳', next: 1000 },
+  { min: 1000, label: 'Rainforest', emoji: '🌴', next: null },
+];
+
+function getLevel(pts) {
+  return LEVELS.slice().reverse().find(l => pts >= l.min) ?? LEVELS[0];
+}
+
 function buddyMessage(buddy, momentum, totalPoints, hour, streak) {
   const name = buddy?.name ?? 'I';
   if (streak >= 7) return `${streak} days in a row — you're incredible. ${name} is so proud of you.`;
@@ -122,12 +135,38 @@ export default function BuddyScreen({ navigation }) {
           <WeekChart dailyPoints={dailyPoints ?? [0,0,0,0,0,0,0]} />
         </View>
 
-        {/* Points */}
+        {/* Level + Points */}
         <View style={s.card}>
           <View style={s.cardRow}>
             <Text style={s.cardTitle}>Total Points</Text>
             <Text style={s.pointsValue}>{totalPoints} pts</Text>
           </View>
+          {(() => {
+            const lvl = getLevel(totalPoints);
+            const pct = lvl.next
+              ? Math.min(100, Math.round(((totalPoints - lvl.min) / (lvl.next - lvl.min)) * 100))
+              : 100;
+            return (
+              <View style={s.levelSection}>
+                <View style={s.levelRow}>
+                  <Text style={s.levelEmoji}>{lvl.emoji}</Text>
+                  <View style={s.levelInfo}>
+                    <Text style={s.levelName}>{lvl.label}</Text>
+                    <Text style={s.levelSub}>
+                      {lvl.next ? `${totalPoints}/${lvl.next} pts to next level` : 'Max level reached!'}
+                    </Text>
+                  </View>
+                  <Text style={s.levelPct}>{pct}%</Text>
+                </View>
+                <View style={s.levelTrack}>
+                  <View style={[s.levelFill, { width: `${pct}%` }]} />
+                </View>
+              </View>
+            );
+          })()}
+          <Text style={[s.cardTitle, { fontSize: 12, color: C.muted, letterSpacing: 1, marginTop: 16, marginBottom: 8 }]}>
+            HOW TO EARN
+          </Text>
           <View style={s.pointsBreakdown}>
             <Text style={s.pointsRow}>✅ Low priority task · 5 pts</Text>
             <Text style={s.pointsRow}>✅ Medium priority task · 10 pts</Text>
@@ -233,6 +272,15 @@ const s = StyleSheet.create({
   chartPts: { fontSize: 9, color: C.muted, marginTop: 1 },
 
   pointsValue: { fontSize: 28, fontWeight: '700', color: C.peach },
+  levelSection: { marginTop: 4, marginBottom: 4 },
+  levelRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  levelEmoji: { fontSize: 26, flexShrink: 0 },
+  levelInfo: { flex: 1 },
+  levelName: { fontSize: 15, fontWeight: '700', color: C.forest },
+  levelSub: { fontSize: 12, color: C.muted, marginTop: 2 },
+  levelPct: { fontSize: 14, fontWeight: '700', color: C.peach, flexShrink: 0 },
+  levelTrack: { height: 8, backgroundColor: C.peachLight, borderRadius: 4, overflow: 'hidden' },
+  levelFill: { height: 8, backgroundColor: C.peach, borderRadius: 4 },
   pointsBreakdown: { gap: 6 },
   pointsRow: { fontSize: 13, color: C.muted },
 
