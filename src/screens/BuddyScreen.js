@@ -77,7 +77,7 @@ function WeekChart({ dailyPoints }) {
 }
 
 export default function BuddyScreen({ navigation }) {
-  const { buddy, setBuddy, totalPoints, momentum, dailyPoints, currentStreak } = useApp();
+  const { buddy, setBuddy, totalPoints, momentum, dailyPoints, currentStreak, tasksCompleted } = useApp();
 
   return (
     <SafeAreaView style={s.safe}>
@@ -131,6 +131,11 @@ export default function BuddyScreen({ navigation }) {
           <Text style={s.cardNote}>
             7-day rolling effort score. It never resets to zero — missing a day just nudges it gently down.
           </Text>
+          {(tasksCompleted ?? 0) > 0 && (
+            <View style={s.tasksStat}>
+              <Text style={s.tasksStatText}>✅ {tasksCompleted} task{tasksCompleted !== 1 ? 's' : ''} completed all-time</Text>
+            </View>
+          )}
           <Text style={[s.cardTitle, { marginTop: 16, marginBottom: 8, fontSize: 12, color: C.muted, letterSpacing: 1 }]}>THIS WEEK</Text>
           <WeekChart dailyPoints={dailyPoints ?? [0,0,0,0,0,0,0]} />
         </View>
@@ -270,6 +275,12 @@ const s = StyleSheet.create({
   chartLabel: { fontSize: 10, color: C.muted, marginTop: 4, fontWeight: '600' },
   chartLabelToday: { color: C.sage },
   chartPts: { fontSize: 9, color: C.muted, marginTop: 1 },
+  tasksStat: {
+    marginTop: 10, backgroundColor: C.sagePale, borderRadius: 10,
+    paddingVertical: 8, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: C.sageLight,
+  },
+  tasksStatText: { fontSize: 13, fontWeight: '600', color: C.sage },
 
   pointsValue: { fontSize: 28, fontWeight: '700', color: C.peach },
   levelSection: { marginTop: 4, marginBottom: 4 },

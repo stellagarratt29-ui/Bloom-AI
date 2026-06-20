@@ -50,6 +50,7 @@ export function AppProvider({ children }) {
   const [currentStreak, setCurrentStreak]   = useState(0);
   const streakRef                           = useRef({ lastDay: '', count: 0 });
   const [latestMilestone, setLatestMilestone] = useState(null);
+  const [tasksCompleted, setTasksCompleted] = useState(0);
   const sessionTaskCount                    = useRef(0);
 
   // ── Load from storage on mount ────────────────────────────────────────────
@@ -79,6 +80,7 @@ export function AppProvider({ children }) {
               setCurrentStreak(s.currentStreak);
               streakRef.current = { lastDay: s.lastStreakDay ?? '', count: s.currentStreak };
             }
+            if (s.tasksCompleted) setTasksCompleted(s.tasksCompleted);
 
             // Roll over daily points if new day(s) have passed
             const today = todayStr();
@@ -107,13 +109,13 @@ export function AppProvider({ children }) {
         buddy: buddy?.id,
         tasks, ideas, selectedHobbies, hobbyProgress,
         totalPoints, monthlyPoints, dailyPoints, goals,
-        monthlyGoalTarget, userName, currentStreak,
+        monthlyGoalTarget, userName, currentStreak, tasksCompleted,
         lastStreakDay: streakRef.current.lastDay,
         lastActiveDay: todayStr(), lastActiveMonth: monthStr(),
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, buddy, tasks, ideas, selectedHobbies, hobbyProgress,
-      totalPoints, monthlyPoints, dailyPoints, goals, monthlyGoalTarget, userName, currentStreak]);
+      totalPoints, monthlyPoints, dailyPoints, goals, monthlyGoalTarget, userName, currentStreak, tasksCompleted]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const momentum = Math.min(100, Math.round(
@@ -148,6 +150,7 @@ export function AppProvider({ children }) {
       const nowDone = !t.done;
       if (nowDone) {
         addPoints(POINTS[t.priority] ?? 10);
+        setTasksCompleted(c => c + 1);
         const today = todayStr();
         if (streakRef.current.lastDay !== today) {
           const diff = streakRef.current.lastDay
@@ -225,7 +228,7 @@ export function AppProvider({ children }) {
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
       totalPoints, monthlyPoints, dailyPoints, momentum, addPoints,
-      currentStreak, latestMilestone, dismissMilestone,
+      currentStreak, latestMilestone, dismissMilestone, tasksCompleted,
       goals, addGoal, deleteGoal, monthlyGoalTarget, setMonthlyGoalTarget,
       userName, setUserName,
     }}>
