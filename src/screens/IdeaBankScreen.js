@@ -1,22 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet,
 } from 'react-native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import BrainDumpModal from '../components/BrainDumpModal';
 
 export default function IdeaBankScreen({ navigation }) {
-  const { ideas, promoteIdea, deleteIdea } = useApp();
+  const { ideas, promoteIdea, deleteIdea, addTask, saveIdea } = useApp();
+  const [showDump, setShowDump] = useState(false);
+
+  const handleDumpDone = ({ tasks, ideas: dumpIdeas }) => {
+    tasks.forEach(t => addTask(t, 'medium'));
+    dumpIdeas.forEach(idea => saveIdea(idea, "When you have some free time, revisit this!"));
+    setShowDump(false);
+  };
 
   return (
     <SafeAreaView style={s.safe}>
+      <BrainDumpModal
+        visible={showDump}
+        onDone={handleDumpDone}
+        onDismiss={() => setShowDump(false)}
+      />
+
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
           <Text style={s.backText}>← Back</Text>
         </TouchableOpacity>
         <Text style={s.title}>Idea Bank</Text>
-        <View style={{ width: 60 }} />
+        <TouchableOpacity style={s.dumpBtn} onPress={() => setShowDump(true)}>
+          <Text style={s.dumpBtnText}>🧠 Dump</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -62,6 +78,12 @@ const s = StyleSheet.create({
   },
   back: { paddingVertical: 4 },
   backText: { fontSize: 16, color: C.sage, fontWeight: '600' },
+  dumpBtn: {
+    backgroundColor: C.sagePale, borderRadius: 10,
+    paddingVertical: 6, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: C.sageLight,
+  },
+  dumpBtnText: { fontSize: 13, fontWeight: '700', color: C.sage },
   title: { fontSize: 18, fontWeight: '700', color: C.forest },
   scroll: { paddingHorizontal: 22, paddingTop: 16 },
   sub: { fontSize: 14, color: C.muted, lineHeight: 21, marginBottom: 20, textAlign: 'center' },

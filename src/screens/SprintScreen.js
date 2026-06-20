@@ -8,7 +8,7 @@ import { C } from '../constants/colors';
 import { SPRINT_SOUNDS, ENCOURAGEMENTS } from '../constants/data';
 import { useApp } from '../context/AppContext';
 
-const DURATION_OPTIONS = [5, 10, 15, 25];
+const DURATION_OPTIONS = [2, 5, 10, 15, 25];
 import BuddyAvatar from '../components/BuddyAvatar';
 
 function formatTime(secs) {

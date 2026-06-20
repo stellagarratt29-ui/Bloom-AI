@@ -90,10 +90,15 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleAddTask = () => {
-    const text = inputText.trim();
+    let text = inputText.trim();
     if (!text) return;
-    const count = addTask(text, priority);
+    let p = priority;
+    if (text.startsWith('!')) { p = 'high';   text = text.slice(1).trim(); }
+    else if (text.startsWith('?')) { p = 'low'; text = text.slice(1).trim(); }
+    if (!text) return;
+    const count = addTask(text, p);
     setInputText('');
+    setPriority('medium');
     inputRef.current?.blur();
     if (count === 3) setTimeout(() => setShowCapture(true), 400);
   };
@@ -349,7 +354,7 @@ export default function HomeScreen({ navigation }) {
               <TextInput
                 ref={inputRef}
                 style={s.input}
-                placeholder="Add a task…"
+                placeholder="Add a task… (! = high, ? = low)"
                 placeholderTextColor={C.muted}
                 value={inputText}
                 onChangeText={setInputText}
