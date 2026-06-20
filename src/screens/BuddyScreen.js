@@ -23,15 +23,23 @@ function moodLabel(m) {
   return 'Resting 😴';
 }
 
-export default function BuddyScreen() {
+export default function BuddyScreen({ navigation }) {
   const { buddy, setBuddy, totalPoints, momentum } = useApp();
 
   return (
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={s.title}>Your Buddy</Text>
-        <Text style={s.sub}>Your companion reflects your effort — not your perfection.</Text>
+        <View style={s.titleRow}>
+          <View>
+            <Text style={s.title}>Your Buddy</Text>
+            <Text style={s.sub}>Your companion reflects your effort.</Text>
+          </View>
+          <TouchableOpacity style={s.settingsBtn} onPress={() => navigation.navigate('Settings')}>
+            <Text style={s.settingsEmoji}>⚙️</Text>
+            <Text style={s.settingsLabel}>Settings</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Buddy display */}
         <View style={s.buddySection}>
@@ -102,8 +110,16 @@ const s = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: C.cream },
   scroll: { paddingHorizontal: 22, paddingTop: 20 },
 
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 },
   title: { fontSize: 30, fontWeight: '700', color: C.forest, marginBottom: 4 },
-  sub:   { fontSize: 15, color: C.sage, marginBottom: 24, lineHeight: 22 },
+  sub:   { fontSize: 15, color: C.sage, lineHeight: 22 },
+  settingsBtn: {
+    alignItems: 'center', backgroundColor: C.white,
+    borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: C.border,
+  },
+  settingsEmoji: { fontSize: 18 },
+  settingsLabel: { fontSize: 9, fontWeight: '700', color: C.muted, marginTop: 2, letterSpacing: 0.5 },
 
   buddySection: { alignItems: 'center', marginBottom: 28 },
   buddyName: { fontSize: 22, fontWeight: '700', color: C.forest, marginTop: 14 },

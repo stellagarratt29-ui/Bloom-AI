@@ -11,6 +11,8 @@ import TaskRow from '../components/TaskRow';
 import IdeaCaptureModal from '../components/IdeaCaptureModal';
 import DistractionModal from '../components/DistractionModal';
 import BuddyAvatar from '../components/BuddyAvatar';
+import BrainDumpModal from '../components/BrainDumpModal';
+import HobbyModeModal from '../components/HobbyModeModal';
 
 const PRIORITY_CFG = {
   high:   { label: 'High',   text: C.peach, bg: C.peachLight },
@@ -31,20 +33,37 @@ export default function HomeScreen({ navigation }) {
     buddy, momentum,
     tasks, addTask, toggleTask,
     ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
+    selectedHobbies, hobbyProgress,
   } = useApp();
 
-  const [inputText, setInputText]     = useState('');
-  const [priority, setPriority]       = useState('medium');
-  const [showCapture, setShowCapture] = useState(false);
+  const [inputText, setInputText]       = useState('');
+  const [priority, setPriority]         = useState('medium');
+  const [showCapture, setShowCapture]   = useState(false);
   const [showDistract, setShowDistract] = useState(false);
-  const [toast, setToast]             = useState(null);
-  const [nudge]                       = useState(() => NUDGE_MESSAGES[Math.floor(Math.random() * NUDGE_MESSAGES.length)]);
-  const inputRef                      = useRef(null);
+  const [showDump, setShowDump]         = useState(false);
+  const [showHobby, setShowHobby]       = useState(false);
+  const [dumpDismissed, setDumpDismissed] = useState(false);
+  const hobbyShownRef                   = useRef(false);
+  const [toast, setToast]               = useState(null);
+  const [nudge]                         = useState(() => NUDGE_MESSAGES[Math.floor(Math.random() * NUDGE_MESSAGES.length)]);
+  const inputRef                        = useRef(null);
+  const isMorning = new Date().getHours() < 12;
 
   const pendingTasks = tasks.filter(t => !t.done);
   const pendingCount = pendingTasks.length;
   const allDone      = tasks.length > 0 && pendingCount === 0;
   const surfaceIdea  = allDone ? ideas.find(i => !i.surfaced) : null;
+
+  const handleToggleTask = (id) => {
+    toggleTask(id);
+    // Show hobby modal once when all tasks become done
+    const afterToggle = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    const stillPending = afterToggle.filter(t => !t.done).length;
+    if (stillPending === 0 && afterToggle.length > 0 && !hobbyShownRef.current) {
+      hobbyShownRef.current = true;
+      setTimeout(() => setShowHobby(true), 600);
+    }
+  };
 
   const handleAddTask = () => {
     const text = inputText.trim();
@@ -53,6 +72,13 @@ export default function HomeScreen({ navigation }) {
     setInputText('');
     inputRef.current?.blur();
     if (count === 3) setTimeout(() => setShowCapture(true), 400);
+  };
+
+  const handleDumpDone = ({ tasks: dumpTasks, ideas: dumpIdeas }) => {
+    dumpTasks.forEach(t => addTask(t, 'medium'));
+    dumpIdeas.forEach(idea => saveIdea(idea, "When you have some free time, explore this!"));
+    setShowDump(false);
+    setDumpDismissed(true);
   };
 
   const handleSaveIdea = (text, returnCondition) => {
@@ -89,6 +115,20 @@ export default function HomeScreen({ navigation }) {
         onAlternative={handleAlternative}
         onIgnore={() => setShowDistract(false)}
       />
+      <BrainDumpModal
+        visible={showDump}
+        onDone={handleDumpDone}
+        onDismiss={() => { setShowDump(false); setDumpDismissed(true); }}
+      />
+      <HobbyModeModal
+        visible={showHobby}
+        selectedHobbies={selectedHobbies}
+        hobbyProgress={hobbyProgress}
+        surfacedIdea={ideas.find(i => !i.surfaced) ?? null}
+        onStartHobby={(id) => { setShowHobby(false); navigation.navigate('Grow'); }}
+        onExploreIdea={(idea) => { promoteIdea(idea); setShowHobby(false); }}
+        onDismiss={() => setShowHobby(false)}
+      />
 
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
@@ -119,6 +159,20 @@ export default function HomeScreen({ navigation }) {
           <Text style={s.greetingBig}>{greeting()}!</Text>
           <Text style={s.greetingSub}>What matters today?</Text>
 
+          {/* ── Morning brain dump card ── */}
+          {isMorning && !dumpDismissed && (
+            <TouchableOpacity style={s.dumpCard} onPress={() => setShowDump(true)}>
+              <View style={s.dumpLeft}>
+                <Text style={s.dumpEmoji}>🧠</Text>
+                <View>
+                  <Text style={s.dumpTitle}>Morning brain dump</Text>
+                  <Text style={s.dumpSub}>Clear your head — type or dictate</Text>
+                </View>
+              </View>
+              <Text style={s.dumpArrow}>→</Text>
+            </TouchableOpacity>
+          )}
+
           {/* ── Section ── */}
           <View style={s.sectionRow}>
             <Text style={s.sectionLabel}>TODAY'S FOCUS</Text>
@@ -143,7 +197,7 @@ export default function HomeScreen({ navigation }) {
               <TaskRow
                 key={t.id}
                 task={t}
-                onToggle={() => toggleTask(t.id)}
+                onToggle={() => handleToggleTask(t.id)}
                 onStartSprint={handleStartSprint}
               />
             ))
@@ -283,6 +337,17 @@ const s = StyleSheet.create({
   ideaPillText: { fontSize: 12, fontWeight: '600', color: C.peach },
 
   empty: { fontSize: 15, color: C.muted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },
+
+  dumpCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: C.white, borderRadius: 16, padding: 16,
+    marginBottom: 18, borderWidth: 1.5, borderColor: C.sageLight,
+  },
+  dumpLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dumpEmoji: { fontSize: 28 },
+  dumpTitle: { fontSize: 15, fontWeight: '700', color: C.forest, marginBottom: 2 },
+  dumpSub: { fontSize: 12, color: C.muted },
+  dumpArrow: { fontSize: 18, color: C.sage, fontWeight: '700' },
 
   addCard: {
     backgroundColor: C.white, borderRadius: 16, padding: 14,

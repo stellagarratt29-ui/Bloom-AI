@@ -15,6 +15,8 @@ import SprintScreen     from './src/screens/SprintScreen';
 import HobbiesScreen    from './src/screens/HobbiesScreen';
 import BuddyScreen      from './src/screens/BuddyScreen';
 import IdeaBankScreen   from './src/screens/IdeaBankScreen';
+import GoalsScreen      from './src/screens/GoalsScreen';
+import SettingsScreen   from './src/screens/SettingsScreen';
 
 enableScreens();
 
@@ -43,6 +45,15 @@ function HomeStack() {
   );
 }
 
+function BuddyStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="BuddyMain" component={BuddyScreen} />
+      <Stack.Screen name="Settings"  component={SettingsScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -64,13 +75,18 @@ function MainTabs() {
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Home" focused={focused} /> }}
       />
       <Tab.Screen
+        name="Goals"
+        component={GoalsScreen}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎯" label="Goals" focused={focused} /> }}
+      />
+      <Tab.Screen
         name="Grow"
         component={HobbiesScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌱" label="Grow" focused={focused} /> }}
       />
       <Tab.Screen
         name="Buddy"
-        component={BuddyScreen}
+        component={BuddyStack}
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌿" label="Buddy" focused={focused} /> }}
       />
     </Tab.Navigator>

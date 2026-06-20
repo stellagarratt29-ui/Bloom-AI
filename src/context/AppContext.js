@@ -9,6 +9,9 @@ const makeTask = (text, priority) => ({ id: _tid++, text, priority, done: false 
 let _iid = 1;
 const makeIdea = (text, returnCondition) => ({ id: _iid++, text, returnCondition, surfaced: false });
 
+let _gid = 1;
+const makeGoal = (text) => ({ id: _gid++, text });
+
 export function AppProvider({ children }) {
   const [hasOnboarded, setHasOnboarded] = useState(false);
   const [buddy, setBuddy] = useState(BUDDIES[0]);
@@ -23,6 +26,9 @@ export function AppProvider({ children }) {
   const [totalPoints, setTotalPoints] = useState(0);
   // Rolling 7-day points: index 6 = today, 0 = 6 days ago
   const [dailyPoints, setDailyPoints] = useState([0, 0, 0, 0, 0, 0, 0]);
+  const [goals, setGoals] = useState([]);
+  const [monthlyGoalTarget, setMonthlyGoalTarget] = useState(250);
+  const [userName, setUserName] = useState('');
   const sessionTaskCount = useRef(0);
 
   const momentum = Math.min(100, Math.round(
@@ -81,6 +87,14 @@ export function AppProvider({ children }) {
     addPoints(POINTS.hobbyStep);
   }, [addPoints]);
 
+  const addGoal = useCallback((text) => {
+    setGoals(prev => [...prev, makeGoal(text)]);
+  }, []);
+
+  const deleteGoal = useCallback((id) => {
+    setGoals(prev => prev.filter(g => g.id !== id));
+  }, []);
+
   const finishOnboarding = useCallback((buddyId, hobbyIds) => {
     setBuddy(BUDDIES.find(b => b.id === buddyId) ?? BUDDIES[0]);
     setSelectedHobbies(hobbyIds);
@@ -96,6 +110,8 @@ export function AppProvider({ children }) {
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
       totalPoints, momentum, addPoints,
+      goals, addGoal, deleteGoal, monthlyGoalTarget, setMonthlyGoalTarget,
+      userName, setUserName,
     }}>
       {children}
     </AppContext.Provider>
