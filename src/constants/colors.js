@@ -1,0 +1,15 @@
+export const C = {
+  cream: '#FAF8F4',
+  forest: '#2D4A35',
+  sage: '#7B9E87',
+  sageMid: '#A8C5A0',
+  sageLight: '#D6E8D4',
+  sagePale: '#EBF4E9',
+  peach: '#C8795E',
+  peachLight: '#F2D4C8',
+  peachPale: '#FBF0EB',
+  muted: '#8A9B8C',
+  border: '#E5DED6',
+  white: '#FFFFFF',
+  overlay: 'rgba(45,74,53,0.35)',
+};
