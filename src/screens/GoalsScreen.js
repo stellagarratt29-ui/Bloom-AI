@@ -43,6 +43,11 @@ function GoalCard({ goal, onDelete, onAddStep, onAchieve }) {
   const [expanded, setExpanded] = useState(false);
   const [showHow, setShowHow]   = useState(false);
   const breakdown = getBreakdown(goal.text);
+  const offset    = (typeof goal.id === 'number' ? goal.id : 0) % WEEKLY_ACTIONS.length;
+  const rotatedActions = [
+    ...WEEKLY_ACTIONS.slice(offset),
+    ...WEEKLY_ACTIONS.slice(0, offset),
+  ];
 
   return (
     <View style={s.goalCard}>
@@ -54,7 +59,7 @@ function GoalCard({ goal, onDelete, onAddStep, onAchieve }) {
       </View>
 
       <Text style={s.weeklyTitle}>WEEKLY ACTIONS</Text>
-      {WEEKLY_ACTIONS.slice(0, expanded ? 5 : 2).map((a, i) => (
+      {rotatedActions.slice(0, expanded ? 5 : 2).map((a, i) => (
         <TouchableOpacity key={i} style={s.actionRow} onPress={() => onAddStep(a)}>
           <View style={s.actionDot} />
           <Text style={s.actionText}>{a}</Text>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BUDDIES, POINTS } from '../constants/data';
+import { BUDDIES, POINTS, HOBBIES } from '../constants/data';
 
 const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v1';
@@ -216,6 +216,17 @@ export function AppProvider({ children }) {
     setSelectedHobbies(hobbyIds);
     if (name) setUserName(name);
     if (goal) setGoals([makeGoal(goal)]);
+
+    // Seed welcome tasks from first hobby steps
+    const hobbyStartTasks = hobbyIds.slice(0, 2).map(hid => {
+      const h = HOBBIES.find(x => x.id === hid);
+      return h ? makeTask(h.steps[0], 'medium') : null;
+    }).filter(Boolean);
+    setTasks([
+      makeTask('Plan what matters most today', 'high'),
+      ...hobbyStartTasks,
+    ]);
+
     setHasOnboarded(true);
   }, []);
 
