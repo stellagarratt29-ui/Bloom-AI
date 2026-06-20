@@ -5,18 +5,20 @@ import {
 } from 'react-native';
 import { C } from '../constants/colors';
 
-function returnConditionFor(hasPendingTasks) {
-  return hasPendingTasks
-    ? "I'll bring this back once today's tasks are done."
-    : "I'll remind you about this tomorrow morning.";
+function returnConditionFor(hasPendingTasks, taskCount) {
+  const h = new Date().getHours();
+  if (h >= 20) return "I'll bring this to the top of your list tomorrow morning.";
+  if (!hasPendingTasks) return "I'll bring this back next time you're planning.";
+  if (taskCount >= 4) return "I'll remind you about this when you need fresh inspiration.";
+  return "I'll bring this back once today's tasks are done.";
 }
 
-export default function IdeaCaptureModal({ visible, hasPendingTasks, onSave, onDismiss }) {
+export default function IdeaCaptureModal({ visible, hasPendingTasks, taskCount, onSave, onDismiss }) {
   const [text, setText] = useState('');
 
   const handleSave = () => {
     if (!text.trim()) return;
-    onSave(text.trim(), returnConditionFor(hasPendingTasks));
+    onSave(text.trim(), returnConditionFor(hasPendingTasks, taskCount ?? 0));
     setText('');
   };
 

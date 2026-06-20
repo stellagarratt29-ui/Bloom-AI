@@ -131,6 +131,7 @@ export default function HomeScreen({ navigation }) {
       <IdeaCaptureModal
         visible={showCapture}
         hasPendingTasks={pendingCount > 0}
+        taskCount={pendingCount}
         onSave={handleSaveIdea}
         onDismiss={() => setShowCapture(false)}
       />

@@ -9,6 +9,18 @@ import { BUDDIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
 import BuddyAvatar from '../components/BuddyAvatar';
 
+const LEVELS = [
+  { min: 0,    label: 'Seedling',   emoji: '🌱' },
+  { min: 50,   label: 'Sprout',     emoji: '🌿' },
+  { min: 150,  label: 'Bloom',      emoji: '🌸' },
+  { min: 300,  label: 'Garden',     emoji: '🌺' },
+  { min: 500,  label: 'Forest',     emoji: '🌳' },
+  { min: 1000, label: 'Rainforest', emoji: '🌴' },
+];
+function getLevel(pts) {
+  return LEVELS.slice().reverse().find(l => pts >= l.min) ?? LEVELS[0];
+}
+
 const TARGETS = [100, 250, 500];
 
 export default function SettingsScreen({ navigation }) {
@@ -16,7 +28,7 @@ export default function SettingsScreen({ navigation }) {
     userName, setUserName,
     buddy, setBuddy,
     monthlyGoalTarget, setMonthlyGoalTarget,
-    momentum,
+    momentum, totalPoints, currentStreak, tasksCompleted,
   } = useApp();
 
   const handleReset = () => {
@@ -103,6 +115,41 @@ export default function SettingsScreen({ navigation }) {
               );
             })}
           </View>
+        </View>
+
+        {/* Stats */}
+        <Text style={s.sectionLabel}>YOUR STATS</Text>
+        <View style={s.card}>
+          {(() => {
+            const lvl = getLevel(totalPoints ?? 0);
+            return (
+              <View style={s.statsGrid}>
+                <View style={s.statCell}>
+                  <Text style={s.statEmoji}>{lvl.emoji}</Text>
+                  <Text style={s.statValue}>{lvl.label}</Text>
+                  <Text style={s.statLabel}>Level</Text>
+                </View>
+                <View style={s.statDivider} />
+                <View style={s.statCell}>
+                  <Text style={s.statEmoji}>🔥</Text>
+                  <Text style={s.statValue}>{currentStreak ?? 0}</Text>
+                  <Text style={s.statLabel}>Day streak</Text>
+                </View>
+                <View style={s.statDivider} />
+                <View style={s.statCell}>
+                  <Text style={s.statEmoji}>✅</Text>
+                  <Text style={s.statValue}>{tasksCompleted ?? 0}</Text>
+                  <Text style={s.statLabel}>Done</Text>
+                </View>
+                <View style={s.statDivider} />
+                <View style={s.statCell}>
+                  <Text style={s.statEmoji}>⚡</Text>
+                  <Text style={s.statValue}>{totalPoints ?? 0}</Text>
+                  <Text style={s.statLabel}>Points</Text>
+                </View>
+              </View>
+            );
+          })()}
         </View>
 
         {/* Monthly target */}
@@ -207,6 +254,13 @@ const s = StyleSheet.create({
   saveBtn: { backgroundColor: C.sage, paddingHorizontal: 18, borderRadius: 12, justifyContent: 'center' },
   saveBtnOff: { opacity: 0.35 },
   saveBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
+
+  statsGrid: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  statCell: { flex: 1, alignItems: 'center', paddingVertical: 4 },
+  statEmoji: { fontSize: 22, marginBottom: 4 },
+  statValue: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 2 },
+  statLabel: { fontSize: 11, color: C.muted, fontWeight: '500' },
+  statDivider: { width: 1, backgroundColor: C.border, marginHorizontal: 4, alignSelf: 'stretch' },
 
   buddyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   buddyOption: {
