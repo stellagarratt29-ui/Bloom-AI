@@ -1,33 +1,37 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bloom</title>
-</head>
-<body style="margin:0; background:#FAF8F4; font-family:sans-serif;">
-  <p id="status" style="text-align:center; padding:40px; color:#8A9B8C; font-size:16px;">Loading Bloom...</p>
-  <div id="root" style="position:fixed; top:0; left:0; right:0; bottom:0; display:flex;"></div>
-  <script>
-    var errorMsg = null;
-    window.onerror = function(msg, src, line, col, err) {
-      errorMsg = 'Error: ' + msg + '\nLine: ' + line + (err ? '\n' + err.stack : '');
-      document.getElementById('status').style.color = '#c0392b';
-      document.getElementById('status').style.whiteSpace = 'pre-wrap';
-      document.getElementById('status').style.fontSize = '12px';
-      document.getElementById('status').style.textAlign = 'left';
-      document.getElementById('status').style.padding = '20px';
-      document.getElementById('status').textContent = errorMsg;
-      return true;
-    };
-    window.addEventListener('unhandledrejection', function(e) {
-      errorMsg = 'Promise Error: ' + e.reason;
-      document.getElementById('status').style.color = '#c0392b';
-      document.getElementById('status').textContent = errorMsg;
-    });
-  </script>
-  <script src="_expo/static/js/web/index-b4dabeb7c23c0ed7deca803ec9016203.js"
-    onerror="document.getElementById('status').textContent='File not found (404)'"
-    onload="if(!errorMsg) document.getElementById('status').textContent='Loaded OK — React did not render'"></script>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Bloom</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  <link rel="icon" href="favicon.ico" /></head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  <script src="_expo/static/js/web/index-488a7826bfe41cd9eddd1bb53cc6bfa5.js" defer></script>
 </body>
 </html>
