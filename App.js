@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View } from 'react-native';
 import { enableScreens } from 'react-native-screens';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppProvider, useApp } from './src/context/AppContext';
 import { C } from './src/constants/colors';
@@ -123,8 +124,10 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <RootNavigator />
-    </AppProvider>
+    <SafeAreaProvider>
+      <AppProvider>
+        <RootNavigator />
+      </AppProvider>
+    </SafeAreaProvider>
   );
 }
