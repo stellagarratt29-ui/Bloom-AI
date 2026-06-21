@@ -48,7 +48,7 @@ const SIDEBAR_W = 220;
 function useLayout() {
   const { width } = useWindowDimensions();
   if (Platform.OS !== 'web') return 'phone';
-  if (width >= 1024) return 'desktop';
+  if (width >= 1400) return 'desktop';
   if (width >= 600)  return 'tablet';
   return 'phone';
 }
@@ -135,10 +135,9 @@ function CustomTabBar({ state, navigation }) {
 
 const deskS = StyleSheet.create({
   sidebar: {
-    position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_W,
+    width: SIDEBAR_W,
     backgroundColor: C.white, borderRightWidth: 1, borderRightColor: C.border,
     paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
-    zIndex: 100,
   },
   logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
   logoText: { fontSize: 28, fontWeight: '700', color: C.forest, letterSpacing: -0.5 },
@@ -196,11 +195,8 @@ function MainTabs() {
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        // Push content right on desktop to make room for the sidebar
-        contentStyle: layout === 'desktop' ? { marginLeft: SIDEBAR_W } : {},
-      }}
+      tabBarPosition={layout === 'desktop' ? 'left' : 'bottom'}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="HomeTab" component={HomeStack} />
       <Tab.Screen name="GrowTab" component={GrowStack} />
