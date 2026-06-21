@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 
 const SUGGESTIONS = [
-  { emoji: '📖', label: 'Read' },
-  { emoji: '🎨', label: 'Create' },
-  { emoji: '🖍', label: 'Color' },
+  { icon: 'book-open', label: 'Read'   },
+  { icon: 'pen-tool',  label: 'Create' },
+  { icon: 'edit-3',    label: 'Write'  },
 ];
 
 export default function ScreenAwarenessScreen() {
@@ -27,16 +28,16 @@ export default function ScreenAwarenessScreen() {
         </View>
 
         <View style={s.insightCard}>
-          <Text style={s.insightEmoji}>📱</Text>
+          <Feather name="smartphone" size={20} color="#C0392B" style={{ marginBottom: 6 }} />
           <Text style={s.insightTitle}>Screen Habits</Text>
           <Text style={s.insightText}>
-            You usually scroll after dinner when you're memory tired.
+            You usually scroll after dinner when you're mentally tired.
           </Text>
         </View>
 
         <View style={s.insightCardAlt}>
           <Text style={s.insightText}>
-            💛 Looks like you're looking for a little break.
+            Looks like you're looking for a little break.
           </Text>
         </View>
 
@@ -44,7 +45,7 @@ export default function ScreenAwarenessScreen() {
         <View style={s.suggestRow}>
           {SUGGESTIONS.map(sg => (
             <TouchableOpacity key={sg.label} style={s.suggestChip} activeOpacity={0.8}>
-              <Text style={s.suggestEmoji}>{sg.emoji}</Text>
+              <Feather name={sg.icon} size={24} color={C.forest} style={{ marginBottom: 6 }} />
               <Text style={s.suggestText}>{sg.label}</Text>
             </TouchableOpacity>
           ))}
@@ -77,7 +78,6 @@ const s = StyleSheet.create({
     backgroundColor: '#FEF3F2', borderRadius: 16, padding: 16,
     borderWidth: 1, borderColor: '#FDD8D6', marginBottom: 10,
   },
-  insightEmoji: { fontSize: 20, marginBottom: 6 },
   insightTitle: { fontSize: 13, fontWeight: '700', color: '#C0392B', marginBottom: 4 },
   insightText: { fontSize: 14, color: C.forest, lineHeight: 22 },
 
@@ -96,7 +96,6 @@ const s = StyleSheet.create({
     paddingVertical: 14, alignItems: 'center',
     borderWidth: 1, borderColor: C.border,
   },
-  suggestEmoji: { fontSize: 24, marginBottom: 6 },
   suggestText: { fontSize: 13, fontWeight: '600', color: C.forest },
 
   note: { fontSize: 12, color: C.muted, fontStyle: 'italic', textAlign: 'center', lineHeight: 18 },

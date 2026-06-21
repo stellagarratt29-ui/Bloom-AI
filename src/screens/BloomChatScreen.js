@@ -4,6 +4,7 @@ import {
   ScrollView, SafeAreaView, StyleSheet,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 
 const STARTERS = [
@@ -47,16 +48,14 @@ export default function BloomChatScreen({ navigation }) {
   return (
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        {/* Header */}
         <View style={s.header}>
           <TouchableOpacity style={s.back} onPress={() => navigation.goBack()}>
-            <Text style={s.backText}>←</Text>
+            <Feather name="arrow-left" size={22} color={C.forest} />
           </TouchableOpacity>
           <Text style={s.headerTitle}>Bloom Chat</Text>
           <View style={s.headerRight} />
         </View>
 
-        {/* Messages */}
         <ScrollView
           ref={scrollRef}
           style={s.messages}
@@ -75,7 +74,6 @@ export default function BloomChatScreen({ navigation }) {
             </View>
           ))}
 
-          {/* Quick reply starters (only at the start) */}
           {messages.length <= 1 && (
             <View style={s.starters}>
               {STARTERS.map(st => (
@@ -87,7 +85,6 @@ export default function BloomChatScreen({ navigation }) {
           )}
         </ScrollView>
 
-        {/* Input */}
         <View style={s.inputBar}>
           <TextInput
             style={s.input}
@@ -104,7 +101,7 @@ export default function BloomChatScreen({ navigation }) {
             onPress={() => send(input)}
             disabled={!input.trim()}
           >
-            <Text style={s.sendIcon}>↑</Text>
+            <Feather name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -123,7 +120,6 @@ const s = StyleSheet.create({
     backgroundColor: C.white,
   },
   back: { width: 36, alignItems: 'flex-start' },
-  backText: { fontSize: 22, color: C.forest },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700', color: C.forest },
   headerRight: { width: 36 },
 
@@ -168,5 +164,4 @@ const s = StyleSheet.create({
     backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.35 },
-  sendIcon: { fontSize: 18, color: C.white, fontWeight: '700' },
 });

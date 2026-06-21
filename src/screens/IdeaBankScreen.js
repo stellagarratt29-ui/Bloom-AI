@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import BrainDumpModal from '../components/BrainDumpModal';
@@ -31,7 +32,10 @@ export default function IdeaBankScreen({ navigation }) {
         </TouchableOpacity>
         <Text style={s.title}>Idea Bank</Text>
         <TouchableOpacity style={s.dumpBtn} onPress={() => setShowDump(true)}>
-          <Text style={s.dumpBtnText}>🧠 Dump</Text>
+          <View style={s.dumpBtnInner}>
+            <Feather name="list" size={13} color={C.sage} />
+            <Text style={s.dumpBtnText}>Dump</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -42,9 +46,9 @@ export default function IdeaBankScreen({ navigation }) {
 
         {ideas.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyEmoji}>🌱</Text>
+            <Feather name="sun" size={48} color={C.sageMid} style={{ marginBottom: 16 }} />
             <Text style={s.emptyText}>
-              No ideas yet. Tap 💡 on the home screen whenever inspiration strikes!
+              No ideas yet. Use the dump button whenever inspiration strikes!
             </Text>
           </View>
         ) : (
@@ -83,12 +87,12 @@ const s = StyleSheet.create({
     paddingVertical: 6, paddingHorizontal: 12,
     borderWidth: 1, borderColor: C.sageLight,
   },
+  dumpBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dumpBtnText: { fontSize: 13, fontWeight: '700', color: C.sage },
   title: { fontSize: 18, fontWeight: '700', color: C.forest },
   scroll: { paddingHorizontal: 22, paddingTop: 16 },
   sub: { fontSize: 14, color: C.muted, lineHeight: 21, marginBottom: 20, textAlign: 'center' },
   empty: { alignItems: 'center', paddingTop: 48 },
-  emptyEmoji: { fontSize: 48, marginBottom: 16 },
   emptyText: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 22 },
   card: {
     backgroundColor: C.white, borderRadius: 16, padding: 18,

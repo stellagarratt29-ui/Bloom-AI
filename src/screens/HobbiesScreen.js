@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  SafeAreaView, StyleSheet, TextInput,
+  SafeAreaView, StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { HOBBIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
@@ -27,14 +28,14 @@ export default function HobbiesScreen({ navigation }) {
             style={s.screenBtn}
             onPress={() => navigation.navigate('ScreenAwareness')}
           >
-            <Text style={s.screenBtnEmoji}>📱</Text>
+            <Feather name="smartphone" size={18} color={C.muted} />
             <Text style={s.screenBtnLabel}>Screen</Text>
           </TouchableOpacity>
         </View>
 
         {myHobbies.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyEmoji}>🌱</Text>
+            <Feather name="sun" size={40} color={C.sageMid} style={{ marginBottom: 12 }} />
             <Text style={s.emptyText}>No hobbies yet. Add one below to start growing!</Text>
           </View>
         ) : (
@@ -47,7 +48,7 @@ export default function HobbiesScreen({ navigation }) {
               <View key={h.id} style={s.hobbyCard}>
                 <View style={s.hobbyRow}>
                   <View style={s.hobbyIconWrap}>
-                    <Text style={s.hobbyEmoji}>{h.emoji}</Text>
+                    <Feather name={h.icon ?? 'star'} size={22} color={C.forest} />
                   </View>
                   <View style={s.hobbyMeta}>
                     <Text style={s.hobbyName}>{h.name}</Text>
@@ -72,12 +73,11 @@ export default function HobbiesScreen({ navigation }) {
           })
         )}
 
-        {/* Add more */}
         {moreHobbies.length > 0 && (
           <>
             <TouchableOpacity style={s.addMoreRow} onPress={() => setShowAdd(v => !v)}>
               <Text style={s.addMoreText}>+ Add a hobby</Text>
-              <Text style={s.addMoreChev}>{showAdd ? '▲' : '▼'}</Text>
+              <Feather name={showAdd ? 'chevron-up' : 'chevron-down'} size={14} color={C.muted} />
             </TouchableOpacity>
 
             {showAdd && (
@@ -89,7 +89,7 @@ export default function HobbiesScreen({ navigation }) {
                     onPress={() => toggleHobby(h.id)}
                     activeOpacity={0.75}
                   >
-                    <Text style={s.moreEmoji}>{h.emoji}</Text>
+                    <Feather name={h.icon ?? 'star'} size={20} color={C.forest} />
                     <Text style={s.moreName}>{h.name}</Text>
                     <Text style={s.moreAdd}>+</Text>
                   </TouchableOpacity>
@@ -120,11 +120,9 @@ const s = StyleSheet.create({
     borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12,
     borderWidth: 1, borderColor: C.border,
   },
-  screenBtnEmoji: { fontSize: 18 },
   screenBtnLabel: { fontSize: 9, fontWeight: '700', color: C.muted, marginTop: 2 },
 
   empty: { alignItems: 'center', paddingTop: 40 },
-  emptyEmoji: { fontSize: 40, marginBottom: 12 },
   emptyText: { fontSize: 14, color: C.muted, textAlign: 'center' },
 
   hobbyCard: {
@@ -137,7 +135,6 @@ const s = StyleSheet.create({
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center',
   },
-  hobbyEmoji: { fontSize: 22 },
   hobbyMeta: { flex: 1 },
   hobbyName: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 3 },
   hobbyNext: { fontSize: 13, color: C.muted, marginBottom: 8 },
@@ -155,7 +152,6 @@ const s = StyleSheet.create({
     paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.border, marginTop: 4,
   },
   addMoreText: { fontSize: 15, fontWeight: '600', color: C.forest },
-  addMoreChev: { fontSize: 12, color: C.muted },
 
   moreGrid: { gap: 8, marginBottom: 12 },
   moreChip: {
@@ -163,7 +159,6 @@ const s = StyleSheet.create({
     backgroundColor: C.white, borderRadius: 14, padding: 14,
     borderWidth: 1.5, borderColor: C.border,
   },
-  moreEmoji: { fontSize: 22 },
   moreName: { flex: 1, fontSize: 15, fontWeight: '600', color: C.forest },
   moreAdd: { fontSize: 20, color: C.forest, fontWeight: '300' },
 });

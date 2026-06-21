@@ -3,14 +3,15 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { BUDDIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
 
 const BOUTIQUE_ITEMS = [
-  { emoji: '🍄', label: 'Lamp',   pts: 50  },
-  { emoji: '🌻', label: 'Flower', pts: 80  },
-  { emoji: '🌿', label: 'Plant',  pts: 60  },
+  { icon: 'sun',     label: 'Lamp',   pts: 50 },
+  { icon: 'star',    label: 'Flower', pts: 80 },
+  { icon: 'feather', label: 'Plant',  pts: 60 },
 ];
 
 function SproutIllustration() {
@@ -57,7 +58,7 @@ const ill = StyleSheet.create({
 });
 
 export default function BuddyScreen({ navigation }) {
-  const { buddy, setBuddy, totalPoints, momentum } = useApp();
+  const { buddy, setBuddy } = useApp();
 
   return (
     <SafeAreaView style={s.safe}>
@@ -66,11 +67,10 @@ export default function BuddyScreen({ navigation }) {
         <View style={s.headerRow}>
           <Text style={s.label}>BUDDY</Text>
           <TouchableOpacity style={s.settingsBtn} onPress={() => navigation.navigate('Settings')}>
-            <Text style={s.settingsIcon}>⚙️</Text>
+            <Feather name="settings" size={20} color={C.muted} />
           </TouchableOpacity>
         </View>
 
-        {/* Buddy room */}
         <View style={s.roomCard}>
           <Text style={s.buddyName}>{buddy?.name ?? 'Sprout'}</Text>
           <Text style={s.buddySub}>Your companion's cozy room.</Text>
@@ -79,9 +79,8 @@ export default function BuddyScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Bloom Chat */}
         <TouchableOpacity style={s.chatBtn} onPress={() => navigation.navigate('BloomChat')}>
-          <Text style={s.chatBtnEmoji}>💬</Text>
+          <Feather name="message-circle" size={22} color={C.white} />
           <View style={s.chatBtnText}>
             <Text style={s.chatBtnTitle}>Bloom Chat</Text>
             <Text style={s.chatBtnSub}>Ask Bloom anything</Text>
@@ -89,19 +88,17 @@ export default function BuddyScreen({ navigation }) {
           <Text style={s.chatBtnArrow}>→</Text>
         </TouchableOpacity>
 
-        {/* Boutique */}
         <Text style={s.boutiqueLabel}>BOUTIQUE</Text>
         <View style={s.boutiqueRow}>
           {BOUTIQUE_ITEMS.map(item => (
             <View key={item.label} style={s.boutiqueItem}>
-              <Text style={s.boutiqueEmoji}>{item.emoji}</Text>
+              <Feather name={item.icon} size={26} color={C.forest} style={{ marginBottom: 4 }} />
               <Text style={s.boutiqueItemName}>{item.label}</Text>
               <Text style={s.boutiquePts}>{item.pts} pts</Text>
             </View>
           ))}
         </View>
 
-        {/* Switch companion */}
         <Text style={s.switchLabel}>SWITCH COMPANION</Text>
         <View style={s.buddyGrid}>
           {BUDDIES.map(b => (
@@ -110,7 +107,12 @@ export default function BuddyScreen({ navigation }) {
               style={[s.buddyCard, buddy?.id === b.id && s.buddyCardActive]}
               onPress={() => setBuddy(b)}
             >
-              <Text style={s.buddyCardEmoji}>{b.emoji ?? '🌱'}</Text>
+              <Feather
+                name={b.icon ?? 'feather'}
+                size={32}
+                color={buddy?.id === b.id ? C.forest : C.muted}
+                style={{ marginBottom: 6 }}
+              />
               <Text style={[s.buddyCardName, buddy?.id === b.id && s.buddyCardNameActive]}>
                 {b.name}
               </Text>
@@ -134,7 +136,6 @@ const s = StyleSheet.create({
   },
   label: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 2 },
   settingsBtn: { padding: 6 },
-  settingsIcon: { fontSize: 20 },
 
   roomCard: {
     backgroundColor: C.white, borderRadius: 20,
@@ -155,7 +156,6 @@ const s = StyleSheet.create({
     backgroundColor: C.forest, borderRadius: 16,
     padding: 18, marginBottom: 24,
   },
-  chatBtnEmoji: { fontSize: 22 },
   chatBtnText: { flex: 1 },
   chatBtnTitle: { fontSize: 16, fontWeight: '700', color: C.white },
   chatBtnSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
@@ -173,7 +173,6 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.border,
     paddingVertical: 16, alignItems: 'center', gap: 4,
   },
-  boutiqueEmoji: { fontSize: 26 },
   boutiqueItemName: { fontSize: 12, fontWeight: '600', color: C.forest },
   boutiquePts: { fontSize: 11, color: C.muted },
 
@@ -185,7 +184,6 @@ const s = StyleSheet.create({
     borderWidth: 2, borderColor: C.border,
   },
   buddyCardActive: { borderColor: C.forest, backgroundColor: '#EAF0E8' },
-  buddyCardEmoji: { fontSize: 32, marginBottom: 6 },
-  buddyCardName: { fontSize: 14, fontWeight: '700', color: C.forest },
+  buddyCardName: { fontSize: 14, fontWeight: '700', color: C.muted },
   buddyCardNameActive: { color: C.forest },
 });

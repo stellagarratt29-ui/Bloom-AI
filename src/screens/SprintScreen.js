@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, SafeAreaView, StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
@@ -73,14 +74,17 @@ export default function SprintScreen({ route, navigation }) {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.center}>
-          <Text style={s.doneEmoji}>🌸</Text>
+          <Feather name="check-circle" size={52} color={C.sage} style={{ marginBottom: 16 }} />
           <Text style={s.doneTitle}>Sprint complete!</Text>
           <Text style={s.doneSub}>
             {selectedMins} focused minutes done. That's real progress.
           </Text>
           {task && !task.done && (
             <TouchableOpacity style={s.primaryBtn} onPress={handleMarkDone}>
-              <Text style={s.primaryBtnText}>✓ Mark as done</Text>
+              <View style={s.btnRow}>
+                <Feather name="check" size={16} color={C.white} />
+                <Text style={s.primaryBtnText}>Mark as done</Text>
+              </View>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={s.secondaryBtn} onPress={() => navigation.goBack()}>
@@ -101,7 +105,6 @@ export default function SprintScreen({ route, navigation }) {
           <Text style={s.backText}>← Back</Text>
         </TouchableOpacity>
 
-        {/* Duration picker */}
         {!running && timeLeft === selectedMins * 60 && (
           <View style={s.durationRow}>
             {DURATION_OPTIONS.map(mins => (
@@ -118,7 +121,6 @@ export default function SprintScreen({ route, navigation }) {
           </View>
         )}
 
-        {/* Clock face */}
         <View style={s.clockWrap}>
           <View style={[s.clockRing, { opacity: 0.12 + progress * 0.88 }]} />
           <View style={s.clockInner}>
@@ -129,12 +131,15 @@ export default function SprintScreen({ route, navigation }) {
           </View>
         </View>
 
-        <Text style={s.quote}>✨ Small progress is still progress.</Text>
+        <Text style={s.quote}>Small progress is still progress.</Text>
 
         <TouchableOpacity style={s.primaryBtn} onPress={toggle}>
-          <Text style={s.primaryBtnText}>
-            {running ? '⏸ Pause' : timeLeft === selectedMins * 60 ? 'Start Focus' : '▶ Resume'}
-          </Text>
+          <View style={s.btnRow}>
+            <Feather name={running ? 'pause' : 'play'} size={18} color={C.white} />
+            <Text style={s.primaryBtnText}>
+              {running ? 'Pause' : timeLeft === selectedMins * 60 ? 'Start Focus' : 'Resume'}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         {timeLeft < selectedMins * 60 && !running && (
@@ -178,6 +183,8 @@ const s = StyleSheet.create({
 
   quote: { fontSize: 14, color: C.muted, fontStyle: 'italic', marginBottom: 32 },
 
+  btnRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+
   primaryBtn: {
     backgroundColor: C.forest, borderRadius: 28,
     paddingVertical: 16, paddingHorizontal: 48,
@@ -193,7 +200,6 @@ const s = StyleSheet.create({
   ghostBtn: { padding: 10, marginTop: 4 },
   ghostBtnText: { fontSize: 14, color: C.muted },
 
-  doneEmoji:  { fontSize: 52, marginBottom: 16 },
   doneTitle:  { fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 10 },
   doneSub:    { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
 });

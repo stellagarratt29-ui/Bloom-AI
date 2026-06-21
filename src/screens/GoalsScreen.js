@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   SafeAreaView, StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 
@@ -11,9 +12,6 @@ const GOLD_LIGHT = '#F5EDD8';
 
 function CircularScore({ score, max }) {
   const pct = Math.min(1, score / max);
-  const SIZE = 180;
-  const STROKE = 14;
-  const filled = Math.round(pct * 100);
 
   return (
     <View style={{ alignItems: 'center', marginVertical: 32 }}>
@@ -38,8 +36,14 @@ const gaugeS = StyleSheet.create({
   max:   { fontSize: 14, color: C.muted, marginTop: 2 },
 });
 
+const EARN_ROWS = [
+  { icon: 'check',       label: 'Complete a task', pts: '5–20 pts' },
+  { icon: 'sun',         label: 'Hobby step',      pts: '15 pts'   },
+  { icon: 'clock',       label: 'Focus sprint',    pts: '10 pts'   },
+];
+
 export default function GoalsScreen() {
-  const { totalPoints, goals, addGoal, deleteGoal, addTask, addPoints } = useApp();
+  const { totalPoints, goals, addGoal, deleteGoal, addTask } = useApp();
   const [newGoal, setNewGoal] = useState('');
   const [showAdd, setShowAdd] = useState(false);
 
@@ -68,12 +72,11 @@ export default function GoalsScreen() {
         <View style={s.scoreCard}>
           <CircularScore score={totalPoints} max={target} />
           <View style={s.insightCard}>
-            <Text style={s.insightStar}>⭐</Text>
+            <Feather name="star" size={18} color={GOLD} style={{ flexShrink: 0 }} />
             <Text style={s.insightText}>{insightText}</Text>
           </View>
         </View>
 
-        {/* Goals */}
         <View style={s.sectionRow}>
           <Text style={s.sectionLabel}>YOUR GOALS</Text>
           <TouchableOpacity onPress={() => setShowAdd(v => !v)}>
@@ -105,7 +108,7 @@ export default function GoalsScreen() {
 
         {goals.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyEmoji}>🌟</Text>
+            <Feather name="target" size={36} color={C.muted} style={{ marginBottom: 10 }} />
             <Text style={s.emptyText}>
               Add a big goal — Bloom will help you take the first step.
             </Text>
@@ -116,7 +119,7 @@ export default function GoalsScreen() {
               <View style={s.goalRow}>
                 <Text style={s.goalText}>{g.text}</Text>
                 <TouchableOpacity onPress={() => deleteGoal(g.id)} style={s.deleteBtn}>
-                  <Text style={s.deleteText}>✕</Text>
+                  <Feather name="x" size={16} color={C.muted} />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
@@ -129,18 +132,13 @@ export default function GoalsScreen() {
           ))
         )}
 
-        {/* How to earn */}
         <View style={s.earnCard}>
           <Text style={s.earnTitle}>HOW TO EARN POINTS</Text>
-          {[
-            ['✓', 'Complete a task', '5–20 pts'],
-            ['🌱', 'Hobby step', '15 pts'],
-            ['⏱', 'Focus sprint', '10 pts'],
-          ].map(([icon, label, pts]) => (
-            <View key={label} style={s.earnRow}>
-              <Text style={s.earnIcon}>{icon}</Text>
-              <Text style={s.earnLabel}>{label}</Text>
-              <Text style={s.earnPts}>{pts}</Text>
+          {EARN_ROWS.map(row => (
+            <View key={row.label} style={s.earnRow}>
+              <Feather name={row.icon} size={16} color={C.forest} style={s.earnIcon} />
+              <Text style={s.earnLabel}>{row.label}</Text>
+              <Text style={s.earnPts}>{row.pts}</Text>
             </View>
           ))}
         </View>
@@ -169,7 +167,6 @@ const s = StyleSheet.create({
     backgroundColor: GOLD_LIGHT, borderRadius: 14, padding: 14,
     borderWidth: 1, borderColor: '#EADCBC', width: '100%',
   },
-  insightStar: { fontSize: 18, flexShrink: 0 },
   insightText: { flex: 1, fontSize: 14, color: C.forest, lineHeight: 22 },
 
   sectionRow: {
@@ -190,7 +187,6 @@ const s = StyleSheet.create({
   addBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
 
   empty: { alignItems: 'center', paddingVertical: 24 },
-  emptyEmoji: { fontSize: 36, marginBottom: 10 },
   emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22 },
 
   goalCard: {
@@ -200,7 +196,6 @@ const s = StyleSheet.create({
   goalRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   goalText: { flex: 1, fontSize: 16, fontWeight: '600', color: C.forest, lineHeight: 24 },
   deleteBtn: { padding: 4 },
-  deleteText: { fontSize: 14, color: C.muted },
   firstStepBtn: {
     alignSelf: 'flex-start', backgroundColor: '#EAF0E8',
     borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16,
@@ -213,7 +208,7 @@ const s = StyleSheet.create({
   },
   earnTitle: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.5, marginBottom: 14 },
   earnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
-  earnIcon: { fontSize: 16, width: 24, textAlign: 'center' },
+  earnIcon: { width: 24, textAlign: 'center' },
   earnLabel: { flex: 1, fontSize: 14, color: C.forest },
   earnPts: { fontSize: 13, fontWeight: '700', color: C.muted },
 });

@@ -1,19 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 
-function moodEmoji(momentum) {
-  if (momentum >= 75) return '✨';
-  if (momentum >= 50) return '😊';
-  if (momentum >= 25) return '😌';
-  return '😴';
+function moodIcon(momentum) {
+  if (momentum >= 75) return 'sun';
+  if (momentum >= 50) return 'smile';
+  if (momentum >= 25) return 'meh';
+  return 'moon';
 }
 
 export default function BuddyAvatar({ buddy, momentum = 0, size = 80 }) {
   const ring = size;
   const inner = size * 0.76;
-  const fontSize = size * 0.36;
+  const iconSize = Math.round(size * 0.34);
   const moodSize = size * 0.24;
+  const moodIconSize = Math.max(8, Math.round(moodSize * 0.52));
 
   return (
     <View style={[s.ring, {
@@ -25,10 +27,14 @@ export default function BuddyAvatar({ buddy, momentum = 0, size = 80 }) {
         width: inner, height: inner, borderRadius: inner / 2,
         backgroundColor: buddy?.color ? buddy.color + '25' : C.sagePale,
       }]}>
-        <Text style={{ fontSize }}>{buddy?.emoji ?? '🌿'}</Text>
+        <Feather
+          name={buddy?.icon ?? 'feather'}
+          size={iconSize}
+          color={buddy?.color ?? C.forest}
+        />
       </View>
       <View style={[s.moodBadge, { width: moodSize, height: moodSize, borderRadius: moodSize / 2 }]}>
-        <Text style={{ fontSize: moodSize * 0.6 }}>{moodEmoji(momentum)}</Text>
+        <Feather name={moodIcon(momentum)} size={moodIconSize} color={C.forest} />
       </View>
     </View>
   );

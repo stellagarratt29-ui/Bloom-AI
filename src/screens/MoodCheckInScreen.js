@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, SafeAreaView, StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 
 const MOODS = [
-  { id: 'motivated',   emoji: '🌟', label: 'Motivated',   sub: 'Ready to get things done' },
-  { id: 'overwhelmed', emoji: '🌿', label: 'Overwhelmed', sub: 'Everything feels like a lot' },
-  { id: 'low',         emoji: '😴', label: 'Low Energy',  sub: 'Want gentle encouragement' },
-  { id: 'excited',     emoji: '✨', label: 'Excited',     sub: 'I have lots of ideas' },
-  { id: 'calm',        emoji: '🧘', label: 'Calm',        sub: 'Want a peaceful day' },
-  { id: 'unmotivated', emoji: '😔', label: 'Unmotivated', sub: 'Burning out here' },
+  { id: 'motivated',   icon: 'zap',        label: 'Motivated',   sub: 'Ready to get things done' },
+  { id: 'overwhelmed', icon: 'cloud-rain',  label: 'Overwhelmed', sub: 'Everything feels like a lot' },
+  { id: 'low',         icon: 'moon',        label: 'Low Energy',  sub: 'Want gentle encouragement' },
+  { id: 'excited',     icon: 'star',        label: 'Excited',     sub: 'I have lots of ideas' },
+  { id: 'calm',        icon: 'sun',         label: 'Calm',        sub: 'Want a peaceful day' },
+  { id: 'unmotivated', icon: 'cloud',       label: 'Unmotivated', sub: 'Burning out here' },
 ];
 
 export default function MoodCheckInScreen({ navigation }) {
@@ -43,7 +44,12 @@ export default function MoodCheckInScreen({ navigation }) {
                 onPress={() => handleSelect(m.id)}
                 activeOpacity={0.8}
               >
-                <Text style={s.emoji}>{m.emoji}</Text>
+                <Feather
+                  name={m.icon}
+                  size={24}
+                  color={active ? C.white : C.forest}
+                  style={{ marginBottom: 8 }}
+                />
                 <Text style={[s.label, active && s.labelActive]}>{m.label}</Text>
                 <Text style={[s.cardSub, active && s.cardSubActive]}>{m.sub}</Text>
               </TouchableOpacity>
@@ -78,7 +84,6 @@ const s = StyleSheet.create({
   },
   cardActive: { backgroundColor: C.forest, borderColor: C.forest },
 
-  emoji: { fontSize: 24, marginBottom: 8 },
   label: { fontSize: 15, fontWeight: '700', color: C.forest, marginBottom: 4 },
   labelActive: { color: C.white },
   cardSub: { fontSize: 12, color: C.muted, lineHeight: 18 },

@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { BUDDIES, HOBBIES } from '../constants/data';
 import BuddyAvatar from '../components/BuddyAvatar';
@@ -38,12 +39,12 @@ export default function OnboardingScreen({ onFinish }) {
 
   const buddy = BUDDIES.find(b => b.id === selectedBuddy);
 
-  // ── Welcome ───────────────────────────────────────────────────────────────
+  // Welcome
   if (STEPS[step] === 'welcome') {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.center}>
-          <Text style={s.logo}>🌸</Text>
+          <Feather name="feather" size={64} color={C.sage} style={{ marginBottom: 8 }} />
           <Text style={s.wordmark}>Bloom</Text>
           <Text style={s.tagline}>Gentle guidance. Real progress.{'\n'}You, in full bloom.</Text>
           <Text style={s.welcomeBody}>
@@ -57,14 +58,14 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Name ──────────────────────────────────────────────────────────────────
+  // Name
   if (STEPS[step] === 'name') {
     return (
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={s.center}>
             <StepDots current={0} total={5} />
-            <Text style={s.nameEmoji}>👋</Text>
+            <Feather name="user" size={52} color={C.sage} style={{ marginBottom: 16 }} />
             <Text style={s.stepTitle}>What should we call you?</Text>
             <Text style={s.stepSub}>Just your first name is perfect.</Text>
             <TextInput
@@ -89,7 +90,7 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Buddy ─────────────────────────────────────────────────────────────────
+  // Buddy
   if (STEPS[step] === 'buddy') {
     return (
       <SafeAreaView style={s.safe}>
@@ -118,7 +119,7 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Hobbies ───────────────────────────────────────────────────────────────
+  // Hobbies
   if (STEPS[step] === 'hobbies') {
     return (
       <SafeAreaView style={s.safe}>
@@ -136,9 +137,13 @@ export default function OnboardingScreen({ onFinish }) {
                   style={[s.hobbyChip, active && s.hobbyChipActive, maxed && s.hobbyChipDisabled]}
                   onPress={() => !maxed && toggleHobby(h.id)}
                 >
-                  <Text style={s.hobbyEmoji}>{h.emoji}</Text>
+                  <Feather
+                    name={h.icon ?? 'star'}
+                    size={18}
+                    color={active ? C.sage : C.forest}
+                  />
                   <Text style={[s.hobbyLabel, active && s.hobbyLabelActive]}>{h.name}</Text>
-                  {active && <Text style={s.hobbyCheck}>✓</Text>}
+                  {active && <Feather name="check" size={13} color={C.sage} />}
                 </TouchableOpacity>
               );
             })}
@@ -159,14 +164,14 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Goal ──────────────────────────────────────────────────────────────────
+  // Goal
   if (STEPS[step] === 'goal') {
     return (
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={s.center}>
             <StepDots current={3} total={5} />
-            <Text style={s.nameEmoji}>🎯</Text>
+            <Feather name="target" size={52} color={C.sage} style={{ marginBottom: 16 }} />
             <Text style={s.stepTitle}>What's one big goal for this year?</Text>
             <Text style={s.stepSub}>Don't overthink it — whatever comes to mind first is perfect.</Text>
             <TextInput
@@ -191,7 +196,7 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Ready ─────────────────────────────────────────────────────────────────
+  // Ready
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.center}>
@@ -204,7 +209,7 @@ export default function OnboardingScreen({ onFinish }) {
             : `You and ${buddy.name} are going to do great things together. One small step at a time.`}
         </Text>
         <TouchableOpacity style={s.primaryBtn} onPress={() => onFinish(selectedBuddy, selectedHobbies, name.trim(), bigGoal.trim())}>
-          <Text style={s.primaryBtnText}>Start blooming 🌸</Text>
+          <Text style={s.primaryBtnText}>Start blooming</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -217,12 +222,10 @@ const s = StyleSheet.create({
   scroll: { padding: 28, paddingBottom: 48 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 
-  logo: { fontSize: 64, marginBottom: 8 },
   wordmark: { fontSize: 42, fontWeight: '700', color: C.forest, marginBottom: 8 },
   tagline: { fontSize: 16, color: C.sage, textAlign: 'center', lineHeight: 24, marginBottom: 28 },
   welcomeBody: { fontSize: 16, color: C.muted, textAlign: 'center', lineHeight: 26, marginBottom: 40 },
 
-  nameEmoji: { fontSize: 52, marginBottom: 16 },
   stepTitle: { fontSize: 26, fontWeight: '700', color: C.forest, marginBottom: 8, textAlign: 'center' },
   stepSub: { fontSize: 15, color: C.muted, lineHeight: 22, marginBottom: 28, textAlign: 'center' },
 
@@ -252,10 +255,8 @@ const s = StyleSheet.create({
   },
   hobbyChipActive: { borderColor: C.sage, backgroundColor: C.sagePale },
   hobbyChipDisabled: { opacity: 0.4 },
-  hobbyEmoji: { fontSize: 20 },
   hobbyLabel: { fontSize: 15, fontWeight: '600', color: C.forest },
   hobbyLabelActive: { color: C.sage },
-  hobbyCheck: { fontSize: 13, color: C.sage, fontWeight: '800' },
 
   readyBody: { fontSize: 16, color: C.muted, textAlign: 'center', lineHeight: 26, marginVertical: 20, marginBottom: 40 },
 

@@ -4,6 +4,7 @@ import {
   SafeAreaView, StyleSheet, KeyboardAvoidingView,
   Platform, ScrollView, Animated,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 
@@ -116,14 +117,13 @@ export default function JournalScreen({ navigation }) {
               ))}
             </View>
 
-            <Text style={s.bloom}>🌸</Text>
+            <Feather name="feather" size={26} color={C.sage} style={{ marginBottom: 14 }} />
             <Text style={s.heading}>{greeting()},{'\n'}{name}.</Text>
             <Text style={s.sub}>
               What's on your mind today? Dump it all here — tasks, worries,
               ideas, errands. I'll sort it for you.
             </Text>
 
-            {/* Dump area */}
             <View style={[s.dumpWrap, listening && s.dumpWrapActive]}>
               <TextInput
                 style={s.dumpInput}
@@ -135,7 +135,6 @@ export default function JournalScreen({ navigation }) {
                 textAlignVertical="top"
               />
 
-              {/* Mic button inside the box */}
               {supported && (
                 <View style={s.micRow}>
                   <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
@@ -144,7 +143,11 @@ export default function JournalScreen({ navigation }) {
                       onPress={toggleVoice}
                       activeOpacity={0.8}
                     >
-                      <Text style={s.micEmoji}>{listening ? '⏹' : '🎙'}</Text>
+                      <Feather
+                        name={listening ? 'stop-circle' : 'mic'}
+                        size={20}
+                        color={listening ? '#E74C3C' : C.forest}
+                      />
                     </TouchableOpacity>
                   </Animated.View>
                   <Text style={s.micLabel}>
@@ -156,13 +159,13 @@ export default function JournalScreen({ navigation }) {
 
             {listening && (
               <View style={s.listeningBanner}>
-                <Text style={s.listeningDot}>●</Text>
+                <View style={s.listeningDot} />
                 <Text style={s.listeningText}>Recording — just talk normally</Text>
               </View>
             )}
 
             <Text style={s.hint}>
-              ✨ Bloom will figure out what's urgent, what's nice-to-do, and put it in order for you.
+              Bloom will figure out what's urgent, what's nice-to-do, and put it in order for you.
             </Text>
 
             <View style={s.actions}>
@@ -196,7 +199,6 @@ const s = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.border },
   dotActive: { backgroundColor: C.forest, width: 20 },
 
-  bloom:   { fontSize: 24, marginBottom: 14 },
   heading: { fontSize: 36, fontWeight: '700', color: C.forest, lineHeight: 44, marginBottom: 12 },
   sub:     { fontSize: 15, color: C.muted, lineHeight: 24, marginBottom: 20 },
 
@@ -224,7 +226,6 @@ const s = StyleSheet.create({
   micBtnActive: {
     backgroundColor: '#FDECEA', borderColor: '#E74C3C',
   },
-  micEmoji: { fontSize: 20 },
   micLabel: { fontSize: 13, color: C.muted, fontWeight: '500' },
 
   listeningBanner: {
@@ -233,7 +234,9 @@ const s = StyleSheet.create({
     paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
     borderWidth: 1, borderColor: '#F5C6C2',
   },
-  listeningDot: { fontSize: 10, color: '#E74C3C' },
+  listeningDot: {
+    width: 8, height: 8, borderRadius: 4, backgroundColor: '#E74C3C',
+  },
   listeningText: { fontSize: 13, color: '#C0392B', fontWeight: '600' },
 
   hint: { fontSize: 13, color: C.muted, fontStyle: 'italic', lineHeight: 20, marginBottom: 28 },

@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity,
   ScrollView, SafeAreaView, StyleSheet, Animated,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
@@ -33,7 +34,7 @@ function TaskRow({ task, onToggle, onFocus }) {
         onPress={handleCheck}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        {task.done && <Text style={s.tick}>✓</Text>}
+        {task.done && <Feather name="check" size={11} color={C.white} />}
       </TouchableOpacity>
 
       <TouchableOpacity style={s.taskBody} onPress={() => onFocus(task)} activeOpacity={0.7}>
@@ -84,11 +85,13 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
         <View style={s.header}>
           <Text style={s.greeting}>{greet}{userName ? `, ${userName}` : ''}</Text>
           <TouchableOpacity style={s.addMoreBtn} onPress={() => navigation.navigate('Journal')}>
-            <Text style={s.addMoreText}>✍ Add more</Text>
+            <View style={s.addMoreInner}>
+              <Feather name="edit-3" size={12} color={C.forest} />
+              <Text style={s.addMoreText}>Add more</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -97,7 +100,7 @@ export default function HomeScreen({ navigation }) {
 
         {tasks.length === 0 ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyEmoji}>🌸</Text>
+            <Feather name="feather" size={52} color={C.sageMid} style={{ marginBottom: 14 }} />
             <Text style={s.emptyTitle}>Your day is blank</Text>
             <Text style={s.emptySub}>
               Do a brain dump and Bloom will turn it into a prioritised checklist.
@@ -139,7 +142,7 @@ export default function HomeScreen({ navigation }) {
 
             <View style={s.nudgeCard}>
               <View style={s.nudgeTop}>
-                <Text style={s.nudgeIcon}>🌿</Text>
+                <Feather name="feather" size={16} color="#3D6B4A" />
                 <Text style={s.nudgeLabel}>Bloom Nudge</Text>
               </View>
               <Text style={s.nudgeText}>{nudgeText}</Text>
@@ -173,6 +176,7 @@ const s = StyleSheet.create({
     backgroundColor: C.white, borderWidth: 1, borderColor: C.border,
     borderRadius: 20, paddingVertical: 7, paddingHorizontal: 14,
   },
+  addMoreInner: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   addMoreText: { fontSize: 13, fontWeight: '600', color: C.forest },
 
   title: { fontSize: 36, fontWeight: '700', color: C.forest, letterSpacing: -0.5, marginBottom: 4 },
@@ -189,7 +193,6 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   circleDone: { backgroundColor: C.forest, borderColor: C.forest },
-  tick: { fontSize: 11, color: C.white, fontWeight: '800' },
   taskBody: { flex: 1 },
   taskText: { fontSize: 15, color: C.forest, lineHeight: 22, fontWeight: '500' },
   taskTextDone: { color: '#B8AFA8', textDecorationLine: 'line-through', fontWeight: '400' },
@@ -205,7 +208,6 @@ const s = StyleSheet.create({
   doneLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.2 },
 
   emptyState: { alignItems: 'center', paddingVertical: 52 },
-  emptyEmoji: { fontSize: 52, marginBottom: 14 },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: C.forest, marginBottom: 10 },
   emptySub: {
     fontSize: 14, color: C.muted, textAlign: 'center',
@@ -223,7 +225,6 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: '#D3E3CF',
   },
   nudgeTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  nudgeIcon: { fontSize: 18 },
   nudgeLabel: {
     fontSize: 11, fontWeight: '700', color: '#3D6B4A',
     letterSpacing: 1.2, textTransform: 'uppercase',

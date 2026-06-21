@@ -1,6 +1,6 @@
 export const HOBBIES = [
   {
-    id: 'guitar', name: 'Guitar', emoji: '🎸',
+    id: 'guitar', name: 'Guitar', icon: 'music',
     steps: [
       'Hold the guitar correctly and tune it by ear',
       'Learn and memorise G, C, and D chords',
@@ -10,7 +10,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'drawing', name: 'Drawing', emoji: '✏️',
+    id: 'drawing', name: 'Drawing', icon: 'pen-tool',
     steps: [
       'Draw basic shapes and straight lines confidently',
       'Sketch simple everyday objects from life',
@@ -20,7 +20,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'coding', name: 'Coding', emoji: '💻',
+    id: 'coding', name: 'Coding', icon: 'code',
     steps: [
       'Understand variables, loops, and functions',
       'Build a simple calculator or quiz app',
@@ -30,7 +30,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'writing', name: 'Writing', emoji: '📝',
+    id: 'writing', name: 'Writing', icon: 'edit',
     steps: [
       'Write 3 sentences about your day — no editing',
       'Write a 1-page short story or scene',
@@ -40,7 +40,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'fitness', name: 'Fitness', emoji: '🏃',
+    id: 'fitness', name: 'Fitness', icon: 'activity',
     steps: [
       'Do 10 minutes of movement today',
       'Complete a 20-minute beginner workout',
@@ -50,7 +50,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'cooking', name: 'Cooking', emoji: '🍳',
+    id: 'cooking', name: 'Cooking', icon: 'coffee',
     steps: [
       'Cook one full meal entirely from scratch',
       'Learn 3 basic knife skills safely',
@@ -60,7 +60,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'meditation', name: 'Meditation', emoji: '🧘',
+    id: 'meditation', name: 'Meditation', icon: 'wind',
     steps: [
       'Sit quietly and focus on your breath for 5 minutes',
       'Try a guided 10-minute meditation (YouTube or app)',
@@ -70,7 +70,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'reading', name: 'Reading', emoji: '📚',
+    id: 'reading', name: 'Reading', icon: 'book-open',
     steps: [
       'Read for 15 uninterrupted minutes today',
       'Finish a full chapter without picking up your phone',
@@ -80,7 +80,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'photography', name: 'Photography', emoji: '📷',
+    id: 'photography', name: 'Photography', icon: 'camera',
     steps: [
       'Take 10 photos of everyday things with intention',
       'Learn about composition: rule of thirds',
@@ -90,7 +90,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'journaling', name: 'Journaling', emoji: '📓',
+    id: 'journaling', name: 'Journaling', icon: 'file-text',
     steps: [
       'Write 3 things you\'re grateful for today',
       'Fill one full page without stopping to edit',
@@ -100,7 +100,7 @@ export const HOBBIES = [
     ],
   },
   {
-    id: 'language', name: 'Language', emoji: '🌍',
+    id: 'language', name: 'Language', icon: 'globe',
     steps: [
       'Learn 10 common words in your target language',
       'Complete your first 3 Duolingo or app lessons',
@@ -112,21 +112,13 @@ export const HOBBIES = [
 ];
 
 export const BUDDIES = [
-  { id: 'fern',   name: 'Fern',   subtitle: 'Forest spirit',    emoji: '🌿', color: '#7B9E87' },
-  { id: 'blob',   name: 'Blob',   subtitle: 'Friendly shape',   emoji: '🫧', color: '#A8C5A0' },
-  { id: 'sprout', name: 'Sprout', subtitle: 'Little seedling',  emoji: '🌱', color: '#5C8A6A' },
-  { id: 'quill',  name: 'Quill',  subtitle: 'Curious hedgehog', emoji: '🦔', color: '#C8795E' },
+  { id: 'fern',   name: 'Fern',   subtitle: 'Forest spirit',    icon: 'feather', color: '#7B9E87' },
+  { id: 'blob',   name: 'Blob',   subtitle: 'Friendly shape',   icon: 'circle',  color: '#A8C5A0' },
+  { id: 'sprout', name: 'Sprout', subtitle: 'Little seedling',  icon: 'sun',     color: '#5C8A6A' },
+  { id: 'quill',  name: 'Quill',  subtitle: 'Curious hedgehog', icon: 'edit-2',  color: '#C8795E' },
 ];
 
-export const SPRINT_SOUNDS = [
-  { id: 'none',       label: 'Silence',    emoji: '🔇' },
-  { id: 'rain',       label: 'Rain',       emoji: '🌧️' },
-  { id: 'forest',     label: 'Forest',     emoji: '🌲' },
-  { id: 'whitenoise', label: 'White noise', emoji: '〰️' },
-  { id: 'cafe',       label: 'Café',       emoji: '☕' },
-];
-
-export const SPRINT_DURATION = 15 * 60; // 15 minutes in seconds
+export const SPRINT_DURATION = 15 * 60;
 
 export const ENCOURAGEMENTS = [
   "You started. That's the hardest part — you already won.",
@@ -148,11 +140,11 @@ export const NUDGE_MESSAGES = [
 export const POINTS = { low: 5, medium: 10, high: 20, hobbyStep: 15, sprint: 10 };
 
 export const DAILY_TIPS = [
-  { emoji: '🎯', text: 'Pick just ONE thing that really matters today. Do that first — everything else is a bonus.' },
-  { emoji: '⏱️', text: "Set a timer for 10 minutes and just start. You'll almost always keep going once you're in it." },
-  { emoji: '💧', text: 'Drink a glass of water before you open any apps. Hydration is the cheapest performance upgrade.' },
-  { emoji: '🧠', text: "Your brain is at its sharpest in the morning. Use that window for your hardest task." },
-  { emoji: '🌿', text: 'Rest is productive. A short break now makes the next hour sharper — not lazier.' },
-  { emoji: '📵', text: 'Try keeping your phone face-down for the first 30 minutes. Watch how much calmer you feel.' },
-  { emoji: '✍️', text: 'Write one sentence about why today matters to you. It takes 10 seconds and sets your whole tone.' },
+  { text: 'Pick just ONE thing that really matters today. Do that first — everything else is a bonus.' },
+  { text: "Set a timer for 10 minutes and just start. You'll almost always keep going once you're in it." },
+  { text: 'Drink a glass of water before you open any apps. Hydration is the cheapest performance upgrade.' },
+  { text: "Your brain is at its sharpest in the morning. Use that window for your hardest task." },
+  { text: 'Rest is productive. A short break now makes the next hour sharper — not lazier.' },
+  { text: 'Try keeping your phone face-down for the first 30 minutes. Watch how much calmer you feel.' },
+  { text: 'Write one sentence about why today matters to you. It takes 10 seconds and sets your whole tone.' },
 ];

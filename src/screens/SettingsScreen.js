@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet, Switch, Alert,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { C } from '../constants/colors';
 import { BUDDIES } from '../constants/data';
@@ -10,12 +11,12 @@ import { useApp } from '../context/AppContext';
 import BuddyAvatar from '../components/BuddyAvatar';
 
 const LEVELS = [
-  { min: 0,    label: 'Seedling',   emoji: '🌱' },
-  { min: 50,   label: 'Sprout',     emoji: '🌿' },
-  { min: 150,  label: 'Bloom',      emoji: '🌸' },
-  { min: 300,  label: 'Garden',     emoji: '🌺' },
-  { min: 500,  label: 'Forest',     emoji: '🌳' },
-  { min: 1000, label: 'Rainforest', emoji: '🌴' },
+  { min: 0,    label: 'Seedling',   icon: 'feather'   },
+  { min: 50,   label: 'Sprout',     icon: 'sun'        },
+  { min: 150,  label: 'Bloom',      icon: 'star'       },
+  { min: 300,  label: 'Garden',     icon: 'wind'       },
+  { min: 500,  label: 'Forest',     icon: 'layers'     },
+  { min: 1000, label: 'Rainforest', icon: 'globe'      },
 ];
 function getLevel(pts) {
   return LEVELS.slice().reverse().find(l => pts >= l.min) ?? LEVELS[0];
@@ -59,6 +60,8 @@ export default function SettingsScreen({ navigation }) {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const lvl = getLevel(totalPoints ?? 0);
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -71,7 +74,6 @@ export default function SettingsScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Profile */}
         <Text style={s.sectionLabel}>YOUR PROFILE</Text>
         <View style={s.card}>
           <Text style={s.fieldLabel}>Your name</Text>
@@ -95,7 +97,6 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Buddy */}
         <Text style={s.sectionLabel}>YOUR BUDDY</Text>
         <View style={s.card}>
           <Text style={s.fieldLabel}>Choose your companion</Text>
@@ -117,42 +118,35 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Stats */}
         <Text style={s.sectionLabel}>YOUR STATS</Text>
         <View style={s.card}>
-          {(() => {
-            const lvl = getLevel(totalPoints ?? 0);
-            return (
-              <View style={s.statsGrid}>
-                <View style={s.statCell}>
-                  <Text style={s.statEmoji}>{lvl.emoji}</Text>
-                  <Text style={s.statValue}>{lvl.label}</Text>
-                  <Text style={s.statLabel}>Level</Text>
-                </View>
-                <View style={s.statDivider} />
-                <View style={s.statCell}>
-                  <Text style={s.statEmoji}>🔥</Text>
-                  <Text style={s.statValue}>{currentStreak ?? 0}</Text>
-                  <Text style={s.statLabel}>Day streak</Text>
-                </View>
-                <View style={s.statDivider} />
-                <View style={s.statCell}>
-                  <Text style={s.statEmoji}>✅</Text>
-                  <Text style={s.statValue}>{tasksCompleted ?? 0}</Text>
-                  <Text style={s.statLabel}>Done</Text>
-                </View>
-                <View style={s.statDivider} />
-                <View style={s.statCell}>
-                  <Text style={s.statEmoji}>⚡</Text>
-                  <Text style={s.statValue}>{totalPoints ?? 0}</Text>
-                  <Text style={s.statLabel}>Points</Text>
-                </View>
-              </View>
-            );
-          })()}
+          <View style={s.statsGrid}>
+            <View style={s.statCell}>
+              <Feather name={lvl.icon} size={22} color={C.forest} style={{ marginBottom: 4 }} />
+              <Text style={s.statValue}>{lvl.label}</Text>
+              <Text style={s.statLabel}>Level</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statCell}>
+              <Feather name="zap" size={22} color={C.forest} style={{ marginBottom: 4 }} />
+              <Text style={s.statValue}>{currentStreak ?? 0}</Text>
+              <Text style={s.statLabel}>Day streak</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statCell}>
+              <Feather name="check-circle" size={22} color={C.forest} style={{ marginBottom: 4 }} />
+              <Text style={s.statValue}>{tasksCompleted ?? 0}</Text>
+              <Text style={s.statLabel}>Done</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statCell}>
+              <Feather name="trending-up" size={22} color={C.forest} style={{ marginBottom: 4 }} />
+              <Text style={s.statValue}>{totalPoints ?? 0}</Text>
+              <Text style={s.statLabel}>Points</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Monthly target */}
         <Text style={s.sectionLabel}>MONTHLY GOAL TARGET</Text>
         <View style={s.card}>
           <Text style={s.fieldLabel}>How many points are you aiming for?</Text>
@@ -175,7 +169,6 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Notifications */}
         <Text style={s.sectionLabel}>REMINDERS</Text>
         <View style={s.card}>
           <View style={s.switchRow}>
@@ -191,11 +184,10 @@ export default function SettingsScreen({ navigation }) {
             />
           </View>
           {notificationsOn && (
-            <Text style={s.comingSoon}>Notification scheduling coming soon 🌱</Text>
+            <Text style={s.comingSoon}>Notification scheduling coming soon</Text>
           )}
         </View>
 
-        {/* Subscription */}
         <Text style={s.sectionLabel}>YOUR PLAN</Text>
         <View style={s.planCard}>
           <View style={s.planTop}>
@@ -206,7 +198,7 @@ export default function SettingsScreen({ navigation }) {
             Task management, hobby growth, points system, and your buddy — all free, forever.
           </Text>
           <View style={s.premiumTeaser}>
-            <Text style={s.premiumLabel}>✨ Bloom Premium — coming soon</Text>
+            <Text style={s.premiumLabel}>Bloom Premium — coming soon</Text>
             <Text style={s.premiumItem}>• Real AI goal coaching</Text>
             <Text style={s.premiumItem}>• Buddy outfits & accessories</Text>
             <Text style={s.premiumItem}>• Weekly insights & patterns</Text>
@@ -214,8 +206,7 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* App info + reset */}
-        <Text style={s.appInfo}>Bloom v1.0 · Made with care 🌿</Text>
+        <Text style={s.appInfo}>Bloom v1.0 · Made with care</Text>
         <TouchableOpacity style={s.resetBtn} onPress={handleReset}>
           <Text style={s.resetBtnText}>Reset all data</Text>
         </TouchableOpacity>
@@ -257,7 +248,6 @@ const s = StyleSheet.create({
 
   statsGrid: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   statCell: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-  statEmoji: { fontSize: 22, marginBottom: 4 },
   statValue: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 2 },
   statLabel: { fontSize: 11, color: C.muted, fontWeight: '500' },
   statDivider: { width: 1, backgroundColor: C.border, marginHorizontal: 4, alignSelf: 'stretch' },

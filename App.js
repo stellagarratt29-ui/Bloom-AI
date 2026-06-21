@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 
 if (Platform.OS !== 'web') {
   require('react-native-gesture-handler');
@@ -26,9 +27,9 @@ import GoalsScreen           from './src/screens/GoalsScreen';
 import SettingsScreen        from './src/screens/SettingsScreen';
 import IdeaBankScreen        from './src/screens/IdeaBankScreen';
 
-const RootStack   = createNativeStackNavigator();
-const HomeStackNav = createNativeStackNavigator();
-const GrowStackNav = createNativeStackNavigator();
+const RootStack     = createNativeStackNavigator();
+const HomeStackNav  = createNativeStackNavigator();
+const GrowStackNav  = createNativeStackNavigator();
 const BuddyStackNav = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -39,7 +40,6 @@ class ErrorBoundary extends React.Component {
     if (this.state.error) {
       return (
         <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
-          <Text style={{ fontSize: 32, marginBottom: 16 }}>🌸</Text>
           <Text style={{ fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 12 }}>Something went wrong</Text>
           <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', fontFamily: 'monospace' }}>
             {this.state.error.message}
@@ -51,12 +51,12 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function TabIcon({ emoji, label, focused }) {
+function TabIcon({ iconName, label, focused }) {
   return (
     <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Text style={{ fontSize: 20 }}>{emoji}</Text>
+      <Feather name={iconName} size={22} color={focused ? C.forest : C.muted} />
       <Text style={{
-        fontSize: 10, marginTop: 2, fontWeight: focused ? '700' : '500',
+        fontSize: 10, marginTop: 3, fontWeight: focused ? '700' : '500',
         color: focused ? C.forest : C.muted,
       }}>{label}</Text>
     </View>
@@ -70,11 +70,7 @@ function HomeStack() {
       <HomeStackNav.Screen name="Journal"     component={JournalScreen} />
       <HomeStackNav.Screen name="MoodCheckIn" component={MoodCheckInScreen} />
       <HomeStackNav.Screen name="IdeaBank"    component={IdeaBankScreen} />
-      <HomeStackNav.Screen
-        name="Sprint"
-        component={SprintScreen}
-        options={{ presentation: 'fullScreenModal' }}
-      />
+      <HomeStackNav.Screen name="Sprint"      component={SprintScreen} options={{ presentation: 'fullScreenModal' }} />
     </HomeStackNav.Navigator>
   );
 }
@@ -113,26 +109,14 @@ function MainTabs() {
         tabBarShowLabel: false,
       }}
     >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeStack}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Today" focused={focused} /> }}
-      />
-      <Tab.Screen
-        name="GrowTab"
-        component={GrowStack}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌱" label="Grow" focused={focused} /> }}
-      />
-      <Tab.Screen
-        name="Goals"
-        component={GoalsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌟" label="Growth" focused={focused} /> }}
-      />
-      <Tab.Screen
-        name="Buddy"
-        component={BuddyStack}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌿" label="Buddy" focused={focused} /> }}
-      />
+      <Tab.Screen name="HomeTab" component={HomeStack}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon iconName="home" label="Today" focused={focused} /> }} />
+      <Tab.Screen name="GrowTab" component={GrowStack}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon iconName="sun" label="Grow" focused={focused} /> }} />
+      <Tab.Screen name="Goals" component={GoalsScreen}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon iconName="trending-up" label="Growth" focused={focused} /> }} />
+      <Tab.Screen name="Buddy" component={BuddyStack}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon iconName="heart" label="Buddy" focused={focused} /> }} />
     </Tab.Navigator>
   );
 }
@@ -140,7 +124,6 @@ function MainTabs() {
 function SplashScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 56 }}>🌸</Text>
       <Text style={{ fontSize: 28, fontWeight: '700', color: C.forest, marginTop: 14 }}>Bloom</Text>
       <Text style={{ fontSize: 14, color: C.muted, marginTop: 6 }}>Gentle guidance. Real progress.</Text>
     </View>
@@ -149,13 +132,8 @@ function SplashScreen() {
 
 function RootNavigator() {
   const { loaded, hasOnboarded, finishOnboarding } = useApp();
-
   if (!loaded) return <SplashScreen />;
-
-  if (!hasOnboarded) {
-    return <OnboardingScreen onFinish={finishOnboarding} />;
-  }
-
+  if (!hasOnboarded) return <OnboardingScreen onFinish={finishOnboarding} />;
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
@@ -166,11 +144,22 @@ function RootNavigator() {
 }
 
 export default function App() {
+  const containerStyle = Platform.OS === 'web'
+    ? { flex: 1, alignItems: 'center', backgroundColor: '#E8E3DC' }
+    : { flex: 1 };
+  const innerStyle = Platform.OS === 'web'
+    ? { flex: 1, width: '100%', maxWidth: 430, backgroundColor: C.cream, overflow: 'hidden' }
+    : { flex: 1 };
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
         <AppProvider>
-          <RootNavigator />
+          <View style={containerStyle}>
+            <View style={innerStyle}>
+              <RootNavigator />
+            </View>
+          </View>
         </AppProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
