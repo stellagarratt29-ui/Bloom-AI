@@ -22,8 +22,6 @@ import IdeaBankScreen   from './src/screens/IdeaBankScreen';
 import GoalsScreen      from './src/screens/GoalsScreen';
 import SettingsScreen   from './src/screens/SettingsScreen';
 
-enableScreens();
-
 const RootStack = createNativeStackNavigator();
 const HomeStackNav = createNativeStackNavigator();
 const BuddyStackNav = createNativeStackNavigator();
