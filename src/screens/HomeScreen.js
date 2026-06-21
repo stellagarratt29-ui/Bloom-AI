@@ -1,230 +1,237 @@
-import React, { useState } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  ScrollView, SafeAreaView, StyleSheet,
+  View, Text, TouchableOpacity,
+  ScrollView, SafeAreaView, StyleSheet, Animated,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { HOBBIES } from '../constants/data';
 
-const TAG_COLORS = {
-  high:   { bg: '#FDECEA', text: '#C0392B', label: 'High' },
-  medium: { bg: '#EBF4E9', text: '#2D6A4F', label: 'Next' },
-  low:    { bg: '#F5F0EB', text: '#8A9B8C', label: 'Low'  },
+const PRIORITY_TAG = {
+  high:   { label: 'Urgent', bg: '#FDECEA', text: '#C0392B' },
+  medium: { label: 'Next',   bg: '#EAF0E8', text: '#2D6A4F' },
+  low:    { label: 'Low',    bg: '#F5F0EB', text: '#8A9B8C' },
 };
 
-function TaskItem({ task, onToggle, onStartSprint }) {
-  const tag = TAG_COLORS[task.priority] ?? TAG_COLORS.medium;
+function TaskRow({ task, onToggle, onFocus }) {
+  const tag = PRIORITY_TAG[task.priority] ?? PRIORITY_TAG.medium;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleCheck = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.94, duration: 70, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1,    duration: 70, useNativeDriver: true }),
+    ]).start();
+    onToggle();
+  };
+
   return (
-    <View style={s.taskRow}>
-      <TouchableOpacity style={[s.circle, task.done && s.circleDone]} onPress={onToggle}>
-        {task.done && <Text style={s.checkMark}>✓</Text>}
+    <Animated.View style={[s.taskRow, { transform: [{ scale: scaleAnim }] }]}>
+      <TouchableOpacity
+        style={[s.circle, task.done && s.circleDone]}
+        onPress={handleCheck}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        {task.done && <Text style={s.tick}>✓</Text>}
       </TouchableOpacity>
-      <TouchableOpacity style={s.taskLabel} onPress={() => onStartSprint(task)} activeOpacity={0.7}>
+
+      <TouchableOpacity style={s.taskBody} onPress={() => onFocus(task)} activeOpacity={0.7}>
         <Text style={[s.taskText, task.done && s.taskTextDone]} numberOfLines={2}>
           {task.text}
         </Text>
       </TouchableOpacity>
+
       <View style={[s.tag, { backgroundColor: tag.bg }]}>
         <Text style={[s.tagText, { color: tag.text }]}>{tag.label}</Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 export default function HomeScreen({ navigation }) {
   const {
-    tasks, addTask, toggleTask,
-    selectedHobbies, hobbyProgress,
-    userName, goals, totalPoints,
+    tasks, toggleTask, hasDoneJournalToday,
+    selectedHobbies, hobbyProgress, goals, userName,
   } = useApp();
 
-  const [newTask, setNewTask] = useState('');
+  useFocusEffect(
+    useCallback(() => {
+      const hour = new Date().getHours();
+      if (!hasDoneJournalToday && hour < 20) {
+        navigation.navigate('Journal');
+      }
+    }, [hasDoneJournalToday])
+  );
 
   const pending = tasks.filter(t => !t.done);
   const done    = tasks.filter(t => t.done);
 
-  const handleAdd = () => {
-    if (!newTask.trim()) return;
-    addTask(newTask.trim(), 'medium');
-    setNewTask('');
-  };
-
-  const handleStartSprint = (task) => navigation.navigate('Sprint', { task });
-
-  const nudgeGoal = goals?.[0]?.text ?? null;
-  const nudgeHobby = (() => {
+  const nudgeText = (() => {
+    const goal = goals?.[0]?.text;
+    if (goal) return `You said "${goal}" matters to you. Want to spend 15 minutes on it?`;
     const active = HOBBIES.find(h =>
       selectedHobbies.includes(h.id) && (hobbyProgress[h.id] ?? 0) < h.steps.length
     );
-    return active ? active.steps[hobbyProgress[active.id] ?? 0] : null;
+    if (active) return `Ready for your next step? "${active.steps[hobbyProgress[active.id] ?? 0]}"`;
+    return 'Small progress is still progress. Which task feels lightest right now?';
   })();
 
-  const nudgeText = nudgeGoal
-    ? `You said "${nudgeGoal}" matters to you. Want to spend fifteen minutes on it?`
-    : nudgeHobby
-    ? `Ready for your next step? "${nudgeHobby}"`
-    : 'Small progress is still progress. What will you do first today?';
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
     <SafeAreaView style={s.safe}>
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
         {/* Header */}
-        <View style={s.headerRow}>
-          <TouchableOpacity style={s.journalBtn} onPress={() => navigation.navigate('Journal')}>
-            <Text style={s.journalBtnText}>✍ Journal</Text>
+        <View style={s.header}>
+          <Text style={s.greeting}>{greet}{userName ? `, ${userName}` : ''}</Text>
+          <TouchableOpacity style={s.addMoreBtn} onPress={() => navigation.navigate('Journal')}>
+            <Text style={s.addMoreText}>✍ Add more</Text>
           </TouchableOpacity>
-          <View style={s.headerRight}>
-            <Text style={s.ptsLabel}>⚡ {totalPoints} pts</Text>
-          </View>
         </View>
 
-        {/* Title */}
         <Text style={s.title}>Today</Text>
-        <Text style={s.sub}>
-          Broken into small steps — overwhelmed days call for tiny wins.
-        </Text>
+        <Text style={s.sub}>Broken into small steps — one thing at a time.</Text>
 
-        {/* Task list */}
-        <View style={s.taskList}>
-          {tasks.length === 0 && (
-            <View style={s.empty}>
-              <Text style={s.emptyEmoji}>🌱</Text>
-              <Text style={s.emptyText}>Nothing here yet. Add a task below.</Text>
-            </View>
-          )}
-          {pending.map(t => (
-            <TaskItem
-              key={t.id}
-              task={t}
-              onToggle={() => toggleTask(t.id)}
-              onStartSprint={handleStartSprint}
-            />
-          ))}
-          {done.length > 0 && (
-            <View style={s.doneSection}>
-              <Text style={s.doneSeparatorLabel}>Done ({done.length})</Text>
-              {done.map(t => (
-                <TaskItem
+        {tasks.length === 0 ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyEmoji}>🌸</Text>
+            <Text style={s.emptyTitle}>Your day is blank</Text>
+            <Text style={s.emptySub}>
+              Do a brain dump and Bloom will turn it into a prioritised checklist.
+            </Text>
+            <TouchableOpacity style={s.emptyBtn} onPress={() => navigation.navigate('Journal')}>
+              <Text style={s.emptyBtnText}>Start brain dump →</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={s.taskList}>
+              {pending.map(t => (
+                <TaskRow
                   key={t.id}
                   task={t}
                   onToggle={() => toggleTask(t.id)}
-                  onStartSprint={handleStartSprint}
+                  onFocus={task => navigation.navigate('Sprint', { task })}
                 />
               ))}
             </View>
-          )}
-        </View>
 
-        {/* Add task */}
-        <TouchableOpacity
-          style={s.addTaskRow}
-          onPress={() => {}}
-          activeOpacity={1}
-        >
-          <TextInput
-            style={s.addInput}
-            placeholder="+ Add Task"
-            placeholderTextColor={C.muted}
-            value={newTask}
-            onChangeText={setNewTask}
-            onSubmitEditing={handleAdd}
-            returnKeyType="done"
-          />
-        </TouchableOpacity>
+            {done.length > 0 && (
+              <View style={s.doneSection}>
+                <View style={s.doneDivider}>
+                  <View style={s.doneLine} />
+                  <Text style={s.doneLabel}>Done · {done.length}</Text>
+                  <View style={s.doneLine} />
+                </View>
+                {done.map(t => (
+                  <TaskRow
+                    key={t.id}
+                    task={t}
+                    onToggle={() => toggleTask(t.id)}
+                    onFocus={task => navigation.navigate('Sprint', { task })}
+                  />
+                ))}
+              </View>
+            )}
 
-        {/* Claude Nudge */}
-        <View style={s.nudgeCard}>
-          <View style={s.nudgeHeader}>
-            <Text style={s.nudgeIcon}>🌿</Text>
-            <Text style={s.nudgeLabel}>Claude Nudge</Text>
-          </View>
-          <Text style={s.nudgeText}>{nudgeText}</Text>
-          <TouchableOpacity
-            style={s.nudgeBtn}
-            onPress={() => pending[0] && handleStartSprint(pending[0])}
-          >
-            <Text style={s.nudgeBtnText}>Let's begin →</Text>
-          </TouchableOpacity>
-        </View>
+            <View style={s.nudgeCard}>
+              <View style={s.nudgeTop}>
+                <Text style={s.nudgeIcon}>🌿</Text>
+                <Text style={s.nudgeLabel}>Bloom Nudge</Text>
+              </View>
+              <Text style={s.nudgeText}>{nudgeText}</Text>
+              <TouchableOpacity
+                style={[s.nudgeBtn, pending.length === 0 && { opacity: 0.4 }]}
+                onPress={() => pending[0] && navigation.navigate('Sprint', { task: pending[0] })}
+                disabled={pending.length === 0}
+              >
+                <Text style={s.nudgeBtnText}>Let's begin →</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 48 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.cream },
-  scroll: { paddingHorizontal: 22, paddingTop: 16 },
+  safe:   { flex: 1, backgroundColor: C.cream },
+  scroll: { paddingHorizontal: 22, paddingTop: 18 },
 
-  headerRow: {
+  header: {
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 20,
+    justifyContent: 'space-between', marginBottom: 18,
   },
-  journalBtn: {
+  greeting: { fontSize: 14, color: C.muted, fontWeight: '500' },
+  addMoreBtn: {
     backgroundColor: C.white, borderWidth: 1, borderColor: C.border,
     borderRadius: 20, paddingVertical: 7, paddingHorizontal: 14,
   },
-  journalBtnText: { fontSize: 13, fontWeight: '600', color: C.forest },
-  headerRight: {},
-  ptsLabel: { fontSize: 13, fontWeight: '600', color: C.muted },
+  addMoreText: { fontSize: 13, fontWeight: '600', color: C.forest },
 
-  title: { fontSize: 34, fontWeight: '700', color: C.forest, marginBottom: 6 },
-  sub:   { fontSize: 14, color: C.muted, lineHeight: 21, marginBottom: 24 },
+  title: { fontSize: 36, fontWeight: '700', color: C.forest, letterSpacing: -0.5, marginBottom: 4 },
+  sub:   { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 22 },
 
-  taskList: { marginBottom: 4 },
-
+  taskList: {},
   taskRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border,
+    flexDirection: 'row', alignItems: 'center', gap: 13,
+    paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#F0EBE3',
   },
   circle: {
     width: 24, height: 24, borderRadius: 12,
-    borderWidth: 2, borderColor: C.border,
+    borderWidth: 2, borderColor: '#C8BFB5',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   circleDone: { backgroundColor: C.forest, borderColor: C.forest },
-  checkMark: { fontSize: 12, color: C.white, fontWeight: '800' },
-  taskLabel: { flex: 1 },
-  taskText: { fontSize: 15, color: C.forest, lineHeight: 22 },
-  taskTextDone: { color: C.muted, textDecorationLine: 'line-through' },
-  tag: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 20 },
+  tick: { fontSize: 11, color: C.white, fontWeight: '800' },
+  taskBody: { flex: 1 },
+  taskText: { fontSize: 15, color: C.forest, lineHeight: 22, fontWeight: '500' },
+  taskTextDone: { color: '#B8AFA8', textDecorationLine: 'line-through', fontWeight: '400' },
+  tag: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 20, flexShrink: 0 },
   tagText: { fontSize: 11, fontWeight: '700' },
 
-  doneSection: { marginTop: 8 },
-  doneSeparatorLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.2, marginBottom: 4, marginTop: 8 },
-
-  empty: { alignItems: 'center', paddingVertical: 32 },
-  emptyEmoji: { fontSize: 32, marginBottom: 10 },
-  emptyText: { fontSize: 14, color: C.muted },
-
-  addTaskRow: {
-    borderWidth: 1.5, borderColor: C.border, borderStyle: 'dashed',
-    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 4,
-    marginTop: 8, marginBottom: 20,
-    backgroundColor: C.white,
+  doneSection: { marginTop: 4 },
+  doneDivider: {
+    flexDirection: 'row', alignItems: 'center',
+    gap: 10, marginVertical: 16,
   },
-  addInput: { fontSize: 15, color: C.forest, paddingVertical: 12 },
+  doneLine: { flex: 1, height: 1, backgroundColor: '#EDE6DF' },
+  doneLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.2 },
+
+  emptyState: { alignItems: 'center', paddingVertical: 52 },
+  emptyEmoji: { fontSize: 52, marginBottom: 14 },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: C.forest, marginBottom: 10 },
+  emptySub: {
+    fontSize: 14, color: C.muted, textAlign: 'center',
+    lineHeight: 22, marginBottom: 28, paddingHorizontal: 12,
+  },
+  emptyBtn: {
+    backgroundColor: C.forest, borderRadius: 28,
+    paddingVertical: 14, paddingHorizontal: 28,
+  },
+  emptyBtnText: { fontSize: 15, fontWeight: '700', color: C.white },
 
   nudgeCard: {
-    backgroundColor: '#EAF0E8', borderRadius: 18,
-    padding: 20, borderWidth: 1, borderColor: '#D0DFD0',
+    backgroundColor: '#EAF0E8', borderRadius: 20,
+    padding: 20, marginTop: 22,
+    borderWidth: 1, borderColor: '#D3E3CF',
   },
-  nudgeHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  nudgeTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   nudgeIcon: { fontSize: 18 },
   nudgeLabel: {
-    fontSize: 11, fontWeight: '700', color: C.forest,
-    letterSpacing: 1, textTransform: 'uppercase',
+    fontSize: 11, fontWeight: '700', color: '#3D6B4A',
+    letterSpacing: 1.2, textTransform: 'uppercase',
   },
   nudgeText: { fontSize: 15, color: C.forest, lineHeight: 24, marginBottom: 16 },
   nudgeBtn: {
     alignSelf: 'flex-start', backgroundColor: C.forest,
-    borderRadius: 20, paddingVertical: 10, paddingHorizontal: 20,
+    borderRadius: 22, paddingVertical: 10, paddingHorizontal: 20,
   },
   nudgeBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
 });

@@ -51,6 +51,7 @@ export function AppProvider({ children }) {
   const streakRef                           = useRef({ lastDay: '', count: 0 });
   const [latestMilestone, setLatestMilestone] = useState(null);
   const [tasksCompleted, setTasksCompleted] = useState(0);
+  const [lastJournalDate, setLastJournalDate] = useState('');
   const sessionTaskCount                    = useRef(0);
 
   // ── Load from storage on mount ────────────────────────────────────────────
@@ -81,6 +82,7 @@ export function AppProvider({ children }) {
               streakRef.current = { lastDay: s.lastStreakDay ?? '', count: s.currentStreak };
             }
             if (s.tasksCompleted) setTasksCompleted(s.tasksCompleted);
+            if (s.lastJournalDate) setLastJournalDate(s.lastJournalDate);
 
             // Roll over daily points if new day(s) have passed
             const today = todayStr();
@@ -110,6 +112,7 @@ export function AppProvider({ children }) {
         tasks, ideas, selectedHobbies, hobbyProgress,
         totalPoints, monthlyPoints, dailyPoints, goals,
         monthlyGoalTarget, userName, currentStreak, tasksCompleted,
+        lastJournalDate,
         lastStreakDay: streakRef.current.lastDay,
         lastActiveDay: todayStr(), lastActiveMonth: monthStr(),
       })).catch(() => {});
@@ -201,6 +204,30 @@ export function AppProvider({ children }) {
     addPoints(POINTS.hobbyStep);
   }, [addPoints]);
 
+  const processDump = useCallback((rawText) => {
+    // Split on newlines, "and", semicolons, bullet chars
+    const items = rawText
+      .split(/[\n;]|\band\b/i)
+      .flatMap(chunk => chunk.split(/[.!?]+/))
+      .map(s => s.trim().replace(/^[-•·*\d.]+\s*/, ''))
+      .filter(s => s.length > 3);
+
+    const prioritized = items.map(text => {
+      const lower = text.toLowerCase();
+      let priority = 'medium';
+      if (/urgent|important|must|need|asap|today|have to|got to|critical|call|email|submit|due|deadline/i.test(lower)) priority = 'high';
+      else if (/maybe|could|if time|eventually|later|sometime|want to|like to|might|would love/i.test(lower)) priority = 'low';
+      return { text: text.charAt(0).toUpperCase() + text.slice(1), priority };
+    }).sort((a, b) => {
+      const order = { high: 0, medium: 1, low: 2 };
+      return (order[a.priority] ?? 1) - (order[b.priority] ?? 1);
+    });
+
+    // Replace today's tasks entirely
+    setTasks(prioritized.map(({ text, priority }) => makeTask(text, priority)));
+    setLastJournalDate(todayStr());
+  }, []);
+
   const addGoal = useCallback((text) => {
     setGoals(prev => [...prev, makeGoal(text)]);
   }, []);
@@ -234,6 +261,8 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       loaded,
       hasOnboarded, finishOnboarding,
+      hasDoneJournalToday: lastJournalDate === todayStr(),
+      processDump,
       buddy, setBuddy,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
       ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
