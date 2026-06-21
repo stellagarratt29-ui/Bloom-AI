@@ -15,9 +15,10 @@ function greeting() {
   return 'Good evening';
 }
 
-function useSpeechRecognition({ onTranscript }) {
+function useSpeechRecognition({ onTranscript, onInterim }) {
   const recogRef = useRef(null);
   const [listening, setListening] = useState(false);
+  const [error, setError] = useState('');
   const [supported] = useState(() => {
     if (Platform.OS !== 'web') return false;
     return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -25,49 +26,71 @@ function useSpeechRecognition({ onTranscript }) {
 
   const start = () => {
     if (!supported) return;
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const r = new SR();
-    r.continuous = false;
-    r.interimResults = false;
-    r.lang = 'en-US';
+    setError('');
+    try {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const r = new SR();
+      r.continuous = true;
+      r.interimResults = true;
+      r.lang = 'en-US';
 
-    r.onstart  = () => setListening(true);
-    r.onend    = () => setListening(false);
-    r.onerror  = () => setListening(false);
-    r.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map(res => res[0].transcript)
-        .join(' ')
-        .trim();
-      if (transcript) onTranscript(transcript);
-    };
+      r.onstart = () => setListening(true);
+      r.onend   = () => { setListening(false); onInterim?.(''); };
+      r.onerror = (e) => {
+        setListening(false);
+        onInterim?.('');
+        if (e.error === 'not-allowed') setError('Microphone access denied. Allow mic in browser settings.');
+        else if (e.error === 'no-speech') setError('No speech detected. Try again.');
+        else if (e.error !== 'aborted') setError('Voice input unavailable. Try typing instead.');
+      };
+      r.onresult = (e) => {
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += t + ' ';
+          else interim += t;
+        }
+        if (interim) onInterim?.(interim);
+        if (final.trim()) {
+          onInterim?.('');
+          onTranscript(final.trim());
+        }
+      };
 
-    recogRef.current = r;
-    r.start();
+      recogRef.current = r;
+      r.start();
+    } catch (err) {
+      setError('Could not start voice input.');
+    }
   };
 
   const stop = () => {
     recogRef.current?.stop();
+    recogRef.current = null;
     setListening(false);
+    onInterim?.('');
   };
 
-  return { listening, supported, start, stop };
+  return { listening, supported, error, start, stop };
 }
 
 export default function JournalScreen({ navigation }) {
   const { userName, processDump } = useApp();
-  const [text, setText]         = useState('');
-  const [processing, setProcessing] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [text, setText]             = useState('');
+  const [interimText, setInterimText] = useState('');
+  const [processing, setProcessing]  = useState(false);
+  const fadeAnim  = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pulseLoop = useRef(null);
 
   const name = userName || 'Stella';
 
-  const { listening, supported, start, stop } = useSpeechRecognition({
+  const { listening, supported, error: micError, start, stop } = useSpeechRecognition({
     onTranscript: (transcript) => {
-      setText(prev => prev ? prev + '\n' + transcript : transcript);
+      setText(prev => prev ? prev + ' ' + transcript : transcript);
     },
+    onInterim: setInterimText,
   });
 
   const startListening = () => {
@@ -160,7 +183,16 @@ export default function JournalScreen({ navigation }) {
             {listening && (
               <View style={s.listeningBanner}>
                 <View style={s.listeningDot} />
-                <Text style={s.listeningText}>Recording — just talk normally</Text>
+                <Text style={s.listeningText}>
+                  {interimText ? interimText : 'Listening — just talk normally'}
+                </Text>
+              </View>
+            )}
+
+            {!!micError && (
+              <View style={s.errorBanner}>
+                <Feather name="alert-circle" size={14} color="#C0392B" />
+                <Text style={s.errorText}>{micError}</Text>
               </View>
             )}
 
@@ -237,7 +269,15 @@ const s = StyleSheet.create({
   listeningDot: {
     width: 8, height: 8, borderRadius: 4, backgroundColor: '#E74C3C',
   },
-  listeningText: { fontSize: 13, color: '#C0392B', fontWeight: '600' },
+  listeningText: { fontSize: 13, color: '#C0392B', fontWeight: '600', flex: 1 },
+
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#FBF0EB', borderRadius: 12,
+    paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: C.peachLight,
+  },
+  errorText: { fontSize: 13, color: '#8B3A2A', flex: 1 },
 
   hint: { fontSize: 13, color: C.muted, fontStyle: 'italic', lineHeight: 20, marginBottom: 28 },
 
