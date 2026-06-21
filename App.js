@@ -1,11 +1,14 @@
-import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View } from 'react-native';
-import { enableScreens } from 'react-native-screens';
+import { Text, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+if (Platform.OS !== 'web') {
+  require('react-native-gesture-handler');
+  require('react-native-screens').enableScreens();
+}
 
 import { AppProvider, useApp } from './src/context/AppContext';
 import { C } from './src/constants/colors';
