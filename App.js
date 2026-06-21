@@ -21,8 +21,29 @@ import SettingsScreen   from './src/screens/SettingsScreen';
 
 enableScreens();
 
-const Stack = createNativeStackNavigator();
-const Tab   = createBottomTabNavigator();
+const RootStack = createNativeStackNavigator();
+const HomeStackNav = createNativeStackNavigator();
+const BuddyStackNav = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+class ErrorBoundary extends React.Component {
+  state = { error: null };
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#FAF8F4', alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+          <Text style={{ fontSize: 32, marginBottom: 16 }}>🌸</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D4A35', marginBottom: 12 }}>Something went wrong</Text>
+          <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', fontFamily: 'monospace' }}>
+            {this.state.error.message}
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function TabIcon({ emoji, label, focused }) {
   return (
@@ -38,20 +59,20 @@ function TabIcon({ emoji, label, focused }) {
 
 function HomeStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home"     component={HomeScreen} />
-      <Stack.Screen name="IdeaBank" component={IdeaBankScreen} />
-      <Stack.Screen name="Sprint"   component={SprintScreen} options={{ presentation: 'fullScreenModal' }} />
-    </Stack.Navigator>
+    <HomeStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStackNav.Screen name="Home"     component={HomeScreen} />
+      <HomeStackNav.Screen name="IdeaBank" component={IdeaBankScreen} />
+      <HomeStackNav.Screen name="Sprint"   component={SprintScreen} options={{ presentation: 'fullScreenModal' }} />
+    </HomeStackNav.Navigator>
   );
 }
 
 function BuddyStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="BuddyMain" component={BuddyScreen} />
-      <Stack.Screen name="Settings"  component={SettingsScreen} />
-    </Stack.Navigator>
+    <BuddyStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <BuddyStackNav.Screen name="BuddyMain" component={BuddyScreen} />
+      <BuddyStackNav.Screen name="Settings"  component={SettingsScreen} />
+    </BuddyStackNav.Navigator>
   );
 }
 
@@ -115,19 +136,21 @@ function RootNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Main" component={MainTabs} />
-      </Stack.Navigator>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Main" component={MainTabs} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AppProvider>
-        <RootNavigator />
-      </AppProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AppProvider>
+          <RootNavigator />
+        </AppProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
