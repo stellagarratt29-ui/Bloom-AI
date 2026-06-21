@@ -1,18 +1,39 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bloom</title>
-  <style>
-    body { background: #FAF8F4; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; flex-direction: column; }
-    h1 { color: #2D4A35; font-size: 28px; margin-top: 16px; }
-    p { color: #8A9B8C; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div style="font-size: 56px">🌸</div>
-  <h1>Bloom</h1>
-  <p>GitHub Pages is working!</p>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Bloom</title>
+    <style id="expo-reset">
+      html, body { height: 100%; }
+      body { overflow: hidden; }
+      #root { display: flex; height: 100%; flex: 1; }
+    </style>
+    <link rel="icon" href="favicon.ico" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="fallback" style="display:none; text-align:center; padding:60px; font-family:sans-serif; background:#FAF8F4; height:100vh; box-sizing:border-box;">
+      <div style="font-size:48px">⚠️</div>
+      <h2 style="color:#2D4A35">Script failed to load</h2>
+      <p id="fallback-msg" style="color:#8A9B8C; font-size:14px">Checking...</p>
+    </div>
+    <script>
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        if (!root || !root.hasChildNodes()) {
+          document.getElementById('fallback').style.display = 'block';
+          document.body.style.overflow = 'auto';
+          fetch('_expo/static/js/web/index-9224ff38cae2c6d6ea956ce1b9a25d47.js')
+            .then(function(r) {
+              document.getElementById('fallback-msg').textContent = 'Bundle HTTP ' + r.status + ' — JS loaded but crashed on execution.';
+            })
+            .catch(function(e) {
+              document.getElementById('fallback-msg').textContent = 'Bundle fetch failed: ' + e.message;
+            });
+        }
+      }, 6000);
+    </script>
+    <script src="_expo/static/js/web/index-9224ff38cae2c6d6ea956ce1b9a25d47.js" defer></script>
+  </body>
 </html>
