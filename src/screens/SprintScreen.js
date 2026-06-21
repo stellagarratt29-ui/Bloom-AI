@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, SafeAreaView,
-  StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, SafeAreaView, StyleSheet,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
-import { SPRINT_SOUNDS, ENCOURAGEMENTS } from '../constants/data';
 import { useApp } from '../context/AppContext';
 
-const DURATION_OPTIONS = [2, 5, 10, 15, 25];
-import BuddyAvatar from '../components/BuddyAvatar';
+const DURATION_OPTIONS = [5, 10, 15, 25];
 
 function formatTime(secs) {
   const m = Math.floor(secs / 60);
@@ -17,43 +14,16 @@ function formatTime(secs) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function CircleTimer({ progress }) {
-  const SIZE = 220;
-  const STROKE = 10;
-  const R = (SIZE - STROKE * 2) / 2;
-  const CIRC = 2 * Math.PI * R;
-  const dashOffset = CIRC * (1 - progress);
-
-  return (
-    <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
-      {/* Background ring */}
-      <View style={{
-        position: 'absolute', width: SIZE, height: SIZE, borderRadius: SIZE / 2,
-        borderWidth: STROKE, borderColor: C.sageLight,
-      }} />
-      {/* Progress ring — approximated with a styled View since we have no SVG */}
-      <View style={{
-        position: 'absolute', width: SIZE, height: SIZE, borderRadius: SIZE / 2,
-        borderWidth: STROKE, borderColor: C.sage,
-        opacity: progress,
-      }} />
-    </View>
-  );
-}
-
 export default function SprintScreen({ route, navigation }) {
   const task = route?.params?.task ?? null;
-  const { buddy, momentum, addPoints, toggleTask } = useApp();
-  const [taskMarkedDone, setTaskMarkedDone] = useState(false);
+  const { addPoints, toggleTask } = useApp();
 
   const [selectedMins, setSelectedMins] = useState(15);
   const [timeLeft, setTimeLeft]         = useState(15 * 60);
   const [running, setRunning]           = useState(false);
   const [done, setDone]                 = useState(false);
-  const [sound, setSound]           = useState('none');
-  const [encourageIdx, setEncourage] = useState(0);
-  const intervalRef                  = useRef(null);
-  const encourageRef                 = useRef(null);
+  const [taskMarkedDone, setTaskMarkedDone] = useState(false);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     if (running && !done) {
@@ -61,28 +31,18 @@ export default function SprintScreen({ route, navigation }) {
         setTimeLeft(t => {
           if (t <= 1) {
             clearInterval(intervalRef.current);
-            clearInterval(encourageRef.current);
             setRunning(false);
             setDone(true);
-            addPoints(10); // sprint bonus
+            addPoints(10);
             return 0;
           }
           return t - 1;
         });
       }, 1000);
-
-      encourageRef.current = setInterval(() => {
-        setEncourage(i => (i + 1) % ENCOURAGEMENTS.length);
-      }, 45000);
     }
-
-    return () => {
-      clearInterval(intervalRef.current);
-      clearInterval(encourageRef.current);
-    };
+    return () => clearInterval(intervalRef.current);
   }, [running]);
 
-  // Pause timer if user navigates away
   useFocusEffect(
     useCallback(() => {
       return () => setRunning(false);
@@ -99,8 +59,6 @@ export default function SprintScreen({ route, navigation }) {
     }
   };
 
-  const progress = 1 - timeLeft / (selectedMins * 60);
-
   const handleMarkDone = () => {
     if (task && !taskMarkedDone) {
       toggleTask(task.id);
@@ -109,29 +67,27 @@ export default function SprintScreen({ route, navigation }) {
     navigation.goBack();
   };
 
+  const progress = 1 - timeLeft / (selectedMins * 60);
+
   if (done) {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.center}>
-          <BuddyAvatar buddy={buddy} momentum={Math.min(100, momentum + 10)} size={100} />
-          <Text style={s.doneEmoji}>🎉</Text>
+          <Text style={s.doneEmoji}>🌸</Text>
           <Text style={s.doneTitle}>Sprint complete!</Text>
           <Text style={s.doneSub}>
-            You did {selectedMins} focused minutes. That's real progress — and {buddy?.name} noticed.
+            {selectedMins} focused minutes done. That's real progress.
           </Text>
-          <View style={s.pointsBadge}>
-            <Text style={s.pointsBadgeText}>+10 pts — Sprint bonus! ⚡</Text>
-          </View>
           {task && !task.done && (
             <TouchableOpacity style={s.primaryBtn} onPress={handleMarkDone}>
-              <Text style={s.primaryBtnText}>✓ Mark "{task.text.slice(0, 24)}{task.text.length > 24 ? '…' : ''}" as done</Text>
+              <Text style={s.primaryBtnText}>✓ Mark as done</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={task && !task.done ? s.secondaryBtn : s.primaryBtn} onPress={() => navigation.goBack()}>
-            <Text style={task && !task.done ? s.secondaryBtnText : s.primaryBtnText}>Back to today →</Text>
+          <TouchableOpacity style={s.secondaryBtn} onPress={() => navigation.goBack()}>
+            <Text style={s.secondaryBtnText}>Back to Today →</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.ghostBtn} onPress={reset}>
-            <Text style={s.ghostBtnText}>Start another sprint</Text>
+            <Text style={s.ghostBtnText}>Another sprint</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -140,31 +96,21 @@ export default function SprintScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={s.safe}>
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* Back */}
+      <View style={s.container}>
         <TouchableOpacity style={s.back} onPress={() => navigation.goBack()}>
           <Text style={s.backText}>← Back</Text>
         </TouchableOpacity>
 
-        {/* Task label */}
-        {task && (
-          <View style={s.taskChip}>
-            <Text style={s.taskChipText} numberOfLines={1}>⚡ {task.text}</Text>
-          </View>
-        )}
-
-        {/* Duration picker — only when timer hasn't started */}
-        {!running && timeLeft === selectedMins * 60 && !done && (
+        {/* Duration picker */}
+        {!running && timeLeft === selectedMins * 60 && (
           <View style={s.durationRow}>
-            <Text style={s.durationLabel}>Duration</Text>
             {DURATION_OPTIONS.map(mins => (
               <TouchableOpacity
                 key={mins}
                 style={[s.durationChip, selectedMins === mins && s.durationChipActive]}
                 onPress={() => handlePickDuration(mins)}
               >
-                <Text style={[s.durationChipText, selectedMins === mins && s.durationChipTextActive]}>
+                <Text style={[s.durationText, selectedMins === mins && s.durationTextActive]}>
                   {mins}m
                 </Text>
               </TouchableOpacity>
@@ -172,138 +118,82 @@ export default function SprintScreen({ route, navigation }) {
           </View>
         )}
 
-        {/* Timer */}
-        <View style={s.timerWrapper}>
-          <CircleTimer progress={progress} />
-          <View style={s.timerCenter}>
-            <Text style={s.timerText}>{formatTime(timeLeft)}</Text>
-            <Text style={s.timerLabel}>{running ? 'in flow' : timeLeft === selectedMins * 60 ? 'ready' : 'paused'}</Text>
+        {/* Clock face */}
+        <View style={s.clockWrap}>
+          <View style={[s.clockRing, { opacity: 0.12 + progress * 0.88 }]} />
+          <View style={s.clockInner}>
+            <Text style={s.clockTime}>{formatTime(timeLeft)}</Text>
+            {task && (
+              <Text style={s.clockTask} numberOfLines={2}>{task.text}</Text>
+            )}
           </View>
         </View>
 
-        {/* Controls */}
-        <View style={s.controls}>
-          <TouchableOpacity style={s.primaryBtn} onPress={toggle}>
-            <Text style={s.primaryBtnText}>{running ? '⏸ Pause' : timeLeft === selectedMins * 60 ? '⚡ Start Sprint' : '▶ Resume'}</Text>
-          </TouchableOpacity>
-          {timeLeft < selectedMins * 60 && (
-            <TouchableOpacity style={s.resetBtn} onPress={reset}>
-              <Text style={s.resetBtnText}>Reset</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text style={s.quote}>✨ Small progress is still progress.</Text>
 
-        {/* Buddy encouragement */}
-        <View style={s.encourageCard}>
-          <BuddyAvatar buddy={buddy} momentum={momentum} size={48} />
-          <Text style={s.encourageText}>
-            {running ? ENCOURAGEMENTS[encourageIdx] : "Whenever you're ready — I'm right here with you."}
+        <TouchableOpacity style={s.primaryBtn} onPress={toggle}>
+          <Text style={s.primaryBtnText}>
+            {running ? '⏸ Pause' : timeLeft === selectedMins * 60 ? 'Start Focus' : '▶ Resume'}
           </Text>
-        </View>
+        </TouchableOpacity>
 
-        {/* Sound picker */}
-        <Text style={s.soundTitle}>Ambient sound</Text>
-        <View style={s.soundRow}>
-          {SPRINT_SOUNDS.map(snd => (
-            <TouchableOpacity
-              key={snd.id}
-              style={[s.soundChip, sound === snd.id && s.soundChipActive]}
-              onPress={() => setSound(snd.id)}
-            >
-              <Text style={s.soundEmoji}>{snd.emoji}</Text>
-              <Text style={[s.soundLabel, sound === snd.id && s.soundLabelActive]}>{snd.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={s.soundNote}>Audio coming soon — the visual timer is fully functional!</Text>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        {timeLeft < selectedMins * 60 && !running && (
+          <TouchableOpacity style={s.ghostBtn} onPress={reset}>
+            <Text style={s.ghostBtnText}>Reset</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: C.cream },
-  scroll: { paddingHorizontal: 24, paddingTop: 16 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  safe:      { flex: 1, backgroundColor: C.cream },
+  container: { flex: 1, alignItems: 'center', paddingHorizontal: 24, paddingTop: 20 },
+  center:    { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 
-  back: { marginBottom: 12 },
+  back: { alignSelf: 'flex-start', marginBottom: 16 },
   backText: { fontSize: 16, color: C.sage, fontWeight: '600' },
 
-  taskChip: {
-    alignSelf: 'center', backgroundColor: C.sagePale,
-    borderRadius: 20, paddingVertical: 8, paddingHorizontal: 18,
-    borderWidth: 1, borderColor: C.sageLight, marginBottom: 16,
-  },
-  taskChipText: { fontSize: 14, fontWeight: '600', color: C.forest },
-
-  durationRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, marginBottom: 20,
-  },
-  durationLabel: { fontSize: 12, fontWeight: '700', color: C.muted, letterSpacing: 1 },
+  durationRow: { flexDirection: 'row', gap: 8, marginBottom: 32 },
   durationChip: {
-    paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 18, borderRadius: 20,
     backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
   },
-  durationChipActive: { backgroundColor: C.sage, borderColor: C.sage },
-  durationChipText: { fontSize: 14, fontWeight: '700', color: C.muted },
-  durationChipTextActive: { color: C.white },
+  durationChipActive: { backgroundColor: C.forest, borderColor: C.forest },
+  durationText: { fontSize: 14, fontWeight: '700', color: C.muted },
+  durationTextActive: { color: C.white },
 
-  timerWrapper: {
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 28, position: 'relative',
+  clockWrap: {
+    width: 260, height: 260, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 32,
   },
-  timerCenter: {
-    position: 'absolute', alignItems: 'center',
+  clockRing: {
+    position: 'absolute', width: 260, height: 260, borderRadius: 130,
+    borderWidth: 12, borderColor: C.forest,
   },
-  timerText: { fontSize: 58, fontWeight: '700', color: C.forest, letterSpacing: -2 },
-  timerLabel: { fontSize: 14, color: C.sage, marginTop: 2, fontWeight: '500' },
+  clockInner: { alignItems: 'center', paddingHorizontal: 24 },
+  clockTime: { fontSize: 64, fontWeight: '300', color: C.forest, letterSpacing: -2 },
+  clockTask: { fontSize: 14, color: C.muted, textAlign: 'center', marginTop: 8, lineHeight: 20 },
 
-  controls: { alignItems: 'center', gap: 10, marginBottom: 24 },
+  quote: { fontSize: 14, color: C.muted, fontStyle: 'italic', marginBottom: 32 },
+
   primaryBtn: {
-    backgroundColor: C.sage, borderRadius: 16,
-    paddingVertical: 17, paddingHorizontal: 40, alignItems: 'center',
+    backgroundColor: C.forest, borderRadius: 28,
+    paddingVertical: 16, paddingHorizontal: 48,
+    marginBottom: 12,
   },
   primaryBtnText: { color: C.white, fontWeight: '700', fontSize: 17 },
   secondaryBtn: {
-    marginTop: 12, paddingVertical: 12, paddingHorizontal: 24,
-    borderRadius: 16, borderWidth: 2, borderColor: C.sage,
+    backgroundColor: C.white, borderWidth: 2, borderColor: C.forest,
+    borderRadius: 28, paddingVertical: 14, paddingHorizontal: 36,
+    marginBottom: 12,
   },
-  secondaryBtnText: { color: C.sage, fontWeight: '600', fontSize: 16 },
-  ghostBtn: { marginTop: 4, paddingVertical: 10 },
-  ghostBtnText: { fontSize: 15, color: C.muted },
-  resetBtn: { paddingVertical: 8 },
-  resetBtnText: { fontSize: 14, color: C.muted },
+  secondaryBtnText: { color: C.forest, fontWeight: '600', fontSize: 16 },
+  ghostBtn: { padding: 10, marginTop: 4 },
+  ghostBtnText: { fontSize: 14, color: C.muted },
 
-  encourageCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: C.sagePale, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: C.sageLight, marginBottom: 24,
-  },
-  encourageText: { flex: 1, fontSize: 15, color: C.forest, lineHeight: 22, fontStyle: 'italic' },
-
-  soundTitle: { fontSize: 12, fontWeight: '700', color: C.muted, letterSpacing: 1.5, marginBottom: 10 },
-  soundRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-  soundChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-    backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
-  },
-  soundChipActive: { borderColor: C.sage, backgroundColor: C.sagePale },
-  soundEmoji: { fontSize: 15 },
-  soundLabel: { fontSize: 13, fontWeight: '600', color: C.muted },
-  soundLabelActive: { color: C.sage },
-  soundNote: { fontSize: 12, color: C.muted, fontStyle: 'italic' },
-
-  doneEmoji: { fontSize: 52, marginTop: 16, marginBottom: 8 },
-  doneTitle: { fontSize: 28, fontWeight: '700', color: C.forest, textAlign: 'center' },
-  doneSub: { fontSize: 16, color: C.muted, textAlign: 'center', lineHeight: 25, marginVertical: 14, marginBottom: 20 },
-  pointsBadge: {
-    backgroundColor: C.peachPale, borderRadius: 20,
-    paddingVertical: 10, paddingHorizontal: 20, marginBottom: 28,
-    borderWidth: 1, borderColor: C.peachLight,
-  },
-  pointsBadgeText: { fontSize: 15, fontWeight: '700', color: C.peach },
+  doneEmoji:  { fontSize: 52, marginBottom: 16 },
+  doneTitle:  { fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 10 },
+  doneSub:    { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
 });

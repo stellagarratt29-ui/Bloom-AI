@@ -13,17 +13,22 @@ if (Platform.OS !== 'web') {
 import { AppProvider, useApp } from './src/context/AppContext';
 import { C } from './src/constants/colors';
 
-import OnboardingScreen from './src/screens/OnboardingScreen';
-import HomeScreen       from './src/screens/HomeScreen';
-import SprintScreen     from './src/screens/SprintScreen';
-import HobbiesScreen    from './src/screens/HobbiesScreen';
-import BuddyScreen      from './src/screens/BuddyScreen';
-import IdeaBankScreen   from './src/screens/IdeaBankScreen';
-import GoalsScreen      from './src/screens/GoalsScreen';
-import SettingsScreen   from './src/screens/SettingsScreen';
+import OnboardingScreen      from './src/screens/OnboardingScreen';
+import HomeScreen            from './src/screens/HomeScreen';
+import JournalScreen         from './src/screens/JournalScreen';
+import MoodCheckInScreen     from './src/screens/MoodCheckInScreen';
+import SprintScreen          from './src/screens/SprintScreen';
+import HobbiesScreen         from './src/screens/HobbiesScreen';
+import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
+import BuddyScreen           from './src/screens/BuddyScreen';
+import BloomChatScreen       from './src/screens/BloomChatScreen';
+import GoalsScreen           from './src/screens/GoalsScreen';
+import SettingsScreen        from './src/screens/SettingsScreen';
+import IdeaBankScreen        from './src/screens/IdeaBankScreen';
 
-const RootStack = createNativeStackNavigator();
+const RootStack   = createNativeStackNavigator();
 const HomeStackNav = createNativeStackNavigator();
+const GrowStackNav = createNativeStackNavigator();
 const BuddyStackNav = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -33,9 +38,9 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <View style={{ flex: 1, backgroundColor: '#FAF8F4', alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+        <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
           <Text style={{ fontSize: 32, marginBottom: 16 }}>🌸</Text>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#2D4A35', marginBottom: 12 }}>Something went wrong</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 12 }}>Something went wrong</Text>
           <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', fontFamily: 'monospace' }}>
             {this.state.error.message}
           </Text>
@@ -52,7 +57,7 @@ function TabIcon({ emoji, label, focused }) {
       <Text style={{ fontSize: 20 }}>{emoji}</Text>
       <Text style={{
         fontSize: 10, marginTop: 2, fontWeight: focused ? '700' : '500',
-        color: focused ? C.sage : C.muted,
+        color: focused ? C.forest : C.muted,
       }}>{label}</Text>
     </View>
   );
@@ -61,10 +66,25 @@ function TabIcon({ emoji, label, focused }) {
 function HomeStack() {
   return (
     <HomeStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStackNav.Screen name="Home"     component={HomeScreen} />
-      <HomeStackNav.Screen name="IdeaBank" component={IdeaBankScreen} />
-      <HomeStackNav.Screen name="Sprint"   component={SprintScreen} options={{ presentation: 'fullScreenModal' }} />
+      <HomeStackNav.Screen name="Home"        component={HomeScreen} />
+      <HomeStackNav.Screen name="Journal"     component={JournalScreen} />
+      <HomeStackNav.Screen name="MoodCheckIn" component={MoodCheckInScreen} />
+      <HomeStackNav.Screen name="IdeaBank"    component={IdeaBankScreen} />
+      <HomeStackNav.Screen
+        name="Sprint"
+        component={SprintScreen}
+        options={{ presentation: 'fullScreenModal' }}
+      />
     </HomeStackNav.Navigator>
+  );
+}
+
+function GrowStack() {
+  return (
+    <GrowStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <GrowStackNav.Screen name="HobbyGarden"     component={HobbiesScreen} />
+      <GrowStackNav.Screen name="ScreenAwareness" component={ScreenAwarenessScreen} />
+    </GrowStackNav.Navigator>
   );
 }
 
@@ -72,6 +92,7 @@ function BuddyStack() {
   return (
     <BuddyStackNav.Navigator screenOptions={{ headerShown: false }}>
       <BuddyStackNav.Screen name="BuddyMain" component={BuddyScreen} />
+      <BuddyStackNav.Screen name="BloomChat" component={BloomChatScreen} />
       <BuddyStackNav.Screen name="Settings"  component={SettingsScreen} />
     </BuddyStackNav.Navigator>
   );
@@ -95,17 +116,17 @@ function MainTabs() {
       <Tab.Screen
         name="HomeTab"
         component={HomeStack}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Home" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Today" focused={focused} /> }}
+      />
+      <Tab.Screen
+        name="GrowTab"
+        component={GrowStack}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌱" label="Grow" focused={focused} /> }}
       />
       <Tab.Screen
         name="Goals"
         component={GoalsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎯" label="Goals" focused={focused} /> }}
-      />
-      <Tab.Screen
-        name="Grow"
-        component={HobbiesScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌱" label="Grow" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌟" label="Growth" focused={focused} /> }}
       />
       <Tab.Screen
         name="Buddy"
@@ -118,10 +139,10 @@ function MainTabs() {
 
 function SplashScreen() {
   return (
-    <View style={{ flex: 1, backgroundColor: '#FAF8F4', alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ fontSize: 56 }}>🌸</Text>
-      <Text style={{ fontSize: 28, fontWeight: '700', color: '#2D4A35', marginTop: 14 }}>Bloom</Text>
-      <Text style={{ fontSize: 14, color: '#8A9B8C', marginTop: 6 }}>Gentle guidance. Real progress.</Text>
+      <Text style={{ fontSize: 28, fontWeight: '700', color: C.forest, marginTop: 14 }}>Bloom</Text>
+      <Text style={{ fontSize: 14, color: C.muted, marginTop: 6 }}>Gentle guidance. Real progress.</Text>
     </View>
   );
 }
