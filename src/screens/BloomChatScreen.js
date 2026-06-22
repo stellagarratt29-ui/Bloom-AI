@@ -7,7 +7,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { callClaude, buildBloomSystem, getApiKey } from '../services/ai';
+import { callClaude, buildBloomSystem, getApiKey, parseTasksWithAI } from '../services/ai';
 
 const STARTERS = [
   "What should I focus on today?",
@@ -124,7 +124,7 @@ function getFallback(msg, { userName, goals, tasks }) {
 }
 
 export default function BloomChatScreen({ navigation }) {
-  const { userName, goals, tasks, currentStreak, totalPoints, momentum, addTask } = useApp();
+  const { userName, goals, tasks, currentStreak, totalPoints, momentum, addTask, processBrainDump } = useApp();
 
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getInitialGreeting(userName) },
@@ -141,6 +141,35 @@ export default function BloomChatScreen({ navigation }) {
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
+  // Detect when the user is brain-dumping a list of tasks into the chat
+  function looksLikeTaskDump(text) {
+    const t = text.toLowerCase();
+    if (/here'?s? (what i|my) (need|have|want|gotta|tasks|list|to.?do)/i.test(text)) return true;
+    if (/i (need|have|gotta|want) to .{5,} and (i )?(also )?(need|have|gotta|want)/i.test(t)) return true;
+    if (text.includes('\n') && text.trim().split('\n').length >= 2) return true;
+    if ((text.match(/\band\b/gi) || []).length >= 2 && text.length > 40) return true;
+    return false;
+  }
+
+  function buildDumpReply(items, name) {
+    const n = name ? ` ${name}` : '';
+    const high = items.filter(i => i.priority === 'high');
+    const med  = items.filter(i => i.priority === 'medium');
+    const low  = items.filter(i => i.priority === 'low');
+    const goals = items.filter(i => i.category === 'goal');
+
+    let lines = [`Got it${n}. Added to Today:\n`];
+    if (high.length) lines.push(...high.map(i => `  - ${i.text}  [urgent]`));
+    if (med.length)  lines.push(...med.map(i =>  `  - ${i.text}`));
+    if (low.length)  lines.push(...low.map(i =>  `  - ${i.text}  [when you can]`));
+    if (goals.length) lines.push(`\nGoal spotted: "${goals[0].text}" — added to your Goals.`);
+
+    const top = high[0] || med[0];
+    if (top) lines.push(`\nStart with "${top.text}" — tap it on Today for a step-by-step guide.`);
+
+    return lines.join('\n');
+  }
+
   const send = async (text) => {
     const trimmed = text.trim();
     if (!trimmed || thinking) return;
@@ -152,14 +181,29 @@ export default function BloomChatScreen({ navigation }) {
     historyRef.current = [...historyRef.current, { role: 'user', content: trimmed }];
 
     if (!hasKey) {
-      const taskText = detectTaskAdd(trimmed);
       let reply;
-      if (taskText) {
-        addTask(taskText, 'medium');
-        reply = `Done — "${taskText}" is on your Today list. Anything else?`;
-      } else {
-        reply = getFallback(trimmed, { userName, goals, tasks });
+
+      // Brain dump detection — parse and add all tasks at once
+      if (looksLikeTaskDump(trimmed)) {
+        try {
+          const items = await parseTasksWithAI(trimmed);
+          if (items.length > 0) {
+            processBrainDump(items);
+            reply = buildDumpReply(items, userName);
+          }
+        } catch {}
       }
+
+      if (!reply) {
+        const taskText = detectTaskAdd(trimmed);
+        if (taskText) {
+          addTask(taskText, 'medium');
+          reply = `Done — "${taskText}" is on your Today list. Anything else?`;
+        } else {
+          reply = getFallback(trimmed, { userName, goals, tasks });
+        }
+      }
+
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
       scrollToEnd();
