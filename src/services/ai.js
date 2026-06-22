@@ -44,33 +44,84 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
   return data.content[0]?.text ?? '';
 }
 
-export function buildBloomSystem({ userName, buddy, goals, tasks, streak, totalPoints, momentum }) {
+export function buildBloomSystem({ userName, goals, tasks, streak, totalPoints, momentum }) {
   const name = userName || 'there';
-  const buddyName = buddy?.name || 'Bloom';
   const goalList = goals?.length ? goals.map(g => g.text).join('; ') : 'none set yet';
   const taskList = tasks?.filter(t => !t.done).slice(0, 6).map(t => `• ${t.text} [${t.priority}]`).join('\n') || 'none';
 
-  return `You are ${buddyName}, a warm, direct productivity companion inside the Bloom app.
+  return `You are Bloom, a calm and direct AI productivity assistant.
 
 About the user:
 - Name: ${name}
-- Year goal(s): ${goalList}
+- Year goals: ${goalList}
 - Today's pending tasks:\n${taskList}
-- Current streak: ${streak ?? 0} days
-- Total points: ${totalPoints ?? 0}  |  Momentum: ${momentum ?? 0}%
+- Streak: ${streak ?? 0} days  |  Points: ${totalPoints ?? 0}  |  Momentum: ${momentum ?? 0}%
 
-Personality: Supportive but honest. Practical, not fluffy. Keep replies to 2–4 sentences unless the user clearly wants more.
-Reference their actual tasks and goals when it's natural. If they seem overwhelmed, help them choose ONE thing.
-Never use hollow phrases like "Great question!" or "Absolutely!".`;
+Personality: Direct, warm, practical. Keep replies to 2–4 sentences unless asked for more.
+Reference their actual tasks and goals naturally. If overwhelmed, help them pick ONE thing.
+Never use filler phrases like "Great question!" or "Absolutely!".`;
 }
 
+// Rule-based categoriser — works without an API key
+function categoriseWithRules(rawText) {
+  const lines = rawText
+    .split(/[\n;]|\band\b/gi)
+    .flatMap(c => c.split(/[.!?]+/))
+    .map(s => s.trim().replace(/^[-•·*\d.]+\s*/, ''))
+    .filter(s => s.length > 2);
+
+  return lines.map(text => {
+    const t = text.toLowerCase();
+    let category = 'task';
+    let priority = 'medium';
+
+    // Goals: big aspirations, financial targets, major life changes
+    if (
+      /\b(become a|start a|launch a|build a|grow a|open a)\b/.test(t) ||
+      /\b(make|earn|save|hit)\b.*\b(\d+k|\d+ (grand|thousand|million))\b/.test(t) ||
+      /\b(write a book|publish|get a degree|move to|buy a (house|flat|car)|run a marathon|learn .+fluent|quit my job|start my own)\b/.test(t)
+    ) {
+      category = 'goal';
+    }
+    // Hobbies: creative or skill-building activities done for personal growth
+    else if (
+      /\b(guitar|piano|violin|drums|singing|dancing|paint(ing)?|draw(ing)?|sketch(ing)?|journal(ling|ing)?|meditat(e|ion|ing)|yoga|cook(ing)?|bak(e|ing)|garden(ing)?|knit(ting)?|sew(ing)?|crochet|craft(ing)?|photograph(y|ing)|sculpt(ing)?|pottery|ceramics|creative writing|reading for fun)\b/.test(t) ||
+      /\bwork on (my |the )?(painting|drawing|music|song|novel|blog|art|portfolio|book)\b/.test(t) ||
+      /\bpractice (my |the )?(guitar|piano|violin|singing|dancing|art|drawing)\b/.test(t)
+    ) {
+      category = 'hobby';
+    }
+
+    // Priority for tasks only
+    if (category === 'task') {
+      if (/\b(urgent|important|must|asap|today|due|deadline|overdue|critical|need to|have to|got to|right away)\b/i.test(t)) priority = 'high';
+      else if (/\b(maybe|could|eventually|later|sometime|want to|might|would love|one day|when i can)\b/i.test(t)) priority = 'low';
+    }
+
+    return {
+      text: text.charAt(0).toUpperCase() + text.slice(1),
+      category,
+      priority,
+    };
+  }).filter(i => i.text.length > 2);
+}
+
+// Parses brain dump → [{text, category: 'task'|'goal'|'hobby', priority}]
 export async function parseTasksWithAI(rawText) {
+  const key = await getApiKey();
+  if (!key) return categoriseWithRules(rawText);
+
   const reply = await callClaude({
-    system: `You convert brain-dump text into a prioritised task list.
+    system: `You categorise a brain dump into goals, tasks, and hobbies.
 Return ONLY a JSON array — no markdown, no explanation.
-Schema: [{"text": "Task description", "priority": "high"|"medium"|"low"}]
-Priority: high = urgent/deadline/appointment/call/email today; low = maybe/eventually/someday; medium = everything else.
-Clean text: fix capitalisation, trim filler, keep each item concise. Merge duplicates.`,
+Schema: [{"text": "clean item text", "category": "task"|"goal"|"hobby", "priority": "high"|"medium"|"low"}]
+
+Rules:
+- "goal": big life aspirations, financial targets, career changes, major milestones (make 10k, start a business, write a book, move city, get a degree)
+- "hobby": creative or skill-building done for personal growth/joy (paint, guitar, yoga, journalling, cooking, reading)
+- "task": specific to-dos, errands, appointments, work items (email someone, call doctor, finish report, buy groceries)
+- priority applies mainly to tasks: high=urgent/today, medium=this week, low=someday/maybe
+Clean up text: fix capitalisation, trim filler words, keep each item concise.`,
     messages: [{ role: 'user', content: rawText }],
     maxTokens: 900,
   });
@@ -78,7 +129,7 @@ Clean text: fix capitalisation, trim filler, keep each item concise. Merge dupli
   const clean = reply.trim().replace(/^```json?\n?/, '').replace(/\n?```$/, '');
   const parsed = JSON.parse(clean);
   if (!Array.isArray(parsed)) throw new Error('Bad format');
-  return parsed.filter(t => t.text && ['high', 'medium', 'low'].includes(t.priority));
+  return parsed.filter(i => i.text && ['task', 'goal', 'hobby'].includes(i.category));
 }
 
 export async function generateGoalAdvice(goalText) {

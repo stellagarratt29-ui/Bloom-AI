@@ -230,6 +230,23 @@ export function AppProvider({ children }) {
     setLastJournalDate(todayStr());
   }, []);
 
+  // Routes categorised brain dump: tasks/hobbies → today list, goals → goals list
+  const processBrainDump = useCallback((items) => {
+    const taskItems = items.filter(i => i.category !== 'goal');
+    const goalItems = items.filter(i => i.category === 'goal');
+
+    if (taskItems.length > 0) {
+      setTasks(taskItems.map(({ text, priority }) => makeTask(text, priority ?? 'medium')));
+    }
+    goalItems.forEach(g => {
+      setGoals(prev => {
+        if (prev.some(x => x.text.toLowerCase() === g.text.toLowerCase())) return prev;
+        return [...prev, makeGoal(g.text)];
+      });
+    });
+    setLastJournalDate(todayStr());
+  }, []);
+
   const addGoal = useCallback((text) => {
     setGoals(prev => [...prev, makeGoal(text)]);
   }, []);
@@ -263,7 +280,7 @@ export function AppProvider({ children }) {
       loaded,
       hasOnboarded, finishOnboarding,
       hasDoneJournalToday: lastJournalDate === todayStr(),
-      processDump, loadTasks,
+      processDump, loadTasks, processBrainDump,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
       ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
       selectedHobbies, toggleHobby,

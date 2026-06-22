@@ -108,6 +108,7 @@ export default function HomeScreen({ navigation }) {
   const {
     tasks, toggleTask, addTask, processDump, loadTasks,
     selectedHobbies, hobbyProgress, goals, userName,
+    hasDoneJournalToday,
   } = useApp();
 
   const [dumpText, setDumpText] = useState('');
@@ -167,10 +168,23 @@ export default function HomeScreen({ navigation }) {
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const isMorning = hour < 11;
+  const showMorningPrompt = isMorning && !hasDoneJournalToday;
 
   return (
     <SafeAreaView style={s.safe}>
-      {/* Brain dump bar */}
+      {/* Morning brain dump prompt */}
+      {showMorningPrompt && (
+        <TouchableOpacity style={s.morningBanner} onPress={() => navigation.navigate('Journal')}>
+          <View style={s.morningBannerLeft}>
+            <Feather name="sun" size={16} color={C.forest} />
+            <Text style={s.morningBannerText}>Morning brain dump — tap to start</Text>
+          </View>
+          <Feather name="arrow-right" size={16} color={C.forest} />
+        </TouchableOpacity>
+      )}
+
+      {/* Quick add bar */}
       <View style={s.chatBar}>
         <TextInput
           ref={inputRef}
@@ -290,6 +304,14 @@ export default function HomeScreen({ navigation }) {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.cream },
+
+  morningBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: C.sagePale, borderBottomWidth: 1, borderBottomColor: C.sageLight,
+    paddingHorizontal: 18, paddingVertical: 12,
+  },
+  morningBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  morningBannerText: { fontSize: 14, fontWeight: '600', color: C.forest },
 
   chatBar: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 10,

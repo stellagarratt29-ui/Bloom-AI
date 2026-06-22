@@ -7,7 +7,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { getApiKey, parseTasksWithAI } from '../services/ai';
+import { parseTasksWithAI } from '../services/ai';
 
 function greeting() {
   const h = new Date().getHours();
@@ -77,15 +77,16 @@ function useSpeechRecognition({ onTranscript, onInterim }) {
 }
 
 export default function JournalScreen({ navigation }) {
-  const { userName, processDump, loadTasks } = useApp();
-  const [text, setText]             = useState('');
+  const { userName, processDump, processBrainDump } = useApp();
+  const [text, setText]               = useState('');
   const [interimText, setInterimText] = useState('');
-  const [processing, setProcessing]  = useState(false);
+  const [processing, setProcessing]   = useState(false);
+  const [processingLabel, setProcessingLabel] = useState('Sorting…');
   const fadeAnim  = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pulseLoop = useRef(null);
 
-  const name = userName || 'Stella';
+  const name = userName || 'you';
 
   const { listening, supported, error: micError, start, stop } = useSpeechRecognition({
     onTranscript: (transcript) => {
@@ -116,32 +117,27 @@ export default function JournalScreen({ navigation }) {
     else startListening();
   };
 
-  const [processingLabel, setProcessingLabel] = useState('Organising…');
-
   const handleDone = async () => {
     if (listening) stopListening();
     if (!text.trim()) { navigation.navigate('Home'); return; }
     setProcessing(true);
 
+    const finish = (items) => {
+      Animated.timing(fadeAnim, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => {
+        processBrainDump(items);
+        navigation.navigate('Home');
+      });
+    };
+
     try {
-      const key = await getApiKey();
-      if (key) {
-        setProcessingLabel('Bloom is thinking…');
-        const parsed = await parseTasksWithAI(text);
-        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-          loadTasks(parsed);
-          navigation.navigate('Home');
-        });
-      } else {
-        setProcessingLabel('Organising…');
-        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-          processDump(text);
-          navigation.navigate('Home');
-        });
-      }
+      setProcessingLabel('Bloom is sorting…');
+      // parseTasksWithAI handles the API key check internally and falls back to rules
+      const items = await parseTasksWithAI(text);
+      finish(items);
     } catch {
-      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-        processDump(text);
+      setProcessingLabel('Sorting…');
+      processDump(text);
+      Animated.timing(fadeAnim, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => {
         navigation.navigate('Home');
       });
     }
@@ -156,17 +152,10 @@ export default function JournalScreen({ navigation }) {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={s.stepRow}>
-              {[0, 1, 2].map(i => (
-                <View key={i} style={[s.dot, i === 0 && s.dotActive]} />
-              ))}
-            </View>
-
-            <Feather name="feather" size={26} color={C.sage} style={{ marginBottom: 14 }} />
-            <Text style={s.heading}>{greeting()},{'\n'}{name}.</Text>
+            <Text style={s.heading}>{greeting()},</Text>
+            <Text style={s.heading}>{name}.</Text>
             <Text style={s.sub}>
-              What's on your mind today? Dump it all here — tasks, worries,
-              ideas, errands. I'll sort it for you.
+              What's on your mind? Tasks, goals, worries, errands — dump it all. Bloom will sort it into your day.
             </Text>
 
             <View style={[s.dumpWrap, listening && s.dumpWrapActive]}>
@@ -219,12 +208,12 @@ export default function JournalScreen({ navigation }) {
             )}
 
             <Text style={s.hint}>
-              Bloom will figure out what's urgent, what's nice-to-do, and put it in order for you.
+              Goals go to your Goals list. Tasks go to Today. Bloom handles the sorting.
             </Text>
 
             <View style={s.actions}>
               <TouchableOpacity style={s.skipBtn} onPress={() => navigation.navigate('Home')}>
-                <Text style={s.skipText}>Skip today</Text>
+                <Text style={s.skipText}>Skip</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.doneBtn, !text.trim() && s.doneBtnOff]}
@@ -232,7 +221,7 @@ export default function JournalScreen({ navigation }) {
                 disabled={processing}
               >
                 <Text style={s.doneBtnText}>
-                  {processing ? processingLabel : 'Build my day →'}
+                  {processing ? processingLabel : 'Sort my day →'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -247,14 +236,10 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: C.cream },
   container: { flex: 1 },
-  scroll: { paddingHorizontal: 26, paddingTop: 20, paddingBottom: 48, flexGrow: 1 },
+  scroll: { paddingHorizontal: 26, paddingTop: 28, paddingBottom: 48, flexGrow: 1 },
 
-  stepRow: { flexDirection: 'row', gap: 6, marginBottom: 24 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.border },
-  dotActive: { backgroundColor: C.forest, width: 20 },
-
-  heading: { fontSize: 36, fontWeight: '700', color: C.forest, lineHeight: 44, marginBottom: 12 },
-  sub:     { fontSize: 15, color: C.muted, lineHeight: 24, marginBottom: 20 },
+  heading: { fontSize: 38, fontWeight: '800', color: C.forest, lineHeight: 46, letterSpacing: -0.5 },
+  sub:     { fontSize: 15, color: C.muted, lineHeight: 24, marginTop: 10, marginBottom: 24 },
 
   dumpWrap: {
     backgroundColor: C.white, borderRadius: 18,
