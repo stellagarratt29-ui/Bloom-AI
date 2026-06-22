@@ -38,48 +38,89 @@ function getFallback(msg, { userName, goals, tasks }) {
   const m = msg.toLowerCase().trim();
   const name = userName ? ` ${userName}` : '';
 
+  // Greetings
   if (/^(hi+|hey+|hello+|yo+|sup|howdy|good\s*(morning|afternoon|evening|night))[\s!?.]*$/.test(m))
     return `Hey${name}. What's on your mind today — tasks, worries, things you want to get done?`;
+
+  // Thanks / acknowledgements
   if (/^(thanks?|thank you|cheers|ok+|okay|got it|perfect|great|nice|cool|sounds good|awesome|fab)[\s!.]*$/.test(m))
     return `Anytime${name}. Anything else?`;
+
+  // Bye
   if (/^(bye|goodbye|see ya|cya|later|ttyl|gotta go)[\s!.]*$/.test(m))
     return `Talk soon${name}.`;
-  if (/how are you|how('re| are) you doing|you ok\??$/.test(m))
+
+  // How are you
+  if (/how are you|how('re| are) you doing|you ok\??/.test(m))
     return `I'm here for you. How are YOU doing — what's on your plate?`;
-  if (/overwhelm|stress|too much|can'?t cope|anxious|anxiety|panic|freak/.test(m))
-    return `That feeling is real. Here's what helps: pick just ONE task — the smallest thing — and only do that. What is it?`;
-  if (/tired|exhausted|no energy|drained|burnt? ?out|fatigue|sleep/.test(m))
-    return `Your body is telling you something. Rest is productive. If you must push through — what's the single most important thing today?`;
-  if (/can'?t start|can'?t begin|procrastinat|don'?t know where to start|where do i start|stuck/.test(m))
-    return `Start anywhere. Pick the smallest task, set a 10-minute timer, and begin. Which one?`;
-  if (/focus|distract|keep getting distract|can'?t concentrate/.test(m))
-    return `Close every other tab. Phone face-down. 25-minute timer. One thing only. What's that one thing?`;
-  if (/goal|progress|how am i doing|on track|am i doing well/.test(m)) {
-    const g = goals?.[0]?.text;
-    if (g) return `Your goal is "${g}". What could you do in the next hour toward it?`;
-    return `Set a goal — tap the target icon — and I can help you track it.`;
+
+  // Time / date questions — can't answer, redirect nicely
+  if (/what (time|day|date|month|year) is it|what's the (time|date)|current time|today's date/.test(m)) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    return `It's ${timeStr} on ${dateStr}. Anything on your mind for today?`;
   }
-  if (/what should i (do|focus|work on)|today|my tasks|my list|where do i start/.test(m)) {
+
+  // What should I focus on / what to do today — check tasks FIRST
+  if (/what should i (do|focus on|work on)|what('s| is) (most important|next|first)|where (do i|should i) start|my tasks|my list/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     if (pending.length > 0) {
       const top = pending.find(t => t.priority === 'high') || pending[0];
-      return `Your most important task: "${top.text}". Go to Today and tap it to break it down.`;
+      return `Your most important task right now: "${top.text}". Head to Today and tap it — I'll break it into steps for you.`;
     }
-    return `Your list is clear. Add something in the Today tab.`;
+    return `Your list is clear${name}. What do you need to get done today? Tell me and I'll add it.`;
   }
-  if (/calendar|cal|schedule/.test(m))
-    return `Added to your task list. (Google Calendar sync is coming soon.)`;
-  if (/habit|routine|every day|daily|consistent/.test(m))
-    return `The best habit is one you'll actually do. What's one tiny thing you could commit to every single day?`;
+
+  // Overwhelm / stress
+  if (/overwhelm|stress|too much|can'?t cope|anxious|anxiety|panic/.test(m))
+    return `That feeling is real. Here's what helps: pick just ONE task — the smallest thing — and only do that. What is it?`;
+
+  // Tired / burnt out
+  if (/tired|exhausted|no energy|drained|burnt? ?out|fatigue/.test(m))
+    return `Your body is telling you something. Rest is productive. If you must push through — what's the single most important thing today?`;
+
+  // Can't start / stuck
+  if (/can'?t start|can'?t begin|procrastinat|don'?t know where to start|stuck/.test(m))
+    return `Start anywhere. Pick the smallest task, set a 10-minute timer, and just begin. Which task?`;
+
+  // Focus / distraction (must come AFTER the "what should I focus on" check above)
+  if (/can'?t focus|hard to focus|keep getting distract|can'?t concentrate|losing focus/.test(m))
+    return `Close every other tab. Phone face-down. 25-minute timer. One thing only. What's that one thing?`;
+
+  // Goal / progress
+  if (/goal|progress|how am i doing|on track|am i doing well/.test(m)) {
+    const g = goals?.[0]?.text;
+    if (g) return `Your goal is "${g}". What could you do in the next hour toward it?`;
+    return `Set a goal — tap the target icon top right — and I can help you track it and figure out next steps.`;
+  }
+
+  // Motivation
   if (/motivat|can'?t be bothered|don'?t feel like|no motivation|lazy/.test(m))
     return `Motivation follows action. Start for just 2 minutes — you'll usually keep going. First tiny step?`;
+
+  // Habit / routine
+  if (/habit|routine|every day|daily|consistent/.test(m))
+    return `The best habit is one you'll actually do. What's one tiny thing you could commit to every single day?`;
+
+  // Calendar / schedule
+  if (/calendar|schedule/.test(m))
+    return `Google Calendar sync is coming soon. For now, tell me what's on your schedule and I'll add it to Today.`;
+
+  // Who/what am I
   if (/what can you do|what are you|who are you|are you an ai|are you real/.test(m))
-    return `I'm Bloom — your productivity assistant. I can help you plan, add tasks, break things down, and talk through what's on your mind.`;
+    return `I'm Bloom — your AI productivity assistant. I can help you plan your day, add tasks, break things down, and talk through what's on your mind.`;
+
+  // Yes/no alone
   if (/^(yes+|no+|nah|nope|yep|yeah|sure|maybe|idk|dunno)[\s!.?]*$/.test(m))
     return `Got it. What's next?`;
+
+  // Very short messages
   if (m.split(' ').length <= 2 && m.length < 20)
-    return `What are you working on today?`;
-  return `I hear you. What's the most important thing you need to get done today?`;
+    return `What are you working on today${name}?`;
+
+  // Catch-all
+  return `Got it${name}. What's the most important thing you need to get done today?`;
 }
 
 export default function BloomChatScreen({ navigation }) {
