@@ -1,15 +1,15 @@
 export const C = {
-  cream:      '#F4EFE6',
-  forest:     '#1C3320',
-  sage:       '#5E8C6A',
-  sageMid:    '#92B89A',
-  sageLight:  '#C2DABD',
-  sagePale:   '#E4F0E2',
-  peach:      '#B5634A',
+  cream:      '#FAF8F5',   // pearl linen background
+  forest:     '#2D1A24',   // deep warm plum (text, dark buttons)
+  sage:       '#C8776B',   // coral rose (main accent)
+  sageMid:    '#D99E94',   // mid coral
+  sageLight:  '#EDCDC7',   // light blush coral
+  sagePale:   '#FCF0EE',   // pale blush
+  peach:      '#B5634A',   // terracotta
   peachLight: '#EBD0C6',
   peachPale:  '#FAF0EB',
-  muted:      '#8A7F76',
-  border:     '#DDD5C8',
+  muted:      '#9A888A',   // warm muted rose-grey
+  border:     '#EDE0DB',   // warm blush border
   white:      '#FFFFFF',
-  overlay:    'rgba(28,51,32,0.35)',
+  overlay:    'rgba(45,26,36,0.35)',
 };

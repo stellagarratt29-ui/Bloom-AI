@@ -359,7 +359,7 @@ const s = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: C.border,
   },
   headerTitle: {
-    fontSize: 32, fontWeight: '800', color: C.forest, letterSpacing: -0.8,
+    fontSize: 32, fontWeight: '800', color: C.sage, letterSpacing: -0.8,
   },
   headerSub: { fontSize: 12, color: C.muted, marginTop: 1, fontWeight: '500' },
   headerIcons: { flexDirection: 'row', gap: 4 },

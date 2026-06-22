@@ -138,7 +138,7 @@ const deskS = StyleSheet.create({
     paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
   },
   logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
-  logoText: { fontSize: 24, fontWeight: '800', color: C.forest, letterSpacing: -0.5 },
+  logoText: { fontSize: 24, fontWeight: '800', color: C.sage, letterSpacing: -0.5 },
   logoSub:  { fontSize: 11, color: C.muted, marginTop: 2 },
   navItem: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
