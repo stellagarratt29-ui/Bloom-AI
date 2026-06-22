@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput,
   ScrollView, SafeAreaView, StyleSheet, Animated,
@@ -8,6 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { HOBBIES } from '../constants/data';
+import { getApiKey, generateGoalAdvice } from '../services/ai';
 
 const GOAL_ADVICE = [
   {
@@ -106,6 +107,21 @@ export default function HomeScreen({ navigation }) {
 
   const [newTaskText, setNewTaskText] = useState('');
   const inputRef = useRef(null);
+  const [aiAdvice, setAiAdvice] = useState(null);
+  const adviceGoalRef = useRef('');
+
+  useEffect(() => {
+    const goalText = goals?.[0]?.text;
+    if (!goalText || goalText === adviceGoalRef.current) return;
+    adviceGoalRef.current = goalText;
+    setAiAdvice(null);
+    getApiKey().then(key => {
+      if (!key) return;
+      generateGoalAdvice(goalText)
+        .then(advice => setAiAdvice(advice))
+        .catch(() => {});
+    });
+  }, [goals]);
 
   const submitTask = () => {
     const trimmed = newTaskText.trim();
@@ -126,7 +142,7 @@ export default function HomeScreen({ navigation }) {
   const pending = tasks.filter(t => !t.done);
   const done    = tasks.filter(t => t.done);
 
-  const goalAdvice = getGoalAdvice(goals?.[0]?.text);
+  const goalAdvice = aiAdvice ?? getGoalAdvice(goals?.[0]?.text);
 
   const genericNudge = (() => {
     const active = HOBBIES.find(h =>

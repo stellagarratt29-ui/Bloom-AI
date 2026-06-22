@@ -9,6 +9,7 @@ import { C } from '../constants/colors';
 import { BUDDIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
 import BuddyAvatar from '../components/BuddyAvatar';
+import { getApiKey, saveApiKey } from '../services/ai';
 
 const LEVELS = [
   { min: 0,    label: 'Seedling',   icon: 'feather'   },
@@ -50,9 +51,30 @@ export default function SettingsScreen({ navigation }) {
     );
   };
 
-  const [nameInput, setNameInput] = useState(userName);
+  const [nameInput, setNameInput]   = useState(userName);
   const [notificationsOn, setNotificationsOn] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved]           = useState(false);
+  const [apiKey, setApiKey]         = useState('');
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [showKey, setShowKey]       = useState(false);
+  const [keyStatus, setKeyStatus]   = useState(null); // null | 'set' | 'cleared'
+
+  React.useEffect(() => {
+    getApiKey().then(k => { if (k) { setApiKey(k); setKeyStatus('set'); } });
+  }, []);
+
+  const handleSaveKey = async () => {
+    await saveApiKey(apiKey);
+    setKeyStatus(apiKey.trim() ? 'set' : 'cleared');
+    setApiKeySaved(true);
+    setTimeout(() => setApiKeySaved(false), 2000);
+  };
+
+  const handleClearKey = async () => {
+    await saveApiKey('');
+    setApiKey('');
+    setKeyStatus('cleared');
+  };
 
   const handleSaveName = () => {
     setUserName(nameInput.trim());
@@ -188,6 +210,59 @@ export default function SettingsScreen({ navigation }) {
           )}
         </View>
 
+        <Text style={s.sectionLabel}>AI FEATURES</Text>
+        <View style={s.card}>
+          <View style={s.aiStatusRow}>
+            <Feather
+              name={keyStatus === 'set' ? 'check-circle' : 'circle'}
+              size={16}
+              color={keyStatus === 'set' ? C.sage : C.muted}
+            />
+            <Text style={[s.aiStatus, keyStatus === 'set' && { color: C.sage }]}>
+              {keyStatus === 'set' ? 'AI connected' : 'AI not connected'}
+            </Text>
+          </View>
+          <Text style={s.fieldLabel}>Anthropic API key</Text>
+          <View style={s.keyRow}>
+            <TextInput
+              style={s.keyInput}
+              placeholder="sk-ant-api03-…"
+              placeholderTextColor={C.muted}
+              value={apiKey}
+              onChangeText={setApiKey}
+              secureTextEntry={!showKey}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity onPress={() => setShowKey(v => !v)} style={s.eyeBtn}>
+              <Feather name={showKey ? 'eye-off' : 'eye'} size={18} color={C.muted} />
+            </TouchableOpacity>
+          </View>
+          <View style={s.keyActions}>
+            <TouchableOpacity
+              style={[s.saveBtn, !apiKey.trim() && s.saveBtnOff]}
+              onPress={handleSaveKey}
+              disabled={!apiKey.trim()}
+            >
+              <Text style={s.saveBtnText}>{apiKeySaved ? '✓ Saved' : 'Save key'}</Text>
+            </TouchableOpacity>
+            {keyStatus === 'set' && (
+              <TouchableOpacity onPress={handleClearKey} style={s.clearKeyBtn}>
+                <Text style={s.clearKeyText}>Remove</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={s.aiHint}>
+            Get a free key at console.anthropic.com → API Keys.{'\n'}
+            Your key is stored only on this device and is never shared.
+          </Text>
+          <View style={s.aiFeatureList}>
+            <Text style={s.aiFeatureItem}>• Brain dump parsed by Claude (not just keywords)</Text>
+            <Text style={s.aiFeatureItem}>• Real conversations with your buddy</Text>
+            <Text style={s.aiFeatureItem}>• Personalised goal advice & plans</Text>
+          </View>
+        </View>
+
         <Text style={s.sectionLabel}>YOUR PLAN</Text>
         <View style={s.planCard}>
           <View style={s.planTop}>
@@ -295,6 +370,25 @@ const s = StyleSheet.create({
   },
   premiumLabel: { fontSize: 13, fontWeight: '700', color: C.peach, marginBottom: 8 },
   premiumItem: { fontSize: 13, color: C.forest, lineHeight: 22 },
+
+  aiStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 },
+  aiStatus: { fontSize: 13, fontWeight: '600', color: C.muted },
+  keyRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 12, marginBottom: 10, paddingRight: 4,
+  },
+  keyInput: {
+    flex: 1, fontSize: 14, color: C.forest,
+    paddingVertical: 11, paddingHorizontal: 14,
+  },
+  eyeBtn: { padding: 10 },
+  keyActions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  clearKeyBtn: { padding: 8 },
+  clearKeyText: { fontSize: 13, color: C.muted, textDecorationLine: 'underline' },
+  aiHint: { fontSize: 12, color: C.muted, lineHeight: 18, marginBottom: 10 },
+  aiFeatureList: { backgroundColor: C.sagePale, borderRadius: 10, padding: 12 },
+  aiFeatureItem: { fontSize: 13, color: C.forest, lineHeight: 22 },
 
   appInfo: { fontSize: 12, color: C.muted, textAlign: 'center', marginBottom: 12 },
   resetBtn: { alignItems: 'center', paddingVertical: 10, marginBottom: 8 },

@@ -228,6 +228,11 @@ export function AppProvider({ children }) {
     setLastJournalDate(todayStr());
   }, []);
 
+  const loadTasks = useCallback((list) => {
+    setTasks(list.map(({ text, priority }) => makeTask(text, priority ?? 'medium')));
+    setLastJournalDate(todayStr());
+  }, []);
+
   const addGoal = useCallback((text) => {
     setGoals(prev => [...prev, makeGoal(text)]);
   }, []);
@@ -262,7 +267,7 @@ export function AppProvider({ children }) {
       loaded,
       hasOnboarded, finishOnboarding,
       hasDoneJournalToday: lastJournalDate === todayStr(),
-      processDump,
+      processDump, loadTasks,
       buddy, setBuddy,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
       ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,

@@ -7,6 +7,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import { getApiKey, parseTasksWithAI } from '../services/ai';
 
 function greeting() {
   const h = new Date().getHours();
@@ -76,7 +77,7 @@ function useSpeechRecognition({ onTranscript, onInterim }) {
 }
 
 export default function JournalScreen({ navigation }) {
-  const { userName, processDump } = useApp();
+  const { userName, processDump, loadTasks } = useApp();
   const [text, setText]             = useState('');
   const [interimText, setInterimText] = useState('');
   const [processing, setProcessing]  = useState(false);
@@ -115,14 +116,35 @@ export default function JournalScreen({ navigation }) {
     else startListening();
   };
 
-  const handleDone = () => {
+  const [processingLabel, setProcessingLabel] = useState('Organising…');
+
+  const handleDone = async () => {
     if (listening) stopListening();
     if (!text.trim()) { navigation.navigate('Home'); return; }
     setProcessing(true);
-    Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-      processDump(text);
-      navigation.navigate('Home');
-    });
+
+    try {
+      const key = await getApiKey();
+      if (key) {
+        setProcessingLabel('Bloom is thinking…');
+        const parsed = await parseTasksWithAI(text);
+        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+          loadTasks(parsed);
+          navigation.navigate('Home');
+        });
+      } else {
+        setProcessingLabel('Organising…');
+        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+          processDump(text);
+          navigation.navigate('Home');
+        });
+      }
+    } catch {
+      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+        processDump(text);
+        navigation.navigate('Home');
+      });
+    }
   };
 
   return (
@@ -210,7 +232,7 @@ export default function JournalScreen({ navigation }) {
                 disabled={processing}
               >
                 <Text style={s.doneBtnText}>
-                  {processing ? 'Organising…' : 'Build my day →'}
+                  {processing ? processingLabel : 'Build my day →'}
                 </Text>
               </TouchableOpacity>
             </View>
