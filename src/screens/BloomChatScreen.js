@@ -16,116 +16,77 @@ const STARTERS = [
   "How am I doing with my goal?",
 ];
 
-function getInitialGreeting(userName, buddyName) {
+function getInitialGreeting(userName) {
   const h = new Date().getHours();
   const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
   const name = userName ? `, ${userName}` : '';
-  return `${greet}${name}! I'm ${buddyName ?? 'Bloom'}. What's on your mind?`;
+  return `${greet}${name}. What's on your mind?`;
 }
 
-// Returns task text if message is an add-task request, otherwise null
 function detectTaskAdd(msg) {
   const lower = msg.toLowerCase().trim();
-
-  // Explicit: "add dentist appointment", "remind me to call mum", etc.
   const explicit = lower.match(
     /^(?:add|remind me to|put|i need to|don'?t let me forget to?|can you add|please add|schedule)\s+(.+?)(?:\s+(?:to|on|in)\s+(?:my\s+)?(?:list|calendar|cal|tasks?|schedule))?[.!?]?$/
   );
   if (explicit) return explicit[1].trim();
-
-  // Short action phrases: "dentist appointment", "call mum", "buy milk"
   const shortAction = /^(?:dentist|doctor|hospital|meeting|appointment|call|email|text|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
   if (shortAction && lower.split(' ').length <= 8) return msg.trim();
-
   return null;
 }
 
-function getFallback(msg, { userName, goals, tasks, buddyName }) {
+function getFallback(msg, { userName, goals, tasks }) {
   const m = msg.toLowerCase().trim();
   const name = userName ? ` ${userName}` : '';
 
-  // Greetings
   if (/^(hi+|hey+|hello+|yo+|sup|howdy|good\s*(morning|afternoon|evening|night))[\s!?.]*$/.test(m))
-    return `Hey${name}! What's on your mind today — tasks, worries, things you want to get done? I'm here to help.`;
-
-  // Thanks / acknowledgements
+    return `Hey${name}. What's on your mind today — tasks, worries, things you want to get done?`;
   if (/^(thanks?|thank you|cheers|ok+|okay|got it|perfect|great|nice|cool|sounds good|awesome|fab)[\s!.]*$/.test(m))
-    return `Anytime${name}! Is there anything else I can help you with?`;
-
-  // Bye
+    return `Anytime${name}. Anything else?`;
   if (/^(bye|goodbye|see ya|cya|later|ttyl|gotta go)[\s!.]*$/.test(m))
-    return `See you later${name}! Come back whenever you need to plan your day.`;
-
-  // How are you?
+    return `Talk soon${name}.`;
   if (/how are you|how('re| are) you doing|you ok\??$/.test(m))
-    return `I'm just here to help you! How are YOU doing — what's on your plate today?`;
-
-  // Overwhelm / stress / anxiety
+    return `I'm here for you. How are YOU doing — what's on your plate?`;
   if (/overwhelm|stress|too much|can'?t cope|anxious|anxiety|panic|freak/.test(m))
-    return `That feeling is real, and it's okay. Here's what actually helps: pick just ONE task — the smallest thing — and only do that. What is it?`;
-
-  // Tired / burnt out
+    return `That feeling is real. Here's what helps: pick just ONE task — the smallest thing — and only do that. What is it?`;
   if (/tired|exhausted|no energy|drained|burnt? ?out|fatigue|sleep/.test(m))
-    return `Your body is telling you something. Rest IS productive. If you must push through — what's the single most important thing you need to do today?`;
-
-  // Can't start / procrastination
+    return `Your body is telling you something. Rest is productive. If you must push through — what's the single most important thing today?`;
   if (/can'?t start|can'?t begin|procrastinat|don'?t know where to start|where do i start|stuck/.test(m))
-    return `Start anywhere. Pick the task that feels smallest, set a 10-minute timer, and just begin. Which task do you want to try first?`;
-
-  // Focus / distraction
+    return `Start anywhere. Pick the smallest task, set a 10-minute timer, and begin. Which one?`;
   if (/focus|distract|keep getting distract|can'?t concentrate/.test(m))
-    return `Try this: close every other tab, put your phone face-down, set a 25-minute timer, and work on ONE thing only. What's that one thing?`;
-
-  // Goal / progress
+    return `Close every other tab. Phone face-down. 25-minute timer. One thing only. What's that one thing?`;
   if (/goal|progress|how am i doing|on track|am i doing well/.test(m)) {
     const g = goals?.[0]?.text;
-    if (g) return `Your goal is "${g}". Best way to make progress? One small action today. What could you do in the next hour toward it?`;
-    return `Set a goal in the Goals tab and I can help you track it and figure out next steps!`;
+    if (g) return `Your goal is "${g}". What could you do in the next hour toward it?`;
+    return `Set a goal — tap the target icon — and I can help you track it.`;
   }
-
-  // What should I do today
   if (/what should i (do|focus|work on)|today|my tasks|my list|where do i start/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     if (pending.length > 0) {
       const top = pending.find(t => t.priority === 'high') || pending[0];
-      return `Your most important task right now: "${top.text}". Tap it on the Today tab to see how to do it step by step.`;
+      return `Your most important task: "${top.text}". Go to Today and tap it to break it down.`;
     }
-    return `Your list is clear! Type anything in the chat bar on the Today tab — tasks, worries, or your whole morning brain dump.`;
+    return `Your list is clear. Add something in the Today tab.`;
   }
-
-  // Calendar / schedule requests
   if (/calendar|cal|schedule/.test(m))
-    return `I've added that to your task list! Check the Today tab. (Google Calendar sync is coming soon.)`;
-
-  // Habit / routine
+    return `Added to your task list. (Google Calendar sync is coming soon.)`;
   if (/habit|routine|every day|daily|consistent/.test(m))
-    return `The best habit is one you'll actually do. What's one tiny thing you could commit to doing every single day — even on bad days?`;
-
-  // Motivation
+    return `The best habit is one you'll actually do. What's one tiny thing you could commit to every single day?`;
   if (/motivat|can'?t be bothered|don'?t feel like|no motivation|lazy/.test(m))
-    return `Motivation follows action — not the other way around. Start for just 2 minutes, you'll usually keep going. What's the first tiny step?`;
-
-  // Questions about the buddy
+    return `Motivation follows action. Start for just 2 minutes — you'll usually keep going. First tiny step?`;
   if (/what can you do|what are you|who are you|are you an ai|are you real/.test(m))
-    return `I'm ${buddyName ?? 'Bloom'}, your productivity buddy! I can help you plan your day, add tasks, break things down, and talk through what's on your mind. What do you need?`;
-
-  // "yes", "no", "maybe" alone
+    return `I'm Bloom — your productivity assistant. I can help you plan, add tasks, break things down, and talk through what's on your mind.`;
   if (/^(yes+|no+|nah|nope|yep|yeah|sure|maybe|idk|dunno)[\s!.?]*$/.test(m))
-    return `Got it! What's the next thing on your mind?`;
-
-  // Short random word (like "API", "BRU" etc.)
+    return `Got it. What's next?`;
   if (m.split(' ').length <= 2 && m.length < 20)
-    return `Got you! What are you working on today, or what's stressing you out?`;
-
-  // Catch-all
-  return `I hear you. What's the most important thing you need to get done today? Tell me and we'll figure it out together.`;
+    return `What are you working on today?`;
+  return `I hear you. What's the most important thing you need to get done today?`;
 }
 
 export default function BloomChatScreen({ navigation }) {
   const { userName, goals, tasks, currentStreak, totalPoints, momentum, addTask } = useApp();
 
   const [messages, setMessages] = useState([
-    { id: 1, from: 'bloom', text: getInitialGreeting(userName, 'Bloom') },
+    { id: 1, from: 'bloom', text: getInitialGreeting(userName) },
   ]);
   const [input, setInput]       = useState('');
   const [thinking, setThinking] = useState(false);
@@ -147,7 +108,6 @@ export default function BloomChatScreen({ navigation }) {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     scrollToEnd();
-
     historyRef.current = [...historyRef.current, { role: 'user', content: trimmed }];
 
     if (!hasKey) {
@@ -155,9 +115,9 @@ export default function BloomChatScreen({ navigation }) {
       let reply;
       if (taskText) {
         addTask(taskText, 'medium');
-        reply = `Done! I've added "${taskText}" to your task list. Head to the Today tab to see it. Anything else?`;
+        reply = `Done — "${taskText}" is on your Today list. Anything else?`;
       } else {
-        reply = getFallback(trimmed, { userName, goals, tasks, buddyName: 'Bloom' });
+        reply = getFallback(trimmed, { userName, goals, tasks });
       }
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
@@ -175,7 +135,7 @@ export default function BloomChatScreen({ navigation }) {
     } catch (e) {
       const errText = e.code === 'AUTH'
         ? 'Your API key looks invalid — check it in Settings.'
-        : 'I had trouble connecting. Check your internet and try again.';
+        : 'Trouble connecting. Check your internet and try again.';
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: errText }]);
     } finally {
       setThinking(false);
@@ -186,18 +146,19 @@ export default function BloomChatScreen({ navigation }) {
   return (
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+
         <View style={s.header}>
-          <View style={s.headerCenter}>
+          <View>
             <Text style={s.headerTitle}>Bloom</Text>
             <Text style={s.headerSub}>
-              {hasKey === true ? 'AI · powered by Claude' : 'Your AI assistant'}
+              {hasKey === true ? 'Powered by Claude' : 'AI companion'}
             </Text>
           </View>
-          <View style={s.headerActions}>
-            <TouchableOpacity style={s.headerBtn} onPress={() => navigation.navigate('Goals')}>
+          <View style={s.headerIcons}>
+            <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Goals')}>
               <Feather name="target" size={20} color={C.muted} />
             </TouchableOpacity>
-            <TouchableOpacity style={s.headerBtn} onPress={() => navigation.navigate('Settings')}>
+            <TouchableOpacity style={s.iconBtn} onPress={() => navigation.navigate('Settings')}>
               <Feather name="settings" size={20} color={C.muted} />
             </TouchableOpacity>
           </View>
@@ -205,30 +166,42 @@ export default function BloomChatScreen({ navigation }) {
 
         <ScrollView
           ref={scrollRef}
-          style={s.messages}
-          contentContainerStyle={s.messagesContent}
+          style={s.scroll}
+          contentContainerStyle={s.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {messages.map(m => (
-            <View key={m.id} style={[s.bubble, m.from === 'user' ? s.bubbleUser : s.bubbleBloom]}>
-              <Text style={[s.bubbleText, m.from === 'user' ? s.bubbleTextUser : s.bubbleTextBloom]}>
-                {m.text}
-              </Text>
-            </View>
+            m.from === 'bloom' ? (
+              <View key={m.id} style={s.bloomRow}>
+                <View style={s.bloomBubble}>
+                  <Text style={s.bloomText}>{m.text}</Text>
+                </View>
+              </View>
+            ) : (
+              <View key={m.id} style={s.userRow}>
+                <View style={s.userBubble}>
+                  <Text style={s.userText}>{m.text}</Text>
+                </View>
+              </View>
+            )
           ))}
 
           {thinking && (
-            <View style={[s.bubble, s.bubbleBloom, s.thinkingBubble]}>
-              <ActivityIndicator size="small" color={C.sage} />
+            <View style={s.bloomRow}>
+              <View style={[s.bloomBubble, s.thinkingBubble]}>
+                <ActivityIndicator size="small" color={C.sage} />
+              </View>
             </View>
           )}
 
           {messages.length <= 1 && !thinking && (
-            <View style={s.starters}>
+            <View style={s.starterWrap}>
+              <Text style={s.starterLabel}>Try asking</Text>
               {STARTERS.map(st => (
                 <TouchableOpacity key={st} style={s.starterChip} onPress={() => send(st)}>
                   <Text style={s.starterText}>{st}</Text>
+                  <Feather name="arrow-right" size={13} color={C.sage} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -252,9 +225,10 @@ export default function BloomChatScreen({ navigation }) {
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="send" size={16} color={C.white} />
+            <Feather name="arrow-up" size={17} color={C.white} />
           </TouchableOpacity>
         </View>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -265,53 +239,71 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.cream },
 
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 22, paddingTop: 18, paddingBottom: 16,
+    backgroundColor: C.cream,
     borderBottomWidth: 1, borderBottomColor: C.border,
+  },
+  headerTitle: {
+    fontSize: 32, fontWeight: '800', color: C.forest, letterSpacing: -0.8,
+  },
+  headerSub: { fontSize: 12, color: C.muted, marginTop: 1, fontWeight: '500' },
+  headerIcons: { flexDirection: 'row', gap: 4 },
+  iconBtn: { padding: 8 },
+
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingVertical: 24, gap: 16 },
+
+  bloomRow: { alignSelf: 'stretch' },
+  bloomBubble: {
     backgroundColor: C.white,
+    borderRadius: 20, borderBottomLeftRadius: 6,
+    paddingVertical: 14, paddingHorizontal: 18,
+    borderWidth: 1, borderColor: C.border,
+    maxWidth: '88%',
   },
-  headerCenter: { flex: 1 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: C.forest, letterSpacing: -0.5 },
-  headerSub: { fontSize: 11, color: C.muted, marginTop: 1 },
-  headerActions: { flexDirection: 'row', gap: 4 },
-  headerBtn: { padding: 8 },
-
-  messages: { flex: 1 },
-  messagesContent: { padding: 20, gap: 12 },
-
-  bubble: { maxWidth: '82%', borderRadius: 18, padding: 14 },
-  bubbleUser: { alignSelf: 'flex-end', backgroundColor: C.forest, borderBottomRightRadius: 4 },
-  bubbleBloom: {
-    alignSelf: 'flex-start', backgroundColor: C.white,
-    borderWidth: 1, borderColor: C.border, borderBottomLeftRadius: 4,
+  bloomText: {
+    fontSize: 16, color: C.forest, lineHeight: 26, fontWeight: '400',
   },
-  bubbleText: { fontSize: 15, lineHeight: 23 },
-  bubbleTextUser: { color: C.white },
-  bubbleTextBloom: { color: C.forest },
-  thinkingBubble: { paddingVertical: 16, paddingHorizontal: 20 },
+  thinkingBubble: { paddingVertical: 16, paddingHorizontal: 22 },
 
-  starters: { gap: 8, marginTop: 8 },
+  userRow: { alignItems: 'flex-end' },
+  userBubble: {
+    backgroundColor: C.forest,
+    borderRadius: 20, borderBottomRightRadius: 6,
+    paddingVertical: 12, paddingHorizontal: 16,
+    maxWidth: '78%',
+  },
+  userText: { fontSize: 15, color: C.white, lineHeight: 23 },
+
+  starterWrap: { marginTop: 8, gap: 10 },
+  starterLabel: {
+    fontSize: 11, fontWeight: '700', color: C.muted,
+    letterSpacing: 1.2, marginBottom: 4,
+  },
   starterChip: {
-    backgroundColor: C.white, borderRadius: 20,
-    paddingVertical: 10, paddingHorizontal: 16,
-    borderWidth: 1, borderColor: C.border, alignSelf: 'flex-start',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: C.white, borderRadius: 14,
+    paddingVertical: 13, paddingHorizontal: 16,
+    borderWidth: 1, borderColor: C.border,
   },
-  starterText: { fontSize: 14, color: C.forest },
+  starterText: { fontSize: 14, color: C.forest, fontWeight: '500', flex: 1 },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: 16, paddingVertical: 12,
     borderTopWidth: 1, borderTopColor: C.border,
-    backgroundColor: C.white,
+    backgroundColor: C.cream,
   },
   input: {
-    flex: 1, backgroundColor: C.cream, borderWidth: 1, borderColor: C.border,
-    borderRadius: 22, paddingVertical: 10, paddingHorizontal: 16,
+    flex: 1, backgroundColor: C.white,
+    borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 24, paddingVertical: 11, paddingHorizontal: 18,
     fontSize: 15, color: C.forest,
   },
   sendBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 42, height: 42, borderRadius: 21,
     backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
   },
-  sendBtnOff: { opacity: 0.35 },
+  sendBtnOff: { opacity: 0.3 },
 });
