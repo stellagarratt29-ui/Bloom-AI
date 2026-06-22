@@ -4,11 +4,10 @@ import {
   ScrollView, SafeAreaView, StyleSheet, Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { HOBBIES } from '../constants/data';
-import { getApiKey, generateGoalAdvice } from '../services/ai';
+import { getApiKey, generateGoalAdvice, parseTasksWithAI } from '../services/ai';
 
 const GOAL_ADVICE = [
   {
@@ -99,16 +98,23 @@ function TaskRow({ task, onToggle, onFocus }) {
   );
 }
 
+function isMultiTaskDump(text) {
+  return text.includes('\n') || text.includes(';')
+    || (text.match(/\band\b/gi) || []).length >= 2
+    || text.length > 90;
+}
+
 export default function HomeScreen({ navigation }) {
   const {
-    tasks, toggleTask, addTask, hasDoneJournalToday,
+    tasks, toggleTask, addTask, processDump, loadTasks,
     selectedHobbies, hobbyProgress, goals, userName,
   } = useApp();
 
-  const [newTaskText, setNewTaskText] = useState('');
-  const inputRef = useRef(null);
-  const [aiAdvice, setAiAdvice] = useState(null);
+  const [dumpText, setDumpText]   = useState('');
+  const [dumping, setDumping]     = useState(false);
+  const [aiAdvice, setAiAdvice]   = useState(null);
   const adviceGoalRef = useRef('');
+  const inputRef = useRef(null);
 
   useEffect(() => {
     const goalText = goals?.[0]?.text;
@@ -117,31 +123,41 @@ export default function HomeScreen({ navigation }) {
     setAiAdvice(null);
     getApiKey().then(key => {
       if (!key) return;
-      generateGoalAdvice(goalText)
-        .then(advice => setAiAdvice(advice))
-        .catch(() => {});
+      generateGoalAdvice(goalText).then(setAiAdvice).catch(() => {});
     });
   }, [goals]);
 
-  const submitTask = () => {
-    const trimmed = newTaskText.trim();
-    if (!trimmed) return;
-    addTask(trimmed, 'medium');
-    setNewTaskText('');
-  };
+  const handleSend = useCallback(async () => {
+    const trimmed = dumpText.trim();
+    if (!trimmed || dumping) return;
+    setDumpText('');
 
-  useFocusEffect(
-    useCallback(() => {
-      const hour = new Date().getHours();
-      if (!hasDoneJournalToday && hour < 20) {
-        navigation.navigate('Journal');
+    if (!isMultiTaskDump(trimmed)) {
+      addTask(trimmed, 'medium');
+      return;
+    }
+
+    setDumping(true);
+    try {
+      const key = await getApiKey();
+      if (key) {
+        const parsed = await parseTasksWithAI(trimmed);
+        loadTasks(parsed);
+      } else {
+        processDump(trimmed);
       }
-    }, [hasDoneJournalToday])
-  );
+    } catch {
+      processDump(trimmed);
+    } finally {
+      setDumping(false);
+    }
+  }, [dumpText, dumping, addTask, loadTasks, processDump]);
+
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const pending = tasks.filter(t => !t.done);
   const done    = tasks.filter(t => t.done);
-
   const goalAdvice = aiAdvice ?? getGoalAdvice(goals?.[0]?.text);
 
   const genericNudge = (() => {
@@ -152,57 +168,45 @@ export default function HomeScreen({ navigation }) {
     return 'Small progress is still progress. Which task feels lightest right now?';
   })();
 
-  const hour = new Date().getHours();
-  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
   return (
     <SafeAreaView style={s.safe}>
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+      {/* Sticky chat bar at top */}
+      <View style={s.chatBar}>
+        <TextInput
+          ref={inputRef}
+          style={s.chatInput}
+          placeholder={dumping ? 'Bloom is sorting…' : "What's on your mind? Type one task or dump it all…"}
+          placeholderTextColor={C.muted}
+          value={dumpText}
+          onChangeText={setDumpText}
+          multiline
+          editable={!dumping}
+          returnKeyType="default"
+        />
+        <TouchableOpacity
+          style={[s.sendBtn, (!dumpText.trim() || dumping) && s.sendBtnOff]}
+          onPress={handleSend}
+          disabled={!dumpText.trim() || dumping}
+        >
+          <Feather name={dumping ? 'loader' : 'send'} size={18} color={C.white} />
+        </TouchableOpacity>
+      </View>
 
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <View style={s.header}>
           <Text style={s.greeting}>{greet}{userName ? `, ${userName}` : ''}</Text>
-          <TouchableOpacity style={s.addMoreBtn} onPress={() => navigation.navigate('Journal')}>
-            <View style={s.addMoreInner}>
-              <Feather name="edit-3" size={12} color={C.forest} />
-              <Text style={s.addMoreText}>Add more</Text>
-            </View>
-          </TouchableOpacity>
         </View>
 
         <Text style={s.title}>Today</Text>
-        <Text style={s.sub}>Broken into small steps — one thing at a time.</Text>
-
-        <View style={s.addRow}>
-          <TextInput
-            ref={inputRef}
-            style={s.addInput}
-            placeholder="Add a task…"
-            placeholderTextColor={C.muted}
-            value={newTaskText}
-            onChangeText={setNewTaskText}
-            onSubmitEditing={submitTask}
-            returnKeyType="done"
-            blurOnSubmit={false}
-          />
-          <TouchableOpacity
-            style={[s.addBtn, !newTaskText.trim() && s.addBtnOff]}
-            onPress={submitTask}
-            disabled={!newTaskText.trim()}
-          >
-            <Feather name="plus" size={18} color={C.white} />
-          </TouchableOpacity>
-        </View>
+        <Text style={s.sub}>Tap a task to see how to do it.</Text>
 
         {tasks.length === 0 ? (
           <View style={s.emptyState}>
             <Feather name="feather" size={52} color={C.sageMid} style={{ marginBottom: 14 }} />
             <Text style={s.emptyTitle}>Your day is blank</Text>
             <Text style={s.emptySub}>
-              Do a brain dump and Bloom will turn it into a prioritised checklist.
+              Type everything on your mind above — tasks, worries, ideas. Bloom will sort them for you.
             </Text>
-            <TouchableOpacity style={s.emptyBtn} onPress={() => navigation.navigate('Journal')}>
-              <Text style={s.emptyBtnText}>Start brain dump →</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           <>
@@ -212,7 +216,7 @@ export default function HomeScreen({ navigation }) {
                   key={t.id}
                   task={t}
                   onToggle={() => toggleTask(t.id)}
-                  onFocus={task => navigation.navigate('Sprint', { task })}
+                  onFocus={task => navigation.navigate('TaskGuide', { task })}
                 />
               ))}
             </View>
@@ -229,7 +233,7 @@ export default function HomeScreen({ navigation }) {
                     key={t.id}
                     task={t}
                     onToggle={() => toggleTask(t.id)}
-                    onFocus={task => navigation.navigate('Sprint', { task })}
+                    onFocus={task => navigation.navigate('TaskGuide', { task })}
                   />
                 ))}
               </View>
@@ -279,37 +283,32 @@ export default function HomeScreen({ navigation }) {
 
 const s = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: C.cream },
-  scroll: { paddingHorizontal: 22, paddingTop: 18 },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 18,
+  chatBar: {
+    flexDirection: 'row', alignItems: 'flex-end', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    backgroundColor: C.white,
   },
+  chatInput: {
+    flex: 1, backgroundColor: C.cream,
+    borderWidth: 1.5, borderColor: C.border, borderRadius: 18,
+    paddingVertical: 10, paddingHorizontal: 14,
+    fontSize: 15, color: C.forest, maxHeight: 100,
+  },
+  sendBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  sendBtnOff: { opacity: 0.35 },
+
+  scroll: { paddingHorizontal: 22, paddingTop: 18 },
+  header: { marginBottom: 6 },
   greeting: { fontSize: 14, color: C.muted, fontWeight: '500' },
-  addMoreBtn: {
-    backgroundColor: C.white, borderWidth: 1, borderColor: C.border,
-    borderRadius: 20, paddingVertical: 7, paddingHorizontal: 14,
-  },
-  addMoreInner: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  addMoreText: { fontSize: 13, fontWeight: '600', color: C.forest },
 
   title: { fontSize: 36, fontWeight: '700', color: C.forest, letterSpacing: -0.5, marginBottom: 4 },
   sub:   { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 22 },
-
-  addRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18,
-  },
-  addInput: {
-    flex: 1, backgroundColor: C.white,
-    borderWidth: 1.5, borderColor: C.border, borderRadius: 22,
-    paddingVertical: 11, paddingHorizontal: 16,
-    fontSize: 15, color: C.forest,
-  },
-  addBtn: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
-  },
-  addBtnOff: { opacity: 0.35 },
 
   taskList: {},
   taskRow: {

@@ -29,6 +29,7 @@ import BloomChatScreen       from './src/screens/BloomChatScreen';
 import GoalsScreen           from './src/screens/GoalsScreen';
 import SettingsScreen        from './src/screens/SettingsScreen';
 import IdeaBankScreen        from './src/screens/IdeaBankScreen';
+import TaskGuideScreen       from './src/screens/TaskGuideScreen';
 
 const RootStack     = createNativeStackNavigator();
 const HomeStackNav  = createNativeStackNavigator();
@@ -164,6 +165,7 @@ function HomeStack() {
     <HomeStackNav.Navigator screenOptions={{ headerShown: false }}>
       <HomeStackNav.Screen name="Home"        component={HomeScreen} />
       <HomeStackNav.Screen name="Journal"     component={JournalScreen} />
+      <HomeStackNav.Screen name="TaskGuide"   component={TaskGuideScreen} />
       <HomeStackNav.Screen name="MoodCheckIn" component={MoodCheckInScreen} />
       <HomeStackNav.Screen name="IdeaBank"    component={IdeaBankScreen} />
       <HomeStackNav.Screen name="Sprint"      component={SprintScreen} options={{ presentation: 'fullScreenModal' }} />
