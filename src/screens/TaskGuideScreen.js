@@ -1,86 +1,137 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, SafeAreaView,
-  StyleSheet, ScrollView, ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity,
+  SafeAreaView, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey } from '../services/ai';
 
-function genericSteps(text) {
+// Detailed rule-based guidance for when there's no API key
+function getTaskGuide(text) {
   const t = (text || '').toLowerCase();
+
+  if (/paint.*nail|nail.*paint/.test(t))
+    return `Here's how to get a clean nail paint:\n\n1. Remove any old polish with acetone remover\n2. File and shape your nails — do all 10 first before painting\n3. Apply a clear base coat and let it dry fully (2 min)\n4. Apply your colour in 2 thin coats — thin is everything, thick coats peel\n5. Wait 2 minutes between each coat\n6. Finish with a clear top coat to make it last longer\n7. Clean up edges with a cotton bud dipped in remover\n\nTip: do it while watching something so you don't move and smudge!\n\nWhat colour are you going for?`;
+
   if (/doctor|dentist|hospital|appointment|clinic/.test(t))
-    return [
-      { step: 'Check the time and location of your appointment' },
-      { step: 'Gather any documents or referral letters you need to bring' },
-      { step: 'Leave 10–15 minutes earlier than you think you need to' },
-    ];
-  if (/email|message|reply/.test(t))
-    return [
-      { step: 'Open your email and find the relevant thread' },
-      { step: 'Write a quick draft — don\'t aim for perfect, aim for sent' },
-      { step: 'Read it once, then hit send' },
-    ];
+    return `Here's how to prepare for your appointment:\n\n1. Confirm the time, date, and exact location — add it to your calendar with a reminder 1 hour before\n2. Write down any symptoms, questions, or concerns before you go (your brain goes blank in appointments)\n3. Bring: insurance card, any previous test results, a list of any medications you take\n4. If it's a new doctor or clinic, arrive 10–15 minutes early to fill out paperwork\n5. During the appointment: take notes on what they say — even just on your phone\n6. After: write down next steps while it's still fresh\n\nWhat's the appointment for? I can help you prepare specific questions to ask.`;
+
+  if (/homework|essay|assignment|study|revision|exam|test/.test(t))
+    return `Here's how to actually get through it:\n\n1. Clear your space first — a messy desk = a distracted brain\n2. Write down exactly what you need to produce (one sentence)\n3. Set a 25-minute timer and work on only that — no phone, no tabs\n4. Take a 5-minute break when it goes off, then go again\n5. Start with the hardest part while your brain is fresh\n6. When you're stuck, write anything — even bad sentences. Fix later.\n\nFree tools:\n- Grammarly (grammarly.com) for writing\n- Khan Academy (khanacademy.org) for maths and science\n- Quizlet (quizlet.com) for revision flashcards\n\nWhat subject is it? I can give more specific help.`;
+
+  if (/clean|tidy|organise|organize|kitchen|room|bedroom|bathroom/.test(t))
+    return `Here's how to make cleaning actually happen:\n\n1. Set a 15-minute timer — commit to stopping when it goes off (you'll usually keep going)\n2. Pick ONE area to start — don't try to do everything at once\n3. Clear surfaces first: everything goes in a pile\n4. Sort the pile: put away, bin, or donate\n5. Wipe surfaces after they're clear\n6. Vacuum or sweep last\n\nSecret: put on a playlist or podcast you love. Cleaning goes 10x faster.\n\nWhich room or area are you starting with?`;
+
+  if (/paint|draw|sketch|watercolou?r|canvas|painting|artwork|art/.test(t))
+    return `Here's how to get into your painting session:\n\n1. Set up your space before you start — brushes clean, colours out, reference image ready\n2. Look at your painting from a distance first. What's the most off? Start there.\n3. Work dark to light — establish your darkest shadows first, then midtones, then highlights\n4. Step back every 10 minutes. You'll catch things you can't see close up.\n5. Don't overwork it — one of the hardest skills is knowing when to stop\n6. Take a photo at the end to compare progress\n\nFree resources:\n- YouTube: search "beginner [your medium] tutorial" — Florent Farges, Proko, or Drawfee are great\n- Pinterest: search your subject + "painting reference" for inspiration\n\nWhat medium are you using? And what's the painting of?`;
+
+  if (/cook|bake|recipe|meal|dinner|lunch|breakfast/.test(t))
+    return `Here's how to cook it well:\n\n1. Read the entire recipe before you start — no surprises mid-cook\n2. Prep everything first (chop, measure) before you turn on any heat\n3. Taste as you go — season in layers, not all at the end\n4. Heat the pan before adding oil, add oil before adding food\n5. Don't crowd the pan — things steam instead of browning\n6. Clean as you go so you're not overwhelmed at the end\n\nRecipe resources:\n- YouTube: "Basics with Babish" or "Joshua Weissman" for simple techniques\n- BBC Good Food (bbcgoodfood.com) for reliable recipes\n\nWhat are you making?`;
+
   if (/call|phone|ring/.test(t))
-    return [
-      { step: 'Note down what you need to say or ask before calling' },
-      { step: 'Make the call — it\'s always faster than you expect' },
-      { step: 'Write down anything important from the conversation' },
-    ];
-  if (/study|read|research|learn/.test(t))
-    return [
-      { step: 'Clear your space and silence notifications' },
-      { step: 'Set a 25-minute timer and read actively (take notes)' },
-      { step: 'Take a 5-minute break, then decide if you continue' },
-    ];
-  if (/clean|tidy|organise|organize/.test(t))
-    return [
-      { step: 'Set a 10-minute timer — only work until it goes off' },
-      { step: 'Start with the most visible area first' },
-      { step: 'Put things away as you go, don\'t just move the mess' },
-    ];
-  return [
-    { step: 'Decide exactly when you\'ll start this (a specific time today)' },
-    { step: 'Break it into the first physical action you need to take' },
-    { step: 'Do that first action — momentum will carry you forward' },
-  ];
+    return `Here's how to make a phone call without dreading it:\n\n1. Write down the 2–3 things you need to say or ask before you dial\n2. Call when you have good signal and a quiet spot\n3. Introduce yourself at the start: "Hi, my name is [name], I'm calling about..."\n4. It's always shorter than you think it'll be\n5. Write down anything important from the call immediately after\n\nWho are you calling and what do you need to sort out?`;
+
+  if (/email|message|reply|respond/.test(t))
+    return `Here's how to write it and actually send it:\n\n1. Open a draft and write the subject line first — it focuses your whole email\n2. Write a bad first draft with no editing — just get the words out\n3. Three-part structure: why you're emailing → what you need → thank you\n4. Read it once out loud, fix anything that sounds weird\n5. Hit send — don't overthink it\n\nTip: If you're stuck, start with "I'm writing to..." and just finish the sentence.\n\nWho's it to and what do you need to say?`;
+
+  if (/buy|shop|groceries|get|pick up|order/.test(t))
+    return `Here's how to get this done efficiently:\n\n1. Write the full list before you go — including quantities\n2. Group by category (fruit, dairy, toiletries) so you don't backtrack\n3. Check what you already have at home first\n4. Set a budget before you walk in\n5. If ordering online: check for discount codes before checkout\n\nWhat do you need to get?`;
+
+  // Generic fallback — still better than before
+  return `Let's break "${text}" into steps:\n\n1. Decide exactly when today you'll do this (a specific time, not "later")\n2. Write down what you actually need to start — materials, info, people to contact\n3. Do the first physical action right now, even if it's tiny\n4. Set a 20-minute timer and work only on this\n5. Anything you don't finish: schedule a specific time to come back to it\n\nWhat's making this feel hard, or shall I break it down further?`;
 }
 
 export default function TaskGuideScreen({ route, navigation }) {
   const { task } = route.params ?? {};
   const { toggleTask } = useApp();
 
-  const [steps, setSteps]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [checked, setChecked] = useState({});
+  const [messages, setMessages] = useState([]);
+  const [input, setInput]       = useState('');
+  const [thinking, setThinking] = useState(false);
   const [taskDone, setTaskDone] = useState(task?.done ?? false);
+  const scrollRef  = useRef(null);
+  const historyRef = useRef([]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const key = await getApiKey();
-        if (!key) throw new Error('no key');
-        const reply = await callClaude({
-          system: `You help people complete tasks by breaking them into clear steps.
-Return ONLY a JSON array — no markdown, no explanation.
-Schema: [{"step": "concrete action", "detail": "optional 1-line clarification"}]
-Give 3–5 steps. Be specific and practical. Match the complexity to the task — a simple errand gets 3 steps, a complex project gets 5.`,
-          messages: [{ role: 'user', content: `How do I complete this task: "${task?.text}"` }],
-          maxTokens: 500,
-        });
-        const clean = reply.trim().replace(/^```json?\n?/, '').replace(/\n?```$/, '');
-        const parsed = JSON.parse(clean);
-        if (!cancelled && Array.isArray(parsed)) setSteps(parsed);
-      } catch {
-        if (!cancelled) setSteps(genericSteps(task?.text));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [task?.text]);
+    loadInitialGuide();
+  }, []);
+
+  const scrollToEnd = () =>
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+
+  const loadInitialGuide = async () => {
+    setThinking(true);
+    try {
+      const key = await getApiKey();
+      if (!key) throw new Error('no key');
+      const reply = await callClaude({
+        system: `You are Bloom, a warm and practical productivity coach helping someone complete a specific task.
+Give a detailed, personalised breakdown of how to do this task:
+- 5–7 numbered steps, each specific and actionable
+- Include real resources (websites, YouTube channels, apps) where relevant
+- End with a warm, open question inviting them to ask more
+Write in plain text, no markdown headers. Be encouraging but not cheesy.`,
+        messages: [{ role: 'user', content: `My task: "${task?.text}"` }],
+        maxTokens: 600,
+      });
+      const msg = { id: 1, from: 'bloom', text: reply };
+      setMessages([msg]);
+      historyRef.current = [{ role: 'assistant', content: reply }];
+    } catch {
+      const guide = getTaskGuide(task?.text);
+      const msg = { id: 1, from: 'bloom', text: guide };
+      setMessages([msg]);
+      historyRef.current = [{ role: 'assistant', content: guide }];
+    } finally {
+      setThinking(false);
+      scrollToEnd();
+    }
+  };
+
+  const send = async (text) => {
+    const trimmed = text.trim();
+    if (!trimmed || thinking) return;
+
+    const userMsg = { id: Date.now(), from: 'user', text: trimmed };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    scrollToEnd();
+    historyRef.current = [...historyRef.current, { role: 'user', content: trimmed }];
+
+    setThinking(true);
+    try {
+      const key = await getApiKey();
+      if (!key) throw new Error('no key');
+      const reply = await callClaude({
+        system: `You are Bloom, a warm and practical productivity coach. The user is working on: "${task?.text}".
+Answer their question helpfully and specifically. Keep replies to 3–5 sentences. Be direct, no filler.`,
+        messages: historyRef.current,
+        maxTokens: 350,
+      });
+      const msg = { id: Date.now() + 1, from: 'bloom', text: reply };
+      setMessages(prev => [...prev, msg]);
+      historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+    } catch {
+      // Smart context-aware fallback
+      const m = trimmed.toLowerCase();
+      let reply = `Good question about "${task?.text}". `;
+      if (/how long|time|take/.test(m)) reply += `It depends on how focused you are, but set a 25-minute timer to start — you can always do more.`;
+      else if (/what do i need|materials|supplies|tools/.test(m)) reply += `Write down everything you think you'll need before you start. Better to gather it all upfront than stop mid-task.`;
+      else if (/can't|can not|don't know how|stuck|help/.test(m)) reply += `Start with the very first physical action — even something tiny. Momentum builds from there.`;
+      else if (/why|should i|worth it/.test(m)) reply += `You added this for a reason. What made you want to do it?`;
+      else reply = `For "${task?.text}": break it into smaller pieces and do one piece at a time. Which step feels most manageable right now?`;
+
+      const msg = { id: Date.now() + 1, from: 'bloom', text: reply };
+      setMessages(prev => [...prev, msg]);
+      historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+    } finally {
+      setThinking(false);
+      scrollToEnd();
+    }
+  };
 
   const handleMarkDone = () => {
     if (task && !taskDone) {
@@ -90,156 +141,154 @@ Give 3–5 steps. Be specific and practical. Match the complexity to the task �
     navigation.goBack();
   };
 
-  const toggleCheck = (i) => setChecked(prev => ({ ...prev, [i]: !prev[i] }));
-
   const PRIORITY_COLOR = { high: '#C0392B', medium: C.sage, low: C.muted };
-  const PRIORITY_LABEL = { high: 'Urgent', medium: 'Next', low: 'Low' };
   const priorityColor = PRIORITY_COLOR[task?.priority] ?? C.sage;
 
   return (
     <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity style={s.back} onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={22} color={C.forest} />
-        </TouchableOpacity>
-        <Text style={s.headerLabel}>How to do it</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <View style={s.taskCard}>
-          <View style={[s.priorityDot, { backgroundColor: priorityColor }]} />
-          <Text style={s.taskText}>{task?.text ?? 'Task'}</Text>
-          {task?.priority && (
-            <View style={[s.priorityTag, { backgroundColor: priorityColor + '1A' }]}>
-              <Text style={[s.priorityTagText, { color: priorityColor }]}>
-                {PRIORITY_LABEL[task.priority]}
-              </Text>
-            </View>
-          )}
+        {/* Header */}
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
+            <Feather name="arrow-left" size={22} color={C.forest} />
+          </TouchableOpacity>
+          <View style={s.headerCenter}>
+            <View style={[s.priorityDot, { backgroundColor: priorityColor }]} />
+            <Text style={s.headerTask} numberOfLines={2}>{task?.text ?? 'Task'}</Text>
+          </View>
+          <TouchableOpacity
+            style={[s.doneBtn, taskDone && s.doneBtnDone]}
+            onPress={handleMarkDone}
+          >
+            <Feather name="check" size={15} color={taskDone ? C.sage : C.white} />
+            <Text style={[s.doneBtnText, taskDone && s.doneBtnTextDone]}>
+              {taskDone ? 'Done' : 'Mark done'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={s.stepsSection}>
-          <Text style={s.stepsLabel}>
-            {loading ? 'Working out the steps…' : 'Here\'s how to get it done'}
-          </Text>
-
-          {loading ? (
+        {/* Chat */}
+        <ScrollView
+          ref={scrollRef}
+          style={s.scroll}
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {thinking && messages.length === 0 && (
             <View style={s.loadingWrap}>
-              <ActivityIndicator size="large" color={C.sage} />
-              <Text style={s.loadingText}>Bloom is thinking…</Text>
+              <ActivityIndicator color={C.sage} size="small" />
+              <Text style={s.loadingText}>Working out how to do this…</Text>
             </View>
-          ) : (
-            steps.map((item, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[s.stepRow, checked[i] && s.stepRowDone]}
-                onPress={() => toggleCheck(i)}
-                activeOpacity={0.7}
-              >
-                <View style={[s.stepCircle, checked[i] && s.stepCircleDone]}>
-                  {checked[i]
-                    ? <Feather name="check" size={12} color={C.white} />
-                    : <Text style={s.stepNum}>{i + 1}</Text>
-                  }
-                </View>
-                <View style={s.stepContent}>
-                  <Text style={[s.stepText, checked[i] && s.stepTextDone]}>{item.step}</Text>
-                  {item.detail ? (
-                    <Text style={s.stepDetail}>{item.detail}</Text>
-                  ) : null}
-                </View>
-              </TouchableOpacity>
-            ))
           )}
-        </View>
-      </ScrollView>
 
-      <View style={s.footer}>
-        <TouchableOpacity
-          style={s.sprintBtn}
-          onPress={() => navigation.navigate('Sprint', { task })}
-        >
-          <Feather name="clock" size={16} color={C.forest} />
-          <Text style={s.sprintBtnText}>Focus timer</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.doneBtn, taskDone && s.doneBtnOff]}
-          onPress={handleMarkDone}
-          disabled={taskDone}
-        >
-          <Feather name="check" size={16} color={C.white} />
-          <Text style={s.doneBtnText}>{taskDone ? 'Done!' : 'Mark as done'}</Text>
-        </TouchableOpacity>
-      </View>
+          {messages.map(m => (
+            m.from === 'bloom' ? (
+              <View key={m.id} style={s.bloomBubble}>
+                <Text style={s.bloomText}>{m.text}</Text>
+              </View>
+            ) : (
+              <View key={m.id} style={s.userRow}>
+                <View style={s.userBubble}>
+                  <Text style={s.userText}>{m.text}</Text>
+                </View>
+              </View>
+            )
+          ))}
+
+          {thinking && messages.length > 0 && (
+            <View style={[s.bloomBubble, { paddingVertical: 16 }]}>
+              <ActivityIndicator color={C.sage} size="small" />
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Input */}
+        <View style={s.inputBar}>
+          <TextInput
+            style={s.input}
+            placeholder="Ask Bloom anything about this task…"
+            placeholderTextColor={C.muted}
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={() => send(input)}
+            returnKeyType="send"
+            editable={!thinking}
+          />
+          <TouchableOpacity
+            style={[s.sendBtn, (!input.trim() || thinking) && s.sendBtnOff]}
+            onPress={() => send(input)}
+            disabled={!input.trim() || thinking}
+          >
+            <Feather name="arrow-up" size={17} color={C.white} />
+          </TouchableOpacity>
+        </View>
+
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: C.cream },
+  flex: { flex: 1 },
+  safe: { flex: 1, backgroundColor: C.cream },
+
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: C.border,
     backgroundColor: C.white,
   },
-  back: { width: 36, alignItems: 'flex-start' },
-  headerLabel: { fontSize: 16, fontWeight: '700', color: C.forest },
-
-  scroll: { padding: 22, paddingBottom: 40 },
-
-  taskCard: {
-    backgroundColor: C.white, borderRadius: 18,
-    borderWidth: 1, borderColor: C.border,
-    padding: 18, marginBottom: 24, gap: 10,
+  backBtn: { padding: 4, flexShrink: 0 },
+  headerCenter: {
+    flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8,
   },
-  priorityDot: { width: 8, height: 8, borderRadius: 4 },
-  taskText: { fontSize: 20, fontWeight: '700', color: C.forest, lineHeight: 28 },
-  priorityTag: {
-    alignSelf: 'flex-start', paddingVertical: 3, paddingHorizontal: 10, borderRadius: 20,
-  },
-  priorityTagText: { fontSize: 12, fontWeight: '700' },
-
-  stepsSection: { gap: 0 },
-  stepsLabel: { fontSize: 13, fontWeight: '700', color: C.muted, letterSpacing: 0.5, marginBottom: 16, textTransform: 'uppercase' },
-
-  loadingWrap: { alignItems: 'center', paddingVertical: 40, gap: 14 },
-  loadingText: { fontSize: 15, color: C.muted },
-
-  stepRow: {
-    flexDirection: 'row', gap: 14, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#F0EBE3',
-    alignItems: 'flex-start',
-  },
-  stepRowDone: { opacity: 0.5 },
-  stepCircle: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  stepCircleDone: { backgroundColor: C.sage },
-  stepNum: { color: C.white, fontWeight: '700', fontSize: 13 },
-  stepContent: { flex: 1, paddingTop: 3 },
-  stepText: { fontSize: 15, color: C.forest, lineHeight: 22, fontWeight: '500' },
-  stepTextDone: { textDecorationLine: 'line-through', color: C.muted },
-  stepDetail: { fontSize: 13, color: C.muted, lineHeight: 20, marginTop: 4 },
-
-  footer: {
-    flexDirection: 'row', gap: 10, padding: 16,
-    borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.white,
-  },
-  sprintBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    flex: 1, justifyContent: 'center',
-    borderWidth: 1.5, borderColor: C.border, borderRadius: 28,
-    paddingVertical: 14,
-  },
-  sprintBtnText: { fontSize: 15, fontWeight: '600', color: C.forest },
+  priorityDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0 },
+  headerTask: { flex: 1, fontSize: 15, fontWeight: '700', color: C.forest, lineHeight: 22 },
   doneBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    flex: 1, justifyContent: 'center',
-    backgroundColor: C.forest, borderRadius: 28, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: C.forest, borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0,
   },
-  doneBtnOff: { backgroundColor: C.sage },
-  doneBtnText: { fontSize: 15, fontWeight: '700', color: C.white },
+  doneBtnDone: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: C.sage },
+  doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
+  doneBtnTextDone: { color: C.sage },
+
+  scroll: { flex: 1 },
+  scrollContent: { padding: 20, gap: 14, paddingBottom: 32 },
+
+  loadingWrap: { alignItems: 'center', paddingVertical: 40, gap: 12 },
+  loadingText: { fontSize: 14, color: C.muted },
+
+  bloomBubble: {
+    backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 6,
+    padding: 16, borderWidth: 1, borderColor: C.border,
+  },
+  bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
+
+  userRow: { alignItems: 'flex-end' },
+  userBubble: {
+    backgroundColor: C.forest, borderRadius: 18, borderBottomRightRadius: 6,
+    paddingVertical: 12, paddingHorizontal: 16, maxWidth: '80%',
+  },
+  userText: { fontSize: 15, color: C.white, lineHeight: 22 },
+
+  inputBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: C.border,
+    backgroundColor: C.cream,
+  },
+  input: {
+    flex: 1, backgroundColor: C.white,
+    borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 24, paddingVertical: 11, paddingHorizontal: 18,
+    fontSize: 15, color: C.forest,
+  },
+  sendBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+  },
+  sendBtnOff: { opacity: 0.3 },
 });
