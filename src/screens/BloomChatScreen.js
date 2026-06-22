@@ -31,7 +31,7 @@ function detectTaskAdd(msg) {
     /^(?:add|remind me to|put|i need to|don'?t let me forget to?|can you add|please add|schedule)\s+(.+?)(?:\s+(?:to|on|in)\s+(?:my\s+)?(?:list|calendar|cal|tasks?|schedule))?[.!?]?$/
   );
   if (explicit) return explicit[1].trim();
-  const shortAction = /^(?:dentist|doctor|hospital|meeting|appointment|call|email|text|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
+  const shortAction = /^(?:dentists?|doctors?|hospital|meetings?|appointments?|appts?|apts?|calls?|emails?|texts?|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
   if (shortAction && lower.split(' ').length <= 8) return msg.trim();
   return null;
 }
@@ -51,6 +51,13 @@ function getFallback(msg, { userName, goals, tasks }) {
 
   if (/how are you|how('re| are) you doing|you ok\??/.test(m))
     return `I'm here for you. How are YOU doing — what's on your plate?`;
+
+  // Questions about Bloom's speed/nature
+  if (/why (do you|are you) (reply|respond|answer) so fast|how (are|do) you (respond|reply|answer) so fast|why so fast/.test(m))
+    return `I'm an AI — no thinking time needed. Use that to your advantage. What do you want to get done?`;
+
+  if (/are you (a )?bot|are you (an )?ai|are you real|are you human|are you a person/.test(m))
+    return `I'm Bloom, an AI assistant. I'm not human, but I'm pretty good at helping you get things done.`;
 
   if (/what (time|day|date|month|year) is it|what's the (time|date)|current time|today's date/.test(m)) {
     const now = new Date();
@@ -101,10 +108,13 @@ function getFallback(msg, { userName, goals, tasks }) {
   if (/^(yes+|no+|nah|nope|yep|yeah|sure|maybe|idk|dunno)[\s!.?]*$/.test(m))
     return `Got it. What's next?`;
 
-  if (m.split(' ').length <= 2 && m.length < 20)
-    return `What are you working on today${name}?`;
+  if (/^(huh|hmm+|what|wait|hm+|eh)[\s!.?]*$/.test(m))
+    return `Not sure what you mean — want to add tasks, get advice, or talk through something?`;
 
-  return `Got it${name}. What's the most important thing you need to get done today?`;
+  if (m.split(' ').length <= 2 && m.length < 20)
+    return `Tell me what's on your mind and I'll help you sort it out.`;
+
+  return `I'm with you${name}. Dump your tasks and I'll sort them — or just tell me what you need.`;
 }
 
 function looksLikeTaskDump(text) {
