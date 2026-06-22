@@ -122,10 +122,10 @@ function getFallback(msg, { userName, goals, tasks, buddyName }) {
 }
 
 export default function BloomChatScreen({ navigation }) {
-  const { userName, buddy, goals, tasks, currentStreak, totalPoints, momentum, addTask } = useApp();
+  const { userName, goals, tasks, currentStreak, totalPoints, momentum, addTask } = useApp();
 
   const [messages, setMessages] = useState([
-    { id: 1, from: 'bloom', text: getInitialGreeting(userName, buddy?.name) },
+    { id: 1, from: 'bloom', text: getInitialGreeting(userName, 'Bloom') },
   ]);
   const [input, setInput]       = useState('');
   const [thinking, setThinking] = useState(false);
@@ -151,14 +151,13 @@ export default function BloomChatScreen({ navigation }) {
     historyRef.current = [...historyRef.current, { role: 'user', content: trimmed }];
 
     if (!hasKey) {
-      // Try to detect task-add intent first
       const taskText = detectTaskAdd(trimmed);
       let reply;
       if (taskText) {
         addTask(taskText, 'medium');
         reply = `Done! I've added "${taskText}" to your task list. Head to the Today tab to see it. Anything else?`;
       } else {
-        reply = getFallback(trimmed, { userName, goals, tasks, buddyName: buddy?.name });
+        reply = getFallback(trimmed, { userName, goals, tasks, buddyName: 'Bloom' });
       }
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
@@ -168,7 +167,7 @@ export default function BloomChatScreen({ navigation }) {
 
     setThinking(true);
     try {
-      const system = buildBloomSystem({ userName, buddy, goals, tasks, streak: currentStreak, totalPoints, momentum });
+      const system = buildBloomSystem({ userName, goals, tasks, streak: currentStreak, totalPoints, momentum });
       const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
       const bloomMsg = { id: Date.now() + 1, from: 'bloom', text: reply };
       setMessages(prev => [...prev, bloomMsg]);
@@ -188,16 +187,20 @@ export default function BloomChatScreen({ navigation }) {
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={s.header}>
-          <TouchableOpacity style={s.back} onPress={() => navigation.goBack()}>
-            <Feather name="arrow-left" size={22} color={C.forest} />
-          </TouchableOpacity>
           <View style={s.headerCenter}>
-            <Text style={s.headerTitle}>{buddy?.name ?? 'Bloom'}</Text>
+            <Text style={s.headerTitle}>Bloom</Text>
             <Text style={s.headerSub}>
-              {hasKey === true ? 'AI · powered by Claude' : 'Your productivity buddy'}
+              {hasKey === true ? 'AI · powered by Claude' : 'Your AI assistant'}
             </Text>
           </View>
-          <View style={s.headerRight} />
+          <View style={s.headerActions}>
+            <TouchableOpacity style={s.headerBtn} onPress={() => navigation.navigate('Goals')}>
+              <Feather name="target" size={20} color={C.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity style={s.headerBtn} onPress={() => navigation.navigate('Settings')}>
+              <Feather name="settings" size={20} color={C.muted} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView
@@ -235,7 +238,7 @@ export default function BloomChatScreen({ navigation }) {
         <View style={s.inputBar}>
           <TextInput
             style={s.input}
-            placeholder={`Message ${buddy?.name ?? 'Bloom'}…`}
+            placeholder="Message Bloom…"
             placeholderTextColor={C.muted}
             value={input}
             onChangeText={setInput}
@@ -263,15 +266,15 @@ const s = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 12,
+    paddingHorizontal: 20, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: C.border,
     backgroundColor: C.white,
   },
-  back: { width: 36, alignItems: 'flex-start' },
-  headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: C.forest },
+  headerCenter: { flex: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: C.forest, letterSpacing: -0.5 },
   headerSub: { fontSize: 11, color: C.muted, marginTop: 1 },
-  headerRight: { width: 36 },
+  headerActions: { flexDirection: 'row', gap: 4 },
+  headerBtn: { padding: 8 },
 
   messages: { flex: 1 },
   messagesContent: { padding: 20, gap: 12 },

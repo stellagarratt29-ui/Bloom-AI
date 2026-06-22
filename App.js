@@ -24,27 +24,25 @@ import MoodCheckInScreen     from './src/screens/MoodCheckInScreen';
 import SprintScreen          from './src/screens/SprintScreen';
 import HobbiesScreen         from './src/screens/HobbiesScreen';
 import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
-import BuddyScreen           from './src/screens/BuddyScreen';
 import BloomChatScreen       from './src/screens/BloomChatScreen';
 import GoalsScreen           from './src/screens/GoalsScreen';
 import SettingsScreen        from './src/screens/SettingsScreen';
 import IdeaBankScreen        from './src/screens/IdeaBankScreen';
 import TaskGuideScreen       from './src/screens/TaskGuideScreen';
 
-const RootStack     = createNativeStackNavigator();
-const HomeStackNav  = createNativeStackNavigator();
-const GrowStackNav  = createNativeStackNavigator();
-const BuddyStackNav = createNativeStackNavigator();
-const Tab           = createBottomTabNavigator();
+const RootStack    = createNativeStackNavigator();
+const HomeStackNav = createNativeStackNavigator();
+const GrowStackNav = createNativeStackNavigator();
+const ChatStackNav = createNativeStackNavigator();
+const Tab          = createBottomTabNavigator();
 
 const TAB_ITEMS = [
-  { name: 'HomeTab', icon: 'home',        label: 'Today'  },
-  { name: 'GrowTab', icon: 'sun',         label: 'Grow'   },
-  { name: 'Goals',   icon: 'trending-up', label: 'Growth' },
-  { name: 'Buddy',   icon: 'heart',       label: 'Buddy'  },
+  { name: 'HomeTab', icon: 'home',           label: 'Today' },
+  { name: 'GrowTab', icon: 'sun',            label: 'Grow'  },
+  { name: 'ChatTab', icon: 'message-circle', label: 'Chat'  },
 ];
 
-const SIDEBAR_W = 220;
+const SIDEBAR_W = 200;
 
 function useLayout() {
   const { width } = useWindowDimensions();
@@ -75,16 +73,16 @@ class ErrorBoundary extends React.Component {
 function TabIcon({ iconName, label, focused }) {
   return (
     <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Feather name={iconName} size={22} color={focused ? C.forest : C.muted} />
+      <Feather name={iconName} size={21} color={focused ? C.forest : C.muted} />
       <Text style={{
-        fontSize: 10, marginTop: 3, fontWeight: focused ? '700' : '500',
+        fontSize: 10, marginTop: 3,
+        fontWeight: focused ? '700' : '500',
         color: focused ? C.forest : C.muted,
       }}>{label}</Text>
     </View>
   );
 }
 
-// Renders as a left sidebar on desktop, bottom bar on phone/tablet
 function CustomTabBar({ state, navigation }) {
   const layout = useLayout();
 
@@ -104,7 +102,7 @@ function CustomTabBar({ state, navigation }) {
               onPress={() => navigation.navigate(item.name)}
               activeOpacity={0.7}
             >
-              <Feather name={item.icon} size={20} color={focused ? C.forest : C.muted} />
+              <Feather name={item.icon} size={18} color={focused ? C.forest : C.muted} />
               <Text style={[deskS.navLabel, focused && deskS.navLabelActive]}>
                 {item.label}
               </Text>
@@ -115,7 +113,6 @@ function CustomTabBar({ state, navigation }) {
     );
   }
 
-  // Phone / tablet: bottom bar
   return (
     <View style={mobileTabS.bar}>
       {TAB_ITEMS.map((item, index) => {
@@ -141,14 +138,14 @@ const deskS = StyleSheet.create({
     paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
   },
   logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
-  logoText: { fontSize: 28, fontWeight: '700', color: C.forest, letterSpacing: -0.5 },
-  logoSub:  { fontSize: 12, color: C.muted, marginTop: 2 },
+  logoText: { fontSize: 24, fontWeight: '800', color: C.forest, letterSpacing: -0.5 },
+  logoSub:  { fontSize: 11, color: C.muted, marginTop: 2 },
   navItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, marginBottom: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 13, paddingHorizontal: 14, borderRadius: 12, marginBottom: 2,
   },
   navItemActive: { backgroundColor: C.sagePale },
-  navLabel:      { fontSize: 15, fontWeight: '500', color: C.muted },
+  navLabel:      { fontSize: 14, fontWeight: '500', color: C.muted },
   navLabelActive:{ fontWeight: '700', color: C.forest },
 });
 
@@ -182,13 +179,13 @@ function GrowStack() {
   );
 }
 
-function BuddyStack() {
+function ChatStack() {
   return (
-    <BuddyStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <BuddyStackNav.Screen name="BuddyMain" component={BuddyScreen} />
-      <BuddyStackNav.Screen name="BloomChat" component={BloomChatScreen} />
-      <BuddyStackNav.Screen name="Settings"  component={SettingsScreen} />
-    </BuddyStackNav.Navigator>
+    <ChatStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <ChatStackNav.Screen name="BloomChat" component={BloomChatScreen} />
+      <ChatStackNav.Screen name="Goals"     component={GoalsScreen} />
+      <ChatStackNav.Screen name="Settings"  component={SettingsScreen} />
+    </ChatStackNav.Navigator>
   );
 }
 
@@ -202,8 +199,7 @@ function MainTabs() {
     >
       <Tab.Screen name="HomeTab" component={HomeStack} />
       <Tab.Screen name="GrowTab" component={GrowStack} />
-      <Tab.Screen name="Goals"   component={GoalsScreen} />
-      <Tab.Screen name="Buddy"   component={BuddyStack} />
+      <Tab.Screen name="ChatTab" component={ChatStack} />
     </Tab.Navigator>
   );
 }
@@ -211,8 +207,8 @@ function MainTabs() {
 function SplashScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 28, fontWeight: '700', color: C.forest, marginTop: 14 }}>Bloom</Text>
-      <Text style={{ fontSize: 14, color: C.muted, marginTop: 6 }}>Gentle guidance. Real progress.</Text>
+      <Text style={{ fontSize: 32, fontWeight: '800', color: C.forest, letterSpacing: -0.5 }}>Bloom</Text>
+      <Text style={{ fontSize: 14, color: C.muted, marginTop: 8 }}>Gentle guidance. Real progress.</Text>
     </View>
   );
 }
@@ -234,13 +230,11 @@ function ResponsiveShell({ children }) {
   const layout = useLayout();
 
   if (Platform.OS !== 'web' || layout !== 'phone') {
-    // Native app or tablet/desktop: fill the whole screen
     return <View style={{ flex: 1, backgroundColor: C.cream }}>{children}</View>;
   }
 
-  // Small phone browser: centre the app in a 430px column
   return (
-    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#E8E3DC' }}>
+    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#EAE5DE' }}>
       <View style={{ flex: 1, width: '100%', maxWidth: 430, backgroundColor: C.cream, overflow: 'hidden' }}>
         {children}
       </View>

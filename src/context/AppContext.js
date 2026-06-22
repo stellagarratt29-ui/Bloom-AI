@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BUDDIES, POINTS, HOBBIES } from '../constants/data';
+import { POINTS, HOBBIES } from '../constants/data';
 
 const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v1';
@@ -35,7 +35,6 @@ const DEFAULT_TASKS = [
 export function AppProvider({ children }) {
   const [loaded, setLoaded]                 = useState(false);
   const [hasOnboarded, setHasOnboarded]     = useState(false);
-  const [buddy, setBuddy]                   = useState(BUDDIES[0]);
   const [tasks, setTasks]                   = useState(DEFAULT_TASKS);
   const [ideas, setIdeas]                   = useState([]);
   const [selectedHobbies, setSelectedHobbies] = useState([]);
@@ -62,7 +61,6 @@ export function AppProvider({ children }) {
           try {
             const s = JSON.parse(raw);
             if (s.hasOnboarded)     setHasOnboarded(true);
-            if (s.buddy)            setBuddy(BUDDIES.find(b => b.id === s.buddy) ?? BUDDIES[0]);
             if (s.tasks)            setTasks(s.tasks);
             if (s.ideas)            setIdeas(s.ideas);
             if (s.selectedHobbies)  setSelectedHobbies(s.selectedHobbies);
@@ -108,7 +106,6 @@ export function AppProvider({ children }) {
     saveTimer.current = setTimeout(() => {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
         hasOnboarded,
-        buddy: buddy?.id,
         tasks, ideas, selectedHobbies, hobbyProgress,
         totalPoints, monthlyPoints, dailyPoints, goals,
         monthlyGoalTarget, userName, currentStreak, tasksCompleted,
@@ -117,7 +114,7 @@ export function AppProvider({ children }) {
         lastActiveDay: todayStr(), lastActiveMonth: monthStr(),
       })).catch(() => {});
     }, 600);
-  }, [loaded, hasOnboarded, buddy, tasks, ideas, selectedHobbies, hobbyProgress,
+  }, [loaded, hasOnboarded, tasks, ideas, selectedHobbies, hobbyProgress,
       totalPoints, monthlyPoints, dailyPoints, goals, monthlyGoalTarget, userName, currentStreak, tasksCompleted]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -243,8 +240,7 @@ export function AppProvider({ children }) {
 
   const dismissMilestone = useCallback(() => setLatestMilestone(null), []);
 
-  const finishOnboarding = useCallback((buddyId, hobbyIds, name, goal) => {
-    setBuddy(BUDDIES.find(b => b.id === buddyId) ?? BUDDIES[0]);
+  const finishOnboarding = useCallback((hobbyIds, name, goal) => {
     setSelectedHobbies(hobbyIds);
     if (name) setUserName(name);
     if (goal) setGoals([makeGoal(goal)]);
@@ -268,7 +264,6 @@ export function AppProvider({ children }) {
       hasOnboarded, finishOnboarding,
       hasDoneJournalToday: lastJournalDate === todayStr(),
       processDump, loadTasks,
-      buddy, setBuddy,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
       ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
       selectedHobbies, toggleHobby,
