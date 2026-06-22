@@ -9,6 +9,12 @@ import { useApp } from '../context/AppContext';
 
 const DURATION_OPTIONS = [5, 10, 15, 25];
 
+const ERRAND_RE = /\b(doctor|dentist|hospital|clinic|pharmacy|appointment|commute|drive|travel|pick.?up|drop.?off|grocery|groceries|shopping|shop(?:ping)?\s+for|store|errand|laundry|tidy|haircut|salon|barber|vet|optician|church|temple|mosque|funeral|wedding|party|event|concert|visit|meeting\s+at|call\s+(?:the|my|a)?|phone\s+call|interview\s+at|school\s+run)\b/i;
+
+function isTimerTask(text) {
+  return !ERRAND_RE.test(text ?? '');
+}
+
 function formatTime(secs) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
@@ -69,6 +75,30 @@ export default function SprintScreen({ route, navigation }) {
   };
 
   const progress = 1 - timeLeft / (selectedMins * 60);
+  const timerMode = isTimerTask(task?.text);
+
+  if (!timerMode && !done) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.container}>
+          <TouchableOpacity style={s.back} onPress={() => navigation.goBack()}>
+            <Text style={s.backText}>← Back</Text>
+          </TouchableOpacity>
+          <View style={s.errandWrap}>
+            <Feather name="map-pin" size={38} color={C.sage} style={{ marginBottom: 18 }} />
+            <Text style={s.errandTitle}>{task?.text ?? 'Task'}</Text>
+            <Text style={s.errandSub}>This one doesn't need a timer — just go do it.</Text>
+          </View>
+          <TouchableOpacity style={s.primaryBtn} onPress={handleMarkDone}>
+            <View style={s.btnRow}>
+              <Feather name="check" size={18} color={C.white} />
+              <Text style={s.primaryBtnText}>Mark as done</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (done) {
     return (
@@ -199,6 +229,10 @@ const s = StyleSheet.create({
   secondaryBtnText: { color: C.forest, fontWeight: '600', fontSize: 16 },
   ghostBtn: { padding: 10, marginTop: 4 },
   ghostBtnText: { fontSize: 14, color: C.muted },
+
+  errandWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, marginBottom: 32 },
+  errandTitle: { fontSize: 22, fontWeight: '700', color: C.forest, textAlign: 'center', marginBottom: 12, lineHeight: 30 },
+  errandSub: { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24 },
 
   doneTitle:  { fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 10 },
   doneSub:    { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 32 },

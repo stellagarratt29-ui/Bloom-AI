@@ -1,6 +1,6 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import {
-  View, Text, TouchableOpacity,
+  View, Text, TouchableOpacity, TextInput,
   ScrollView, SafeAreaView, StyleSheet, Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -8,6 +8,54 @@ import { useFocusEffect } from '@react-navigation/native';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { HOBBIES } from '../constants/data';
+
+const GOAL_ADVICE = [
+  {
+    match: /fit|gym|exercise|run|marathon|weight|muscle|diet|workout|swim|yoga|pilates|sport|health/i,
+    nudge: 'Consistency beats intensity. One session today is worth more than a perfect plan tomorrow.',
+    step: 'Put on your shoes and go for a 20-minute walk — that\'s how every fitness journey starts.',
+    links: 'Couch to 5K: nhs.uk/couch-to-5k  ·  Calorie tracking: myfitnesspal.com  ·  Free workouts: youtube → "beginner home workout"',
+  },
+  {
+    match: /learn|study|language|spanish|french|mandarin|code|program|guitar|piano|music|skill|course|degree/i,
+    nudge: 'Learning compounds — 20 focused minutes a day beats a 3-hour weekend session.',
+    step: 'Find one structured course and complete the very first lesson today.',
+    links: 'Free courses: coursera.org (audit for free)  ·  Languages: duolingo.com  ·  Coding: freecodecamp.org',
+  },
+  {
+    match: /job|career|promotion|business|startup|freelance|entrepreneur|salary|work/i,
+    nudge: 'Careers move when you show up every week, not just when you feel ready.',
+    step: 'Update your LinkedIn profile and reach out to one person in your target field this week.',
+    links: 'Job search: linkedin.com / glassdoor.com  ·  Portfolio: notion.so (free)  ·  Business setup: gov.uk/set-up-business',
+  },
+  {
+    match: /save|budget|debt|invest|house|property|pension|retirement|financial|money/i,
+    nudge: 'Financial progress starts with one week of tracking every purchase.',
+    step: 'Open your bank app and look at last month\'s spending — awareness comes first.',
+    links: 'Budgeting: moneysavingexpert.com  ·  Investing basics: investopedia.com  ·  Reddit community: reddit.com/r/personalfinance',
+  },
+  {
+    match: /write|book|novel|blog|creative|art|draw|paint|design|podcast|film|photo/i,
+    nudge: 'Creative work grows by showing up daily, even if just for 15 minutes.',
+    step: 'Create something small and imperfect today — post it, share it, ship it.',
+    links: 'Writing: substack.com or medium.com  ·  Design: behance.net  ·  Creative community: reddit.com → search your craft',
+  },
+  {
+    match: /travel|trip|holiday|adventure|abroad|country|visit/i,
+    nudge: 'Great trips get planned one step at a time, months in advance.',
+    step: 'Pick your destination and research the best time to go — then set a monthly savings target.',
+    links: 'Flights: skyscanner.net  ·  Accommodation: booking.com  ·  Visa info: gov.uk/foreign-travel-advice',
+  },
+];
+
+function getGoalAdvice(text) {
+  if (!text) return null;
+  return GOAL_ADVICE.find(a => a.match.test(text)) ?? {
+    nudge: 'The best time to start is today, with one tiny action.',
+    step: 'Write down the single next physical step you need to take.',
+    links: 'Goal tracking: notion.so  ·  Habit building: jamesclear.com/atomic-habits',
+  };
+}
 
 const PRIORITY_TAG = {
   high:   { label: 'Urgent', bg: '#FDECEA', text: '#C0392B' },
@@ -52,9 +100,19 @@ function TaskRow({ task, onToggle, onFocus }) {
 
 export default function HomeScreen({ navigation }) {
   const {
-    tasks, toggleTask, hasDoneJournalToday,
+    tasks, toggleTask, addTask, hasDoneJournalToday,
     selectedHobbies, hobbyProgress, goals, userName,
   } = useApp();
+
+  const [newTaskText, setNewTaskText] = useState('');
+  const inputRef = useRef(null);
+
+  const submitTask = () => {
+    const trimmed = newTaskText.trim();
+    if (!trimmed) return;
+    addTask(trimmed, 'medium');
+    setNewTaskText('');
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -68,9 +126,9 @@ export default function HomeScreen({ navigation }) {
   const pending = tasks.filter(t => !t.done);
   const done    = tasks.filter(t => t.done);
 
-  const nudgeText = (() => {
-    const goal = goals?.[0]?.text;
-    if (goal) return `You said "${goal}" matters to you. Want to spend 15 minutes on it?`;
+  const goalAdvice = getGoalAdvice(goals?.[0]?.text);
+
+  const genericNudge = (() => {
     const active = HOBBIES.find(h =>
       selectedHobbies.includes(h.id) && (hobbyProgress[h.id] ?? 0) < h.steps.length
     );
@@ -97,6 +155,27 @@ export default function HomeScreen({ navigation }) {
 
         <Text style={s.title}>Today</Text>
         <Text style={s.sub}>Broken into small steps — one thing at a time.</Text>
+
+        <View style={s.addRow}>
+          <TextInput
+            ref={inputRef}
+            style={s.addInput}
+            placeholder="Add a task…"
+            placeholderTextColor={C.muted}
+            value={newTaskText}
+            onChangeText={setNewTaskText}
+            onSubmitEditing={submitTask}
+            returnKeyType="done"
+            blurOnSubmit={false}
+          />
+          <TouchableOpacity
+            style={[s.addBtn, !newTaskText.trim() && s.addBtnOff]}
+            onPress={submitTask}
+            disabled={!newTaskText.trim()}
+          >
+            <Feather name="plus" size={18} color={C.white} />
+          </TouchableOpacity>
+        </View>
 
         {tasks.length === 0 ? (
           <View style={s.emptyState}>
@@ -140,20 +219,39 @@ export default function HomeScreen({ navigation }) {
               </View>
             )}
 
-            <View style={s.nudgeCard}>
-              <View style={s.nudgeTop}>
-                <Feather name="feather" size={16} color="#3D6B4A" />
-                <Text style={s.nudgeLabel}>Bloom Nudge</Text>
+            {goalAdvice ? (
+              <View style={s.nudgeCard}>
+                <View style={s.nudgeTop}>
+                  <Feather name="target" size={16} color="#3D6B4A" />
+                  <Text style={s.nudgeLabel}>Your Goal</Text>
+                </View>
+                <Text style={s.nudgeGoal} numberOfLines={2}>{goals[0].text}</Text>
+                <Text style={s.nudgeText}>{goalAdvice.nudge}</Text>
+                <View style={s.nudgeStepBox}>
+                  <Feather name="arrow-right" size={13} color={C.forest} />
+                  <Text style={s.nudgeStepText}>{goalAdvice.step}</Text>
+                </View>
+                <Text style={s.nudgeLinks}>{goalAdvice.links}</Text>
+                <TouchableOpacity style={s.nudgeBtn} onPress={() => navigation.navigate('Goals')}>
+                  <Text style={s.nudgeBtnText}>See full plan →</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={s.nudgeText}>{nudgeText}</Text>
-              <TouchableOpacity
-                style={[s.nudgeBtn, pending.length === 0 && { opacity: 0.4 }]}
-                onPress={() => pending[0] && navigation.navigate('Sprint', { task: pending[0] })}
-                disabled={pending.length === 0}
-              >
-                <Text style={s.nudgeBtnText}>Let's begin →</Text>
-              </TouchableOpacity>
-            </View>
+            ) : (
+              <View style={s.nudgeCard}>
+                <View style={s.nudgeTop}>
+                  <Feather name="feather" size={16} color="#3D6B4A" />
+                  <Text style={s.nudgeLabel}>Bloom Nudge</Text>
+                </View>
+                <Text style={s.nudgeText}>{genericNudge}</Text>
+                <TouchableOpacity
+                  style={[s.nudgeBtn, pending.length === 0 && { opacity: 0.4 }]}
+                  onPress={() => pending[0] && navigation.navigate('Sprint', { task: pending[0] })}
+                  disabled={pending.length === 0}
+                >
+                  <Text style={s.nudgeBtnText}>Let's begin →</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </>
         )}
 
@@ -181,6 +279,21 @@ const s = StyleSheet.create({
 
   title: { fontSize: 36, fontWeight: '700', color: C.forest, letterSpacing: -0.5, marginBottom: 4 },
   sub:   { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 22 },
+
+  addRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18,
+  },
+  addInput: {
+    flex: 1, backgroundColor: C.white,
+    borderWidth: 1.5, borderColor: C.border, borderRadius: 22,
+    paddingVertical: 11, paddingHorizontal: 16,
+    fontSize: 15, color: C.forest,
+  },
+  addBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+  },
+  addBtnOff: { opacity: 0.35 },
 
   taskList: {},
   taskRow: {
@@ -218,6 +331,15 @@ const s = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 28,
   },
   emptyBtnText: { fontSize: 15, fontWeight: '700', color: C.white },
+
+  nudgeGoal: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 8, lineHeight: 22 },
+  nudgeStepBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: '#D6E8D4', borderRadius: 12,
+    paddingVertical: 10, paddingHorizontal: 12, marginBottom: 10,
+  },
+  nudgeStepText: { fontSize: 14, color: C.forest, flex: 1, lineHeight: 20, fontWeight: '500' },
+  nudgeLinks: { fontSize: 12, color: C.muted, lineHeight: 18, marginBottom: 14 },
 
   nudgeCard: {
     backgroundColor: '#EAF0E8', borderRadius: 20,
