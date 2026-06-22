@@ -149,7 +149,7 @@ export function AppProvider({ children }) {
       if (t.id !== id) return t;
       const nowDone = !t.done;
       if (nowDone) {
-        addPoints(POINTS[t.priority] ?? 10);
+        addPoints(5);
         setTasksCompleted(c => c + 1);
         const today = todayStr();
         if (streakRef.current.lastDay !== today) {
@@ -235,8 +235,9 @@ export function AppProvider({ children }) {
     const taskItems = items.filter(i => i.category !== 'goal');
     const goalItems = items.filter(i => i.category === 'goal');
 
-    if (taskItems.length > 0) {
-      setTasks(taskItems.map(({ text, priority }) => makeTask(text, priority ?? 'medium')));
+    const newTasks = taskItems.map(({ text, priority }) => makeTask(text, priority ?? 'medium'));
+    if (newTasks.length > 0) {
+      setTasks(newTasks);
     }
     goalItems.forEach(g => {
       setGoals(prev => {
@@ -245,6 +246,7 @@ export function AppProvider({ children }) {
       });
     });
     setLastJournalDate(todayStr());
+    return newTasks;
   }, []);
 
   const addGoal = useCallback((text) => {

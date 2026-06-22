@@ -182,9 +182,10 @@ function GrowStack() {
 function ChatStack() {
   return (
     <ChatStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ChatStackNav.Screen name="BloomChat" component={BloomChatScreen} />
-      <ChatStackNav.Screen name="Goals"     component={GoalsScreen} />
-      <ChatStackNav.Screen name="Settings"  component={SettingsScreen} />
+      <ChatStackNav.Screen name="BloomChat"  component={BloomChatScreen} />
+      <ChatStackNav.Screen name="Goals"      component={GoalsScreen} />
+      <ChatStackNav.Screen name="Settings"   component={SettingsScreen} />
+      <ChatStackNav.Screen name="TaskGuide"  component={TaskGuideScreen} />
     </ChatStackNav.Navigator>
   );
 }
@@ -196,6 +197,7 @@ function MainTabs() {
       tabBar={(props) => <CustomTabBar {...props} />}
       tabBarPosition={layout === 'desktop' ? 'left' : 'bottom'}
       screenOptions={{ headerShown: false }}
+      initialRouteName="ChatTab"
     >
       <Tab.Screen name="HomeTab" component={HomeStack} />
       <Tab.Screen name="GrowTab" component={GrowStack} />
