@@ -16,24 +16,116 @@ const STARTERS = [
   "How am I doing with my goal?",
 ];
 
-function getFallback(msg) {
-  const m = msg.toLowerCase();
-  if (/overwhelm|stress|too much|can't cope/.test(m))
-    return "That's okay. When everything piles up, pick just ONE task — the smallest one you can do right now. What is it?";
-  if (/habit|routine|daily/.test(m))
-    return "The best habit is one you'll actually stick to. What's something small you could do every single day?";
-  if (/goal|aim|want to/.test(m))
-    return "Goals happen one small step at a time. What's the next physical action you need to take toward yours?";
-  if (/focus|distract|procrastinat/.test(m))
-    return "Try the 2-minute rule: if it takes less than 2 minutes, do it now. Otherwise pick one task and set a 15-minute timer.";
-  return "Tell me more — what's the most pressing thing on your mind right now?";
+function getInitialGreeting(userName, buddyName) {
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const name = userName ? `, ${userName}` : '';
+  return `${greet}${name}! I'm ${buddyName ?? 'Bloom'}. What's on your mind?`;
+}
+
+// Returns task text if message is an add-task request, otherwise null
+function detectTaskAdd(msg) {
+  const lower = msg.toLowerCase().trim();
+
+  // Explicit: "add dentist appointment", "remind me to call mum", etc.
+  const explicit = lower.match(
+    /^(?:add|remind me to|put|i need to|don'?t let me forget to?|can you add|please add|schedule)\s+(.+?)(?:\s+(?:to|on|in)\s+(?:my\s+)?(?:list|calendar|cal|tasks?|schedule))?[.!?]?$/
+  );
+  if (explicit) return explicit[1].trim();
+
+  // Short action phrases: "dentist appointment", "call mum", "buy milk"
+  const shortAction = /^(?:dentist|doctor|hospital|meeting|appointment|call|email|text|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
+  if (shortAction && lower.split(' ').length <= 8) return msg.trim();
+
+  return null;
+}
+
+function getFallback(msg, { userName, goals, tasks, buddyName }) {
+  const m = msg.toLowerCase().trim();
+  const name = userName ? ` ${userName}` : '';
+
+  // Greetings
+  if (/^(hi+|hey+|hello+|yo+|sup|howdy|good\s*(morning|afternoon|evening|night))[\s!?.]*$/.test(m))
+    return `Hey${name}! What's on your mind today — tasks, worries, things you want to get done? I'm here to help.`;
+
+  // Thanks / acknowledgements
+  if (/^(thanks?|thank you|cheers|ok+|okay|got it|perfect|great|nice|cool|sounds good|awesome|fab)[\s!.]*$/.test(m))
+    return `Anytime${name}! Is there anything else I can help you with?`;
+
+  // Bye
+  if (/^(bye|goodbye|see ya|cya|later|ttyl|gotta go)[\s!.]*$/.test(m))
+    return `See you later${name}! Come back whenever you need to plan your day.`;
+
+  // How are you?
+  if (/how are you|how('re| are) you doing|you ok\??$/.test(m))
+    return `I'm just here to help you! How are YOU doing — what's on your plate today?`;
+
+  // Overwhelm / stress / anxiety
+  if (/overwhelm|stress|too much|can'?t cope|anxious|anxiety|panic|freak/.test(m))
+    return `That feeling is real, and it's okay. Here's what actually helps: pick just ONE task — the smallest thing — and only do that. What is it?`;
+
+  // Tired / burnt out
+  if (/tired|exhausted|no energy|drained|burnt? ?out|fatigue|sleep/.test(m))
+    return `Your body is telling you something. Rest IS productive. If you must push through — what's the single most important thing you need to do today?`;
+
+  // Can't start / procrastination
+  if (/can'?t start|can'?t begin|procrastinat|don'?t know where to start|where do i start|stuck/.test(m))
+    return `Start anywhere. Pick the task that feels smallest, set a 10-minute timer, and just begin. Which task do you want to try first?`;
+
+  // Focus / distraction
+  if (/focus|distract|keep getting distract|can'?t concentrate/.test(m))
+    return `Try this: close every other tab, put your phone face-down, set a 25-minute timer, and work on ONE thing only. What's that one thing?`;
+
+  // Goal / progress
+  if (/goal|progress|how am i doing|on track|am i doing well/.test(m)) {
+    const g = goals?.[0]?.text;
+    if (g) return `Your goal is "${g}". Best way to make progress? One small action today. What could you do in the next hour toward it?`;
+    return `Set a goal in the Goals tab and I can help you track it and figure out next steps!`;
+  }
+
+  // What should I do today
+  if (/what should i (do|focus|work on)|today|my tasks|my list|where do i start/.test(m)) {
+    const pending = (tasks || []).filter(t => !t.done);
+    if (pending.length > 0) {
+      const top = pending.find(t => t.priority === 'high') || pending[0];
+      return `Your most important task right now: "${top.text}". Tap it on the Today tab to see how to do it step by step.`;
+    }
+    return `Your list is clear! Type anything in the chat bar on the Today tab — tasks, worries, or your whole morning brain dump.`;
+  }
+
+  // Calendar / schedule requests
+  if (/calendar|cal|schedule/.test(m))
+    return `I've added that to your task list! Check the Today tab. (Google Calendar sync is coming soon.)`;
+
+  // Habit / routine
+  if (/habit|routine|every day|daily|consistent/.test(m))
+    return `The best habit is one you'll actually do. What's one tiny thing you could commit to doing every single day — even on bad days?`;
+
+  // Motivation
+  if (/motivat|can'?t be bothered|don'?t feel like|no motivation|lazy/.test(m))
+    return `Motivation follows action — not the other way around. Start for just 2 minutes, you'll usually keep going. What's the first tiny step?`;
+
+  // Questions about the buddy
+  if (/what can you do|what are you|who are you|are you an ai|are you real/.test(m))
+    return `I'm ${buddyName ?? 'Bloom'}, your productivity buddy! I can help you plan your day, add tasks, break things down, and talk through what's on your mind. What do you need?`;
+
+  // "yes", "no", "maybe" alone
+  if (/^(yes+|no+|nah|nope|yep|yeah|sure|maybe|idk|dunno)[\s!.?]*$/.test(m))
+    return `Got it! What's the next thing on your mind?`;
+
+  // Short random word (like "API", "BRU" etc.)
+  if (m.split(' ').length <= 2 && m.length < 20)
+    return `Got you! What are you working on today, or what's stressing you out?`;
+
+  // Catch-all
+  return `I hear you. What's the most important thing you need to get done today? Tell me and we'll figure it out together.`;
 }
 
 export default function BloomChatScreen({ navigation }) {
-  const { userName, buddy, goals, tasks, currentStreak, totalPoints, momentum } = useApp();
+  const { userName, buddy, goals, tasks, currentStreak, totalPoints, momentum, addTask } = useApp();
 
   const [messages, setMessages] = useState([
-    { id: 1, from: 'bloom', text: `Hey${userName ? ` ${userName}` : ''}! I'm ${buddy?.name ?? 'Bloom'}. What's on your mind?` },
+    { id: 1, from: 'bloom', text: getInitialGreeting(userName, buddy?.name) },
   ]);
   const [input, setInput]       = useState('');
   const [thinking, setThinking] = useState(false);
@@ -59,9 +151,17 @@ export default function BloomChatScreen({ navigation }) {
     historyRef.current = [...historyRef.current, { role: 'user', content: trimmed }];
 
     if (!hasKey) {
-      const fallback = getFallback(trimmed);
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: fallback }]);
-      historyRef.current = [...historyRef.current, { role: 'assistant', content: fallback }];
+      // Try to detect task-add intent first
+      const taskText = detectTaskAdd(trimmed);
+      let reply;
+      if (taskText) {
+        addTask(taskText, 'medium');
+        reply = `Done! I've added "${taskText}" to your task list. Head to the Today tab to see it. Anything else?`;
+      } else {
+        reply = getFallback(trimmed, { userName, goals, tasks, buddyName: buddy?.name });
+      }
+      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
+      historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
       scrollToEnd();
       return;
     }
@@ -93,8 +193,9 @@ export default function BloomChatScreen({ navigation }) {
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <Text style={s.headerTitle}>{buddy?.name ?? 'Bloom'}</Text>
-            {hasKey === true  && <Text style={s.headerSub}>AI · powered by Claude</Text>}
-            {hasKey === false && <Text style={s.headerSub}>Add API key in Settings for real AI</Text>}
+            <Text style={s.headerSub}>
+              {hasKey === true ? 'AI · powered by Claude' : 'Your productivity buddy'}
+            </Text>
           </View>
           <View style={s.headerRight} />
         </View>
