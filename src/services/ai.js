@@ -169,12 +169,18 @@ function categoriseWithRules(rawText) {
       category = 'goal';
     }
     // Hobbies: creative or skill-building for personal growth/joy
-    else if (
-      /\b(guitar|piano|violin|drums|singing|dancing|watercolou?r|meditat(e|ion|ing)|yoga|bak(e|ing)|garden(ing)?|knit(ting)?|sew(ing)?|crochet|craft(ing)?|photograph(y|ing)|sculpt(ing)?|pottery|ceramics)\b/.test(t) ||
-      /\b(finish|continue|work on|practice) (my |the |a )?(painting|drawing|sketch|watercolou?r|canvas|portrait|landscape|art|music|song|piece)\b/.test(t) ||
-      /\bpractice (my |the )?(guitar|piano|violin|singing|dancing|art)\b/.test(t)
-    ) {
-      category = 'hobby';
+    // Guard: buying supplies is a task, not a hobby
+    else {
+      const isBuying = /^(buy|purchase|get (some|more|a)|order|pick up)\b/.test(t);
+      if (
+        !isBuying && (
+          /\b(guitar|piano|violin|drums|singing|dancing|watercolou?r|meditat(e|ion|ing)|yoga|bak(e|ing)|garden(ing)?|knit(ting)?|sew(ing)?|crochet|craft(ing)?|photograph(y|ing)|sculpt(ing)?|pottery|ceramics)\b/.test(t) ||
+          /\b(finish|continue|work on|practice) (my |the |a )?\w* ?(painting|drawing|sketch|watercolou?r|canvas|portrait|landscape|art|music|song|piece)\b/.test(t) ||
+          /\bpractice (my |the )?(guitar|piano|violin|singing|dancing|art)\b/.test(t)
+        )
+      ) {
+        category = 'hobby';
+      }
     }
 
     if (category === 'task') {
