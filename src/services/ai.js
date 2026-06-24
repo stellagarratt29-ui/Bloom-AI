@@ -80,6 +80,7 @@ Item rules:
 - Hobbies: always priority "low"
 - Goals: always priority "medium"
 - Extract EVERY distinct item — never merge, never drop anything
+- Rewrite each item's "text" as a short, clean imperative action label — strip filler words, first-person phrasing, and casual language. Title-case imperative style (e.g. "Take out the garbage" not "I really need to take out the garbage can"; "Write English essay outline" not "ugh i still haven't done my english essay outline")
 
 Response rules (critical):
 - Name 2–3 specific items from the dump using the user's own words

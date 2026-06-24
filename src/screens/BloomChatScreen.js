@@ -119,7 +119,6 @@ export default function BloomChatScreen({ navigation }) {
       if (looksLikeTaskDump(trimmed)) {
         const { items, response } = await parseBrainDump(trimmed, userName);
         if (items.length > 0) {
-          // Generate goal actions in parallel
           const goalItems = items.filter(i => i.category === 'goal');
           const goalActionsMap = {};
           await Promise.all(
@@ -129,13 +128,9 @@ export default function BloomChatScreen({ navigation }) {
           );
 
           const createdTasks = processBrainDump(items, goalActionsMap);
-          const replyText = response ?? `Got ${createdTasks.length} things sorted. Tap any task for step-by-step help.`;
+          const replyText = response ?? `Got ${createdTasks.length} things sorted below. Tap any task for step-by-step help.`;
 
-          const bloomMsg = {
-            id: Date.now() + 1, from: 'bloom', type: 'tasks',
-            taskList: createdTasks, text: replyText,
-          };
-          setMessages(prev => [...prev, bloomMsg]);
+          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: replyText }]);
           historyRef.current = [...historyRef.current, { role: 'assistant', content: replyText }];
           setThinking(false);
           scrollToEnd();
@@ -175,6 +170,8 @@ export default function BloomChatScreen({ navigation }) {
     }
   };
 
+  const pendingTasks = tasks.filter(t => !t.done);
+
   function renderTaskSections(taskList) {
     const high = taskList.filter(t => t.priority === 'high');
     const med  = taskList.filter(t => t.priority === 'medium');
@@ -185,28 +182,24 @@ export default function BloomChatScreen({ navigation }) {
       { key: 'low', label: SECTION_LABEL.low, items: low },
     ].filter(g => g.items.length > 0);
 
-    return (
-      <View style={s.taskSections}>
-        {groups.map(g => (
-          <View key={g.key} style={s.taskGroup}>
-            <Text style={s.taskGroupLabel}>{g.label.toUpperCase()}</Text>
-            {g.items.map(task => (
-              <TouchableOpacity
-                key={task.id}
-                style={s.taskCard}
-                onPress={() => navigation.navigate('TaskGuide', { task })}
-                activeOpacity={0.7}
-              >
-                <View style={[s.taskDot, { backgroundColor: PRIORITY_DOT[task.priority] ?? C.sage }]} />
-                <Text style={s.taskCardText} numberOfLines={2}>{task.text}</Text>
-                <View style={s.taskPts}><Text style={s.taskPtsText}>+5</Text></View>
-                <Feather name="chevron-right" size={14} color={C.muted} />
-              </TouchableOpacity>
-            ))}
-          </View>
+    return groups.map(g => (
+      <View key={g.key} style={s.taskGroup}>
+        <Text style={s.taskGroupLabel}>{g.label.toUpperCase()}</Text>
+        {g.items.map(task => (
+          <TouchableOpacity
+            key={task.id}
+            style={s.taskCard}
+            onPress={() => navigation.navigate('TaskGuide', { task })}
+            activeOpacity={0.7}
+          >
+            <View style={[s.taskDot, { backgroundColor: PRIORITY_DOT[task.priority] ?? C.sage }]} />
+            <Text style={s.taskCardText} numberOfLines={2}>{task.text}</Text>
+            <View style={s.taskPts}><Text style={s.taskPtsText}>+5</Text></View>
+            <Feather name="chevron-right" size={14} color={C.muted} />
+          </TouchableOpacity>
         ))}
       </View>
-    );
+    ));
   }
 
   return (
@@ -220,6 +213,7 @@ export default function BloomChatScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Conversation log */}
         <ScrollView
           ref={scrollRef}
           style={s.scroll}
@@ -233,16 +227,6 @@ export default function BloomChatScreen({ navigation }) {
                 <View key={m.id} style={s.userRow}>
                   <View style={s.userBubble}>
                     <Text style={s.userText}>{m.text}</Text>
-                  </View>
-                </View>
-              );
-            }
-            if (m.type === 'tasks') {
-              return (
-                <View key={m.id} style={s.bloomRow}>
-                  <View style={s.taskBubble}>
-                    <Text style={s.bloomText}>{m.text}</Text>
-                    {renderTaskSections(m.taskList)}
                   </View>
                 </View>
               );
@@ -272,6 +256,24 @@ export default function BloomChatScreen({ navigation }) {
             </View>
           )}
         </ScrollView>
+
+        {/* Persistent task list — stays visible all day, below conversation */}
+        {pendingTasks.length > 0 && (
+          <View style={s.taskPanel}>
+            <View style={s.taskPanelHeader}>
+              <Text style={s.taskPanelTitle}>TODAY'S TASKS</Text>
+              <Text style={s.taskPanelCount}>{pendingTasks.length} remaining</Text>
+            </View>
+            <ScrollView
+              style={s.taskPanelScroll}
+              contentContainerStyle={s.taskPanelContent}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+            >
+              {renderTaskSections(pendingTasks)}
+            </ScrollView>
+          </View>
+        )}
 
         <View style={s.inputBar}>
           <TouchableOpacity
@@ -322,7 +324,7 @@ const s = StyleSheet.create({
   ptsText: { fontSize: 13, fontWeight: '700', color: C.sage },
 
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 18, paddingVertical: 20, gap: 14 },
+  scrollContent: { paddingHorizontal: 18, paddingVertical: 16, gap: 14 },
 
   bloomRow: { alignSelf: 'stretch' },
   bloomBubble: {
@@ -331,25 +333,6 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
-
-  taskBubble: {
-    backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 5,
-    padding: 16, borderWidth: 1, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
-  },
-  taskSections: { marginTop: 14, gap: 16 },
-  taskGroup: { gap: 6 },
-  taskGroupLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, marginBottom: 2 },
-  taskCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: C.cream, borderRadius: 12,
-    paddingVertical: 11, paddingHorizontal: 13,
-    borderWidth: 1, borderColor: C.border,
-  },
-  taskDot: { width: 7, height: 7, borderRadius: 4, flexShrink: 0 },
-  taskCardText: { flex: 1, fontSize: 14, color: C.forest, fontWeight: '500', lineHeight: 20 },
-  taskPts: { backgroundColor: C.goldPale, borderRadius: 8, paddingVertical: 2, paddingHorizontal: 6 },
-  taskPtsText: { fontSize: 11, fontWeight: '700', color: C.gold },
 
   userRow: { alignItems: 'flex-end' },
   userBubble: {
@@ -363,6 +346,37 @@ const s = StyleSheet.create({
     marginTop: 8, borderWidth: 1, borderColor: C.sageLight,
   },
   hintText: { fontSize: 14, color: C.forest, lineHeight: 22, textAlign: 'center' },
+
+  // Persistent task panel
+  taskPanel: {
+    borderTopWidth: 1.5, borderTopColor: C.border,
+    backgroundColor: C.cream, maxHeight: 300,
+  },
+  taskPanelHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 18, paddingTop: 12, paddingBottom: 8,
+  },
+  taskPanelTitle: {
+    fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.5,
+  },
+  taskPanelCount: {
+    fontSize: 11, fontWeight: '600', color: C.sage,
+  },
+  taskPanelScroll: { flex: 1 },
+  taskPanelContent: { paddingHorizontal: 14, paddingBottom: 12, gap: 12 },
+
+  taskGroup: { gap: 5 },
+  taskGroupLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, marginBottom: 2 },
+  taskCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: C.white, borderRadius: 12,
+    paddingVertical: 11, paddingHorizontal: 13,
+    borderWidth: 1, borderColor: C.border,
+  },
+  taskDot: { width: 7, height: 7, borderRadius: 4, flexShrink: 0 },
+  taskCardText: { flex: 1, fontSize: 14, color: C.forest, fontWeight: '500', lineHeight: 20 },
+  taskPts: { backgroundColor: C.goldPale, borderRadius: 8, paddingVertical: 2, paddingHorizontal: 6 },
+  taskPtsText: { fontSize: 11, fontWeight: '700', color: C.gold },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
