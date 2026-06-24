@@ -21,18 +21,22 @@ import OnboardingScreen      from './src/screens/OnboardingScreen';
 import BloomChatScreen       from './src/screens/BloomChatScreen';
 import TaskGuideScreen       from './src/screens/TaskGuideScreen';
 import HobbiesScreen         from './src/screens/HobbiesScreen';
+import HobbyDetailScreen     from './src/screens/HobbyDetailScreen';
 import GoalsScreen           from './src/screens/GoalsScreen';
+import GoalDetailScreen      from './src/screens/GoalDetailScreen';
 import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
 
-const RootStack    = createNativeStackNavigator();
-const ChatStackNav = createNativeStackNavigator();
-const Tab          = createBottomTabNavigator();
+const RootStack     = createNativeStackNavigator();
+const ChatStackNav  = createNativeStackNavigator();
+const GrowStackNav  = createNativeStackNavigator();
+const GoalsStackNav = createNativeStackNavigator();
+const Tab           = createBottomTabNavigator();
 
 const TAB_ITEMS = [
-  { name: 'ChatTab',    icon: 'message-circle', label: 'Today'    },
-  { name: 'GrowTab',    icon: 'sun',            label: 'Grow'     },
-  { name: 'GoalsTab',   icon: 'target',         label: 'Goals'    },
-  { name: 'ScreenTab',  icon: 'smartphone',     label: 'Screen'   },
+  { name: 'ChatTab',   icon: 'message-circle', label: 'Today'  },
+  { name: 'GrowTab',   icon: 'sun',            label: 'Grow'   },
+  { name: 'GoalsTab',  icon: 'target',         label: 'Goals'  },
+  { name: 'ScreenTab', icon: 'smartphone',     label: 'Screen' },
 ];
 
 const SIDEBAR_W = 200;
@@ -67,11 +71,9 @@ function TabIcon({ iconName, label, focused }) {
   return (
     <View style={{ alignItems: 'center', paddingTop: 4 }}>
       <Feather name={iconName} size={21} color={focused ? C.forest : C.muted} />
-      <Text style={{
-        fontSize: 10, marginTop: 3,
-        fontWeight: focused ? '700' : '500',
-        color: focused ? C.forest : C.muted,
-      }}>{label}</Text>
+      <Text style={{ fontSize: 10, marginTop: 3, fontWeight: focused ? '700' : '500', color: focused ? C.forest : C.muted }}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -96,9 +98,7 @@ function CustomTabBar({ state, navigation }) {
               activeOpacity={0.7}
             >
               <Feather name={item.icon} size={18} color={focused ? C.forest : C.muted} />
-              <Text style={[deskS.navLabel, focused && deskS.navLabelActive]}>
-                {item.label}
-              </Text>
+              <Text style={[deskS.navLabel, focused && deskS.navLabelActive]}>{item.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -126,37 +126,49 @@ function CustomTabBar({ state, navigation }) {
 
 const deskS = StyleSheet.create({
   sidebar: {
-    width: SIDEBAR_W,
-    backgroundColor: C.white, borderRightWidth: 1, borderRightColor: C.border,
+    width: SIDEBAR_W, backgroundColor: C.white,
+    borderRightWidth: 1, borderRightColor: C.border,
     paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
   },
-  logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
-  logoText: { fontSize: 24, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
+  logoWrap:      { marginBottom: 40, paddingHorizontal: 8 },
+  logoText:      { fontSize: 24, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined },
-  logoSub:  { fontSize: 11, color: C.muted, marginTop: 2 },
-  navItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 13, paddingHorizontal: 14, borderRadius: 12, marginBottom: 2,
-  },
+  logoSub:       { fontSize: 11, color: C.muted, marginTop: 2 },
+  navItem:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 14, borderRadius: 12, marginBottom: 2 },
   navItemActive: { backgroundColor: C.sagePale },
   navLabel:      { fontSize: 14, fontWeight: '500', color: C.muted },
   navLabelActive:{ fontWeight: '700', color: C.forest },
 });
 
 const mobileTabS = StyleSheet.create({
-  bar: {
-    backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.border,
-    height: 72, paddingBottom: 8, flexDirection: 'row',
-  },
+  bar:  { backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.border, height: 72, paddingBottom: 8, flexDirection: 'row' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
 
 function ChatStack() {
   return (
     <ChatStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ChatStackNav.Screen name="BloomChat" component={BloomChatScreen} />
-      <ChatStackNav.Screen name="TaskGuide" component={TaskGuideScreen} />
+      <ChatStackNav.Screen name="BloomChat"  component={BloomChatScreen} />
+      <ChatStackNav.Screen name="TaskGuide"  component={TaskGuideScreen} />
     </ChatStackNav.Navigator>
+  );
+}
+
+function GrowStack() {
+  return (
+    <GrowStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <GrowStackNav.Screen name="Hobbies"     component={HobbiesScreen} />
+      <GrowStackNav.Screen name="HobbyDetail" component={HobbyDetailScreen} />
+    </GrowStackNav.Navigator>
+  );
+}
+
+function GoalsStack() {
+  return (
+    <GoalsStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <GoalsStackNav.Screen name="GoalsList"   component={GoalsScreen} />
+      <GoalsStackNav.Screen name="GoalDetail"  component={GoalDetailScreen} />
+    </GoalsStackNav.Navigator>
   );
 }
 
@@ -170,8 +182,8 @@ function MainTabs() {
       initialRouteName="ChatTab"
     >
       <Tab.Screen name="ChatTab"   component={ChatStack} />
-      <Tab.Screen name="GrowTab"   component={HobbiesScreen} />
-      <Tab.Screen name="GoalsTab"  component={GoalsScreen} />
+      <Tab.Screen name="GrowTab"   component={GrowStack} />
+      <Tab.Screen name="GoalsTab"  component={GoalsStack} />
       <Tab.Screen name="ScreenTab" component={ScreenAwarenessScreen} />
     </Tab.Navigator>
   );
@@ -202,11 +214,9 @@ function RootNavigator() {
 
 function ResponsiveShell({ children }) {
   const layout = useLayout();
-
   if (Platform.OS !== 'web' || layout !== 'phone') {
     return <View style={{ flex: 1, backgroundColor: C.cream }}>{children}</View>;
   }
-
   return (
     <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#EAE5DE' }}>
       <View style={{ flex: 1, width: '100%', maxWidth: 430, backgroundColor: C.cream, overflow: 'hidden' }}>

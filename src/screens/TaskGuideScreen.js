@@ -9,41 +9,6 @@ import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey } from '../services/ai';
 
-// Detailed rule-based guidance for when there's no API key
-function getTaskGuide(text) {
-  const t = (text || '').toLowerCase();
-
-  if (/paint.*nail|nail.*paint/.test(t))
-    return `Here's how to get a clean nail paint:\n\n1. Remove any old polish with acetone remover\n2. File and shape your nails — do all 10 first before painting\n3. Apply a clear base coat and let it dry fully (2 min)\n4. Apply your colour in 2 thin coats — thin is everything, thick coats peel\n5. Wait 2 minutes between each coat\n6. Finish with a clear top coat to make it last longer\n7. Clean up edges with a cotton bud dipped in remover\n\nTip: do it while watching something so you don't move and smudge!\n\nWhat colour are you going for?`;
-
-  if (/doctor|dentist|hospital|appointment|clinic/.test(t))
-    return `Here's how to prepare for your appointment:\n\n1. Confirm the time, date, and exact location — add it to your calendar with a reminder 1 hour before\n2. Write down any symptoms, questions, or concerns before you go (your brain goes blank in appointments)\n3. Bring: insurance card, any previous test results, a list of any medications you take\n4. If it's a new doctor or clinic, arrive 10–15 minutes early to fill out paperwork\n5. During the appointment: take notes on what they say — even just on your phone\n6. After: write down next steps while it's still fresh\n\nWhat's the appointment for? I can help you prepare specific questions to ask.`;
-
-  if (/homework|essay|assignment|study|revision|exam|test/.test(t))
-    return `Here's how to actually get through it:\n\n1. Clear your space first — a messy desk = a distracted brain\n2. Write down exactly what you need to produce (one sentence)\n3. Set a 25-minute timer and work on only that — no phone, no tabs\n4. Take a 5-minute break when it goes off, then go again\n5. Start with the hardest part while your brain is fresh\n6. When you're stuck, write anything — even bad sentences. Fix later.\n\nFree tools:\n- Grammarly (grammarly.com) for writing\n- Khan Academy (khanacademy.org) for maths and science\n- Quizlet (quizlet.com) for revision flashcards\n\nWhat subject is it? I can give more specific help.`;
-
-  if (/clean|tidy|organise|organize|kitchen|room|bedroom|bathroom/.test(t))
-    return `Here's how to make cleaning actually happen:\n\n1. Set a 15-minute timer — commit to stopping when it goes off (you'll usually keep going)\n2. Pick ONE area to start — don't try to do everything at once\n3. Clear surfaces first: everything goes in a pile\n4. Sort the pile: put away, bin, or donate\n5. Wipe surfaces after they're clear\n6. Vacuum or sweep last\n\nSecret: put on a playlist or podcast you love. Cleaning goes 10x faster.\n\nWhich room or area are you starting with?`;
-
-  if (/paint|draw|sketch|watercolou?r|canvas|painting|artwork|art/.test(t))
-    return `Here's how to get into your painting session:\n\n1. Set up your space before you start — brushes clean, colours out, reference image ready\n2. Look at your painting from a distance first. What's the most off? Start there.\n3. Work dark to light — establish your darkest shadows first, then midtones, then highlights\n4. Step back every 10 minutes. You'll catch things you can't see close up.\n5. Don't overwork it — one of the hardest skills is knowing when to stop\n6. Take a photo at the end to compare progress\n\nFree resources:\n- YouTube: search "beginner [your medium] tutorial" — Florent Farges, Proko, or Drawfee are great\n- Pinterest: search your subject + "painting reference" for inspiration\n\nWhat medium are you using? And what's the painting of?`;
-
-  if (/cook|bake|recipe|meal|dinner|lunch|breakfast/.test(t))
-    return `Here's how to cook it well:\n\n1. Read the entire recipe before you start — no surprises mid-cook\n2. Prep everything first (chop, measure) before you turn on any heat\n3. Taste as you go — season in layers, not all at the end\n4. Heat the pan before adding oil, add oil before adding food\n5. Don't crowd the pan — things steam instead of browning\n6. Clean as you go so you're not overwhelmed at the end\n\nRecipe resources:\n- YouTube: "Basics with Babish" or "Joshua Weissman" for simple techniques\n- BBC Good Food (bbcgoodfood.com) for reliable recipes\n\nWhat are you making?`;
-
-  if (/call|phone|ring/.test(t))
-    return `Here's how to make a phone call without dreading it:\n\n1. Write down the 2–3 things you need to say or ask before you dial\n2. Call when you have good signal and a quiet spot\n3. Introduce yourself at the start: "Hi, my name is [name], I'm calling about..."\n4. It's always shorter than you think it'll be\n5. Write down anything important from the call immediately after\n\nWho are you calling and what do you need to sort out?`;
-
-  if (/email|message|reply|respond/.test(t))
-    return `Here's how to write it and actually send it:\n\n1. Open a draft and write the subject line first — it focuses your whole email\n2. Write a bad first draft with no editing — just get the words out\n3. Three-part structure: why you're emailing → what you need → thank you\n4. Read it once out loud, fix anything that sounds weird\n5. Hit send — don't overthink it\n\nTip: If you're stuck, start with "I'm writing to..." and just finish the sentence.\n\nWho's it to and what do you need to say?`;
-
-  if (/buy|shop|groceries|get|pick up|order/.test(t))
-    return `Here's how to get this done efficiently:\n\n1. Write the full list before you go — including quantities\n2. Group by category (fruit, dairy, toiletries) so you don't backtrack\n3. Check what you already have at home first\n4. Set a budget before you walk in\n5. If ordering online: check for discount codes before checkout\n\nWhat do you need to get?`;
-
-  // Generic fallback — still better than before
-  return `Let's break "${text}" into steps:\n\n1. Decide exactly when today you'll do this (a specific time, not "later")\n2. Write down what you actually need to start — materials, info, people to contact\n3. Do the first physical action right now, even if it's tiny\n4. Set a 20-minute timer and work only on this\n5. Anything you don't finish: schedule a specific time to come back to it\n\nWhat's making this feel hard, or shall I break it down further?`;
-}
-
 export default function TaskGuideScreen({ route, navigation }) {
   const { task } = route.params ?? {};
   const { toggleTask } = useApp();
@@ -55,12 +20,9 @@ export default function TaskGuideScreen({ route, navigation }) {
   const scrollRef  = useRef(null);
   const historyRef = useRef([]);
 
-  useEffect(() => {
-    loadInitialGuide();
-  }, []);
+  useEffect(() => { loadInitialGuide(); }, []);
 
-  const scrollToEnd = () =>
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+  const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
   const loadInitialGuide = async () => {
     setThinking(true);
@@ -69,19 +31,20 @@ export default function TaskGuideScreen({ route, navigation }) {
       if (!key) throw new Error('no key');
       const reply = await callClaude({
         system: `You are Bloom, a warm and practical productivity coach helping someone complete a specific task.
-Give a detailed, personalised breakdown of how to do this task:
-- 5–7 numbered steps, each specific and actionable
-- Include real resources (websites, YouTube channels, apps) where relevant
-- End with a warm, open question inviting them to ask more
-Write in plain text, no markdown headers. Be encouraging but not cheesy.`,
+Give a detailed, personalised breakdown of how to do this exact task:
+- 5–7 numbered steps, each specific and actionable for this particular task
+- Include real resources (websites, YouTube channels, apps, tools) where relevant
+- Match depth to complexity: a simple task gets a short answer; a complex task gets a real breakdown
+- End with a warm open question inviting them to ask more
+Write in plain text. No markdown headers. Be encouraging but not generic.`,
         messages: [{ role: 'user', content: `My task: "${task?.text}"` }],
-        maxTokens: 600,
+        maxTokens: 650,
       });
       const msg = { id: 1, from: 'bloom', text: reply };
       setMessages([msg]);
       historyRef.current = [{ role: 'assistant', content: reply }];
     } catch {
-      const guide = getTaskGuide(task?.text);
+      const guide = getTaskGuideFallback(task?.text);
       const msg = { id: 1, from: 'bloom', text: guide };
       setMessages([msg]);
       historyRef.current = [{ role: 'assistant', content: guide }];
@@ -106,8 +69,7 @@ Write in plain text, no markdown headers. Be encouraging but not cheesy.`,
       const key = await getApiKey();
       if (!key) throw new Error('no key');
       const reply = await callClaude({
-        system: `You are Bloom, a warm and practical productivity coach. The user is working on: "${task?.text}".
-Answer their question helpfully and specifically. Keep replies to 3–5 sentences. Be direct, no filler.`,
+        system: `You are Bloom, a practical productivity coach. The user is working on: "${task?.text}". Answer their follow-up question helpfully and specifically. Keep replies to 3–5 sentences. Be direct.`,
         messages: historyRef.current,
         maxTokens: 350,
       });
@@ -115,15 +77,13 @@ Answer their question helpfully and specifically. Keep replies to 3–5 sentence
       setMessages(prev => [...prev, msg]);
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
     } catch {
-      // Smart context-aware fallback
       const m = trimmed.toLowerCase();
-      let reply = `Good question about "${task?.text}". `;
-      if (/how long|time|take/.test(m)) reply += `It depends on how focused you are, but set a 25-minute timer to start — you can always do more.`;
-      else if (/what do i need|materials|supplies|tools/.test(m)) reply += `Write down everything you think you'll need before you start. Better to gather it all upfront than stop mid-task.`;
-      else if (/can't|can not|don't know how|stuck|help/.test(m)) reply += `Start with the very first physical action — even something tiny. Momentum builds from there.`;
-      else if (/why|should i|worth it/.test(m)) reply += `You added this for a reason. What made you want to do it?`;
-      else reply = `For "${task?.text}": break it into smaller pieces and do one piece at a time. Which step feels most manageable right now?`;
-
+      let reply;
+      if (/how long|time|take/.test(m)) reply = `It depends on your focus, but set a 25-minute timer to start — you can always do more.`;
+      else if (/what do i need|materials|tools|supplies/.test(m)) reply = `Write down everything you think you'll need before starting. Better to gather it upfront than stop mid-task.`;
+      else if (/can'?t|don't know|stuck|help/.test(m)) reply = `Start with the very first physical action — even something tiny. Momentum builds from there.`;
+      else if (/why|should i|worth it/.test(m)) reply = `You added this for a reason. What made you want to do it?`;
+      else reply = `For "${task?.text}": break it into smaller pieces and do one at a time. Which part feels most manageable right now?`;
       const msg = { id: Date.now() + 1, from: 'bloom', text: reply };
       setMessages(prev => [...prev, msg]);
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
@@ -148,7 +108,6 @@ Answer their question helpfully and specifically. Keep replies to 3–5 sentence
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        {/* Header */}
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
             <Feather name="arrow-left" size={22} color={C.forest} />
@@ -168,7 +127,6 @@ Answer their question helpfully and specifically. Keep replies to 3–5 sentence
           </TouchableOpacity>
         </View>
 
-        {/* Chat */}
         <ScrollView
           ref={scrollRef}
           style={s.scroll}
@@ -204,7 +162,6 @@ Answer their question helpfully and specifically. Keep replies to 3–5 sentence
           )}
         </ScrollView>
 
-        {/* Input */}
         <View style={s.inputBar}>
           <TextInput
             style={s.input}
@@ -228,6 +185,33 @@ Answer their question helpfully and specifically. Keep replies to 3–5 sentence
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+function getTaskGuideFallback(text) {
+  const t = (text || '').toLowerCase();
+
+  if (/paint.*nail|nail.*paint/.test(t))
+    return `Here's how to get a clean nail paint:\n\n1. Remove old polish with acetone remover\n2. File and shape your nails — do all 10 before painting\n3. Apply a clear base coat and let it dry fully (2 min)\n4. Apply colour in 2 thin coats — thin is key, thick coats peel\n5. Wait 2 minutes between each coat\n6. Finish with a clear top coat\n7. Clean up edges with a cotton bud dipped in remover\n\nTip: do it while watching something so you don't fidget!\n\nWhat colour are you going for?`;
+
+  if (/doctor|dentist|hospital|appointment|clinic/.test(t))
+    return `Here's how to prepare:\n\n1. Confirm the time, date, and location — add it to your calendar with a 1-hour reminder\n2. Write down your symptoms, questions, or concerns before you go\n3. Bring: insurance card, previous test results, list of medications you take\n4. Arrive 10–15 minutes early if it's a new clinic\n5. During the appointment: take notes on what they say — even on your phone\n6. After: write down next steps while it's fresh\n\nWhat's the appointment for? I can help you prepare specific questions.`;
+
+  if (/homework|essay|assignment|study|revision|exam|test/.test(t))
+    return `Here's how to actually get through it:\n\n1. Clear your space first — a messy desk means a distracted brain\n2. Write down exactly what you need to produce in one sentence\n3. Set a 25-minute timer and work on only that\n4. Take a 5-minute break when it goes off, then go again\n5. Start with the hardest part while your brain is fresh\n\nFree tools: Grammarly for writing, Khan Academy for maths and science, Quizlet for revision cards.\n\nWhat subject is it? I can give more specific help.`;
+
+  if (/clean|tidy|organise|organize|kitchen|room|bedroom|bathroom/.test(t))
+    return `Here's how to make cleaning actually happen:\n\n1. Set a 15-minute timer — commit to stopping when it goes off (you'll usually keep going)\n2. Pick ONE area to start, not the whole space\n3. Clear surfaces first: everything goes into a pile\n4. Sort the pile: put away, bin, or donate\n5. Wipe surfaces after they're clear\n6. Vacuum or sweep last\n\nSecret: put on a podcast or playlist you love. Cleaning goes 10x faster.\n\nWhich area are you starting with?`;
+
+  if (/cook|bake|recipe|meal|dinner|lunch|breakfast/.test(t))
+    return `Here's how to cook it well:\n\n1. Read the entire recipe before starting — no surprises mid-cook\n2. Prep everything first (chop, measure) before you turn on any heat\n3. Taste as you go — season in layers, not all at the end\n4. Heat the pan before adding oil, add oil before adding food\n5. Don't crowd the pan — things steam instead of browning\n\nResources: "Basics with Babish" on YouTube, BBC Good Food for reliable recipes.\n\nWhat are you making?`;
+
+  if (/email|message|reply|respond/.test(t))
+    return `Here's how to write and actually send it:\n\n1. Open a draft and write the subject line first — it focuses your whole email\n2. Write a bad first draft with no editing — just get words out\n3. Three-part structure: why you're emailing → what you need → thanks\n4. Read it once out loud, fix anything that sounds odd\n5. Hit send — don't overthink it\n\nTip: if you're stuck, start with "I'm writing to…" and just finish the sentence.\n\nWho's it to and what do you need to say?`;
+
+  if (/call|phone|ring/.test(t))
+    return `Here's how to make the call without dreading it:\n\n1. Write down the 2–3 things you need to say or ask before dialling\n2. Call when you have good signal and a quiet spot\n3. Introduce yourself: "Hi, my name is [name], I'm calling about…"\n4. It's always shorter than you think it'll be\n5. Write down anything important immediately after\n\nWho are you calling and what do you need to sort out?`;
+
+  return `Let's break this down:\n\n1. Decide exactly when today you'll do this — a specific time, not "later"\n2. Write down what you actually need to start (materials, info, who to contact)\n3. Do the first physical action right now, even if it's tiny\n4. Set a 20-minute timer and work only on this\n5. Anything you don't finish: schedule a specific time to come back to it\n\nWhat's making this feel hard, or shall I break it down further?`;
 }
 
 const s = StyleSheet.create({

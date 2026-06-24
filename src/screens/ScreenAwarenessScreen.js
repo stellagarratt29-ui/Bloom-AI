@@ -1,32 +1,37 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { HOBBIES } from '../constants/data';
+import { generateScreenInsight } from '../services/ai';
+
+// PLACEHOLDER: real screen time requires native device APIs not available in Expo Go/web.
+// These values are mocked. Replace with actual ScreenTime/UsageStats API integration.
+const MOCK_SCREEN_TIME = '3h 42m';
+const MOCK_UNLOCKS = 28;
 
 export default function ScreenAwarenessScreen({ navigation }) {
-  const { dailyPoints, selectedHobbies } = useApp();
-  const todayPts = dailyPoints?.[6] ?? 0;
+  const { hobbies } = useApp();
+  const [insight, setInsight] = useState('');
+  const [loadingInsight, setLoadingInsight] = useState(true);
 
-  const hour = new Date().getHours();
-  const isEvening = hour >= 18;
+  useEffect(() => {
+    const hobbyNames = hobbies.map(h => h.name);
+    generateScreenInsight({
+      screenTime: MOCK_SCREEN_TIME,
+      unlocks: MOCK_UNLOCKS,
+      hobbies: hobbyNames,
+    }).then(text => {
+      setInsight(text);
+      setLoadingInsight(false);
+    }).catch(() => {
+      setInsight('Noticing your patterns is the most useful first step.');
+      setLoadingInsight(false);
+    });
+  }, []);
 
-  const insight = isEvening
-    ? 'You tend to scroll most in the evening. Try putting your phone down 30 minutes before bed.'
-    : todayPts > 0
-    ? `You've already earned ${todayPts} pts today — you're making real progress.`
-    : 'You haven\'t started your tasks yet today. Opening Bloom was a good first step.';
-
-  // Build redirect options from the user's actual hobbies, not a hardcoded list
-  const myHobbies = HOBBIES.filter(h => selectedHobbies.includes(h.id)).slice(0, 3);
-  const fallbackRedirects = [
-    { icon: 'book-open', label: 'Read', tab: null },
-    { icon: 'edit',      label: 'Write', tab: null },
-  ];
-  const redirects = myHobbies.length > 0
-    ? myHobbies.map(h => ({ icon: h.icon ?? 'star', label: h.name, tab: 'GrowTab' }))
-    : fallbackRedirects;
+  // Redirect suggestions come from the user's actual saved hobbies
+  const redirectHobbies = hobbies.slice(0, 3);
 
   return (
     <SafeAreaView style={s.safe}>
@@ -37,37 +42,41 @@ export default function ScreenAwarenessScreen({ navigation }) {
 
         <View style={s.statsRow}>
           <View style={s.statCard}>
-            <Text style={s.statValue}>—</Text>
-            <Text style={s.statLabel}>Screen time</Text>
-            <Text style={s.statNote}>Requires device API</Text>
+            <Text style={s.statValue}>{MOCK_SCREEN_TIME}</Text>
+            <Text style={s.statLabel}>Screen time today</Text>
+            {/* PLACEHOLDER — replace with real device API */}
+            <Text style={s.statNote}>Mock data</Text>
           </View>
           <View style={s.statCard}>
-            <Text style={s.statValue}>—</Text>
+            <Text style={s.statValue}>{MOCK_UNLOCKS}</Text>
             <Text style={s.statLabel}>Unlocks today</Text>
-            <Text style={s.statNote}>Requires device API</Text>
+            {/* PLACEHOLDER — replace with real device API */}
+            <Text style={s.statNote}>Mock data</Text>
           </View>
         </View>
 
         <View style={s.insightCard}>
           <Text style={s.insightLabel}>BLOOM NOTICED</Text>
-          <Text style={s.insightText}>{insight}</Text>
+          {loadingInsight ? (
+            <ActivityIndicator size="small" color={C.sage} style={{ marginVertical: 8 }} />
+          ) : (
+            <Text style={s.insightText}>{insight}</Text>
+          )}
         </View>
 
-        {isEvening && redirects.length > 0 && (
+        {redirectHobbies.length > 0 && (
           <>
-            <Text style={s.redirectLabel}>
-              {myHobbies.length > 0 ? 'INSTEAD, WORK ON' : 'INSTEAD, TRY'}
-            </Text>
+            <Text style={s.redirectLabel}>INSTEAD, WORK ON</Text>
             <View style={s.redirectRow}>
-              {redirects.map(r => (
+              {redirectHobbies.map(h => (
                 <TouchableOpacity
-                  key={r.label}
+                  key={h.id}
                   style={s.redirectChip}
-                  onPress={() => r.tab && navigation?.navigate?.(r.tab)}
+                  onPress={() => navigation?.navigate?.('GrowTab')}
                   activeOpacity={0.75}
                 >
-                  <Feather name={r.icon} size={22} color={C.forest} style={{ marginBottom: 6 }} />
-                  <Text style={s.redirectText}>{r.label}</Text>
+                  <Feather name="sun" size={20} color={C.forest} style={{ marginBottom: 6 }} />
+                  <Text style={s.redirectText}>{h.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -77,7 +86,7 @@ export default function ScreenAwarenessScreen({ navigation }) {
         <View style={s.noteCard}>
           <Feather name="info" size={14} color={C.muted} style={{ marginRight: 8, marginTop: 1 }} />
           <Text style={s.noteText}>
-            Full screen time data requires native device access. Bloom never blocks or restricts any app — it only observes and gently suggests.
+            Screen time and unlock data shown here is currently mocked. Real data requires native device APIs — Bloom never blocks or restricts any app.
           </Text>
         </View>
 
@@ -102,20 +111,18 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: C.white, borderRadius: 18,
     padding: 18, alignItems: 'center',
     borderWidth: 1, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  statValue: { fontSize: 30, fontWeight: '700', color: C.forest, marginBottom: 4 },
-  statLabel: { fontSize: 12, color: C.muted, fontWeight: '600', letterSpacing: 0.3 },
-  statNote:  { fontSize: 10, color: C.sageLight, marginTop: 4, textAlign: 'center' },
+  statValue: { fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 4 },
+  statLabel: { fontSize: 12, color: C.muted, fontWeight: '600', letterSpacing: 0.3, textAlign: 'center' },
+  statNote:  { fontSize: 10, color: C.sageLight, marginTop: 4 },
 
   insightCard: {
     backgroundColor: C.white, borderRadius: 18, padding: 18,
     borderWidth: 1, borderColor: C.border, marginBottom: 22,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  insightLabel: { fontSize: 10, fontWeight: '700', color: C.sage, letterSpacing: 1.3, marginBottom: 8 },
+  insightLabel: { fontSize: 10, fontWeight: '700', color: C.sage, letterSpacing: 1.3, marginBottom: 10 },
   insightText:  { fontSize: 14, color: C.forest, lineHeight: 22 },
 
   redirectLabel: {

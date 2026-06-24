@@ -2,65 +2,39 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, SafeAreaView, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { callClaude, buildBloomSystem, getApiKey, parseTasksWithAI } from '../services/ai';
+import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction } from '../services/ai';
 
 const PRIORITY_DOT = { high: '#C0392B', medium: C.sage, low: C.clay };
-
-// Mood inference from free-form text
-function inferMood(text) {
-  const t = text.toLowerCase();
-  if (/stress|overwhelm|anxious|anxiety|nervous|scared|worried|panic|too much|exhausted|drained/.test(t))
-    return 'stressed';
-  if (/tired|sleepy|no energy|can't be bothered|not feeling it|meh|blah/.test(t))
-    return 'tired';
-  if (/excited|pumped|motivated|ready|let's go|can't wait|great|amazing|good/.test(t))
-    return 'energised';
-  if (/sad|down|upset|crying|depressed|not okay|not good|rough/.test(t))
-    return 'low';
-  return 'neutral';
-}
-
-function moodAck(mood, name) {
-  const n = name ? ` ${name}` : '';
-  switch (mood) {
-    case 'stressed':  return `Sounds like a lot on your plate${n}. I'll keep things simple — let's just focus on what matters today.`;
-    case 'tired':     return `Got it${n}. We'll keep today light. Even one thing done is progress.`;
-    case 'energised': return `Love that energy${n}. Let's put it to work.`;
-    case 'low':       return `Thanks for sharing that${n}. No pressure — we'll take this one small step at a time.`;
-    default:          return null;
-  }
-}
 
 function getGreeting(userName) {
   const h = new Date().getHours();
   const time = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
   const name = userName ? `, ${userName}` : '';
-  return `Good ${time}${name}. How are you feeling, and what's on your mind today? Just tell me everything — I'll sort it out.`;
+  return `Good ${time}${name}. How are you feeling today, and what's on your mind? Just tell me everything — tasks, worries, plans — and I'll sort it out.`;
 }
 
 function looksLikeTaskDump(text) {
   const t = text.toLowerCase();
-  if (/here'?s? (what i|my) (need|have|want|gotta|tasks|list|to.?do)/i.test(text)) return true;
+  if (/here'?s? (what i|my) (need|have|want|tasks|list|to.?do)/i.test(text)) return true;
   if (/i (need|have|gotta|want) to .{5,} and (i )?(also )?(need|have|gotta|want)/i.test(t)) return true;
   if (text.includes('\n') && text.trim().split('\n').length >= 2) return true;
   if ((text.match(/\band\b/gi) || []).length >= 2 && text.length > 40) return true;
-  // Comma-separated list: 3+ commas strongly suggests a multi-item list
-  if ((text.match(/,/g) || []).length >= 3 && text.length > 50) return true;
+  if ((text.match(/,/g) || []).length >= 2 && text.length > 30) return true;
   return false;
 }
 
 function detectTaskAdd(msg) {
   const lower = msg.toLowerCase().trim();
-  const explicit = lower.match(
+  const m = lower.match(
     /^(?:add|remind me to|put|i need to|don'?t let me forget to?|can you add|please add|schedule)\s+(.+?)(?:\s+(?:to|on|in)\s+(?:my\s+)?(?:list|tasks?|schedule))?[.!?]?$/
   );
-  if (explicit) return explicit[1].trim();
-  const shortAction = /^(?:dentists?|doctors?|hospital|meetings?|appointments?|appts?|apts?|calls?|emails?|texts?|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
+  if (m) return m[1].trim();
+  const shortAction = /^(?:dentists?|doctors?|hospital|meetings?|appointments?|appts?|calls?|emails?|texts?|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
   if (shortAction && lower.split(' ').length <= 8) return msg.trim();
   return null;
 }
@@ -73,11 +47,9 @@ function getFallback(msg, { userName, goals, tasks }) {
     return `Hey${name}. What's on your mind? Tell me everything and I'll sort it.`;
   if (/^(thanks?|thank you|cheers|ok+|okay|got it|sounds good)[\s!.]*$/.test(m))
     return `Anytime${name}. What else?`;
-  if (/^(bye|goodbye|see ya|later)[\s!.]*$/.test(m))
-    return `Talk soon${name}.`;
-  if (/how are you/.test(m))
-    return `I'm here. How are YOU doing today?`;
-  if (/what (time|day|date) is it|what's the (time|date)/.test(m)) {
+  if (/^(bye|goodbye|see ya|later)[\s!.]*$/.test(m)) return `Talk soon${name}.`;
+  if (/how are you/.test(m)) return `I'm here and ready. How are YOU doing today?`;
+  if (/what (time|day|date) is it/.test(m)) {
     const now = new Date();
     return `It's ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} on ${now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}.`;
   }
@@ -87,105 +59,49 @@ function getFallback(msg, { userName, goals, tasks }) {
       const top = pending.find(t => t.priority === 'high') || pending[0];
       return `Your most important task right now: "${top.text}". Tap it for step-by-step help.`;
     }
-    return `Nothing on your list yet${name}. Tell me what's on your mind today.`;
+    return `Nothing on your list yet${name}. Tell me what's on your mind.`;
   }
-  if (/overwhelm|stress|too much|anxious|worried|nervous/.test(m)) {
-    const aboutMatch = m.match(/(?:about|with|for|over|regarding)\s+(.{3,40}?)(?:\s+(?:and|but|,)|[.!?]|$)/);
+  if (/overwhelm|stress|too much|anxious|worried/.test(m)) {
+    const aboutMatch = m.match(/(?:about|with|for|over)\s+(.{3,40}?)(?:\s+(?:and|but|,)|[.!?]|$)/);
     const topic = aboutMatch?.[1]?.trim();
     return topic
-      ? `That's a lot — especially with "${topic}" hanging over you. Pick just the single smallest action on it and do only that. What would that be?`
-      : `That feeling is real. Pick just one task — the smallest possible thing — and do only that. What is it?`;
+      ? `That's a lot — especially with "${topic}" hanging over you. Pick just one tiny thing to do next and do only that.`
+      : `That feeling is real. Pick the single smallest possible action and do just that. What is it?`;
   }
-  if (/can'?t start|procrastinat|stuck|don'?t know where to start/.test(m)) {
-    const onMatch = m.match(/(?:on|with|the|my)\s+(.{3,35}?)(?:\s+(?:and|but|,)|[.!?]|$)/);
-    const task = onMatch?.[1]?.trim();
-    return task
-      ? `Set a 10-minute timer and just start "${task}" — it doesn't have to be good, it just has to begin. Go.`
-      : `Set a 10-minute timer and just begin. It doesn't have to be good — it just has to start. Which task?`;
-  }
+  if (/can'?t start|procrastinat|stuck|don'?t know where to start/.test(m))
+    return `Set a 10-minute timer and just begin — it doesn't have to be good, it just has to start. Which task?`;
   if (/done|finished|completed|just did|just finished/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     return pending.length > 0
-      ? `Nice. Next up: "${pending[0].text}". Tap it to see how to do it.`
-      : `Great — everything's done. Add more tasks any time you need to plan again.`;
+      ? `Nice work. Next up: "${pending[0].text}". Tap it to see how to do it.`
+      : `Everything's done — well done${name}. Add more any time.`;
   }
   if (/goal|progress/.test(m)) {
     const g = goals?.[0]?.text;
-    return g ? `Your goal: "${g}". Check the Goals tab for your next step on it.` : `Head to the Goals tab to set a big goal — I'll build you a real plan.`;
+    return g ? `Your goal: "${g}". Check the Goals tab for your next step.` : `Head to Goals to set a big goal — I'll build you a real plan.`;
   }
-  if (/why (do you|are you) (reply|respond|answer) so fast/.test(m))
-    return `I'm built-in AI — no thinking time needed. What do you want to get done?`;
-  if (/^(huh|hmm+|what|wait)[\s!.?]*$/.test(m))
-    return `Not sure what you mean — want to add tasks, talk through something, or get help with a goal?`;
-  if (m.split(' ').length <= 2)
-    return `Tell me what's on your mind and I'll help you sort it.`;
-  // For anything else, try to echo back a key word from their message
   const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|paint|draw|gym|run|cook|clean)\b/)?.[0];
   return keyWord
     ? `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`
-    : `Got it${name}. Tell me everything that's on your mind and I'll sort it into a plan.`;
+    : `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
 
-const SECTION_LABEL = {
-  high:   'School & Health',
-  medium: 'Tasks',
-  low:    'Fun & Leisure',
-};
-
-function buildBrainDumpResponse(createdTasks, goalItems, userName) {
-  const high = createdTasks.filter(t => t.priority === 'high');
-  const med  = createdTasks.filter(t => t.priority === 'medium');
-  const low  = createdTasks.filter(t => t.priority === 'low');
-  const parts = [];
-
-  if (high.length > 0) {
-    const names = high.slice(0, 2).map(t => `"${t.text}"`).join(' and ');
-    parts.push(
-      high.length === 1
-        ? `Most important today: ${names}.`
-        : `Top of the list: ${names}${high.length > 2 ? `, plus ${high.length - 2} more` : ''}.`
-    );
-  } else if (createdTasks.length > 0) {
-    parts.push(`Got that — ${createdTasks.length} things sorted.`);
-  }
-
-  if (med.length > 0 && high.length > 0) {
-    const ex = med.slice(0, 2).map(t => `"${t.text}"`).join(', ');
-    parts.push(`Middle: ${ex}${med.length > 2 ? ` and ${med.length - 2} more` : ''}.`);
-  }
-
-  if (low.length > 0) {
-    const ex = low.slice(0, 2).map(t => `"${t.text}"`).join(' and ');
-    parts.push(`${ex}${low.length > 2 ? ` (and ${low.length - 2} more)` : ''} — at the bottom as your reward tasks.`);
-  }
-
-  if (goalItems.length > 0) {
-    parts.push(`\n"${goalItems[0].text}" sounds like a bigger goal — added to your Goals tab with a real plan.`);
-  }
-
-  parts.push(`\nTap any task for step-by-step help.`);
-  return parts.join(' ');
-}
+const SECTION_LABEL = { high: 'School & Health', medium: 'Tasks', low: 'Fun & Leisure' };
 
 export default function BloomChatScreen({ navigation }) {
-  const {
-    userName, goals, tasks, totalPoints,
-    addTask, processBrainDump,
-  } = useApp();
-
+  const { userName, goals, tasks, totalPoints, addTask, processBrainDump } = useApp();
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
   ]);
-  const [input, setInput]   = useState('');
+  const [input, setInput]     = useState('');
   const [thinking, setThinking] = useState(false);
-  const [hasKey, setHasKey] = useState(null);
+  const [hasKey, setHasKey]   = useState(null);
   const scrollRef  = useRef(null);
   const historyRef = useRef([]);
 
   useEffect(() => { getApiKey().then(k => setHasKey(!!k)); }, []);
 
-  const scrollToEnd = () =>
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+  const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
   const send = async (text) => {
     const trimmed = text.trim();
@@ -196,62 +112,62 @@ export default function BloomChatScreen({ navigation }) {
     setInput('');
     scrollToEnd();
     historyRef.current = [...historyRef.current, { role: 'user', content: trimmed }];
+    setThinking(true);
 
-    // Brain dump: detect and process first, regardless of API key
-    if (looksLikeTaskDump(trimmed)) {
-      try {
-        const items = await parseTasksWithAI(trimmed);
+    try {
+      // Brain dump path
+      if (looksLikeTaskDump(trimmed)) {
+        const { items, response } = await parseBrainDump(trimmed, userName);
         if (items.length > 0) {
-          const createdTasks = processBrainDump(items);
-          const mood = inferMood(trimmed);
-          const ack  = moodAck(mood, userName);
+          // Generate goal actions in parallel
           const goalItems = items.filter(i => i.category === 'goal');
+          const goalActionsMap = {};
+          await Promise.all(
+            goalItems.map(async g => {
+              goalActionsMap[g.text] = await generateGoalAction({ goalText: g.text });
+            })
+          );
 
-          const specificReply = buildBrainDumpResponse(createdTasks, goalItems, userName);
-          let replyText = ack ? ack + '\n\n' + specificReply : specificReply;
+          const createdTasks = processBrainDump(items, goalActionsMap);
+          const replyText = response ?? `Got ${createdTasks.length} things sorted. Tap any task for step-by-step help.`;
 
           const bloomMsg = {
-            id: Date.now() + 1,
-            from: 'bloom',
-            type: 'tasks',
-            taskList: createdTasks,
-            text: replyText,
+            id: Date.now() + 1, from: 'bloom', type: 'tasks',
+            taskList: createdTasks, text: replyText,
           };
           setMessages(prev => [...prev, bloomMsg]);
           historyRef.current = [...historyRef.current, { role: 'assistant', content: replyText }];
+          setThinking(false);
           scrollToEnd();
           return;
         }
-      } catch (_) {}
-    }
-
-    // No API key: rule-based
-    if (!hasKey) {
-      const taskText = detectTaskAdd(trimmed);
-      let reply;
-      if (taskText) {
-        addTask(taskText, 'medium');
-        reply = `Added "${taskText}" to your list. Tap it when you're ready to start.`;
-      } else {
-        reply = getFallback(trimmed, { userName, goals, tasks });
       }
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
-      historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
-      scrollToEnd();
-      return;
-    }
 
-    // API key: call Claude
-    setThinking(true);
-    try {
-      const system = buildBloomSystem({ userName, goals, tasks, streak: 0, totalPoints, momentum: 0 });
-      const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
-      historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+      // Single task add
+      const taskText = detectTaskAdd(trimmed);
+      if (taskText && !hasKey) {
+        addTask(taskText, 'medium');
+        const reply = `Added "${taskText}" to your list. Tap it when you're ready to start.`;
+        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
+        historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+        setThinking(false);
+        scrollToEnd();
+        return;
+      }
+
+      // AI chat
+      if (hasKey) {
+        const system = buildBloomSystem({ userName, goals, tasks, totalPoints });
+        const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
+        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
+        historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+      } else {
+        const reply = getFallback(trimmed, { userName, goals, tasks });
+        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
+        historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+      }
     } catch (e) {
-      const err = e.code === 'AUTH'
-        ? 'API key looks invalid — please try again.'
-        : 'Trouble connecting. Try again.';
+      const err = e.code === 'AUTH' ? 'API key looks invalid.' : getFallback(trimmed, { userName, goals, tasks });
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: err }]);
     } finally {
       setThinking(false);
@@ -259,7 +175,6 @@ export default function BloomChatScreen({ navigation }) {
     }
   };
 
-  // Render task sections (3 groups)
   function renderTaskSections(taskList) {
     const high = taskList.filter(t => t.priority === 'high');
     const med  = taskList.filter(t => t.priority === 'medium');
@@ -300,8 +215,8 @@ export default function BloomChatScreen({ navigation }) {
 
         <View style={s.header}>
           <Text style={s.headerTitle}>Bloom</Text>
-          <View style={s.headerRight}>
-            <Text style={s.ptsCounter}>{totalPoints} pts</Text>
+          <View style={s.ptsWrap}>
+            <Text style={s.ptsText}>{totalPoints} pts</Text>
           </View>
         </View>
 
@@ -343,7 +258,7 @@ export default function BloomChatScreen({ navigation }) {
 
           {thinking && (
             <View style={s.bloomRow}>
-              <View style={[s.bloomBubble, { paddingVertical: 18, paddingHorizontal: 22 }]}>
+              <View style={[s.bloomBubble, { paddingVertical: 18 }]}>
                 <ActivityIndicator size="small" color={C.sage} />
               </View>
             </View>
@@ -352,13 +267,19 @@ export default function BloomChatScreen({ navigation }) {
           {messages.length <= 1 && !thinking && (
             <View style={s.hint}>
               <Text style={s.hintText}>
-                Type everything on your mind — tasks, feelings, plans. Bloom will sort it into your day.
+                Type everything on your mind — tasks, feelings, plans, worries. Bloom will sort it into your day.
               </Text>
             </View>
           )}
         </ScrollView>
 
         <View style={s.inputBar}>
+          <TouchableOpacity
+            style={s.voiceBtn}
+            onPress={() => Alert.alert('Coming soon', 'Voice input will be available in a future update.')}
+          >
+            <Feather name="mic" size={18} color={C.muted} />
+          </TouchableOpacity>
           <TextInput
             style={s.input}
             placeholder="Tell Bloom what's on your mind…"
@@ -397,9 +318,8 @@ const s = StyleSheet.create({
     fontSize: 30, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  ptsCounter: { fontSize: 13, fontWeight: '700', color: C.sage, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: C.sagePale, borderRadius: 20 },
-  iconBtn: { padding: 6 },
+  ptsWrap: { backgroundColor: C.sagePale, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+  ptsText: { fontSize: 13, fontWeight: '700', color: C.sage },
 
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 18, paddingVertical: 20, gap: 14 },
@@ -408,22 +328,18 @@ const s = StyleSheet.create({
   bloomBubble: {
     backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 5,
     padding: 16, borderWidth: 1, borderColor: C.border, maxWidth: '90%',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
 
   taskBubble: {
     backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 5,
     padding: 16, borderWidth: 1, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   taskSections: { marginTop: 14, gap: 16 },
   taskGroup: { gap: 6 },
-  taskGroupLabel: {
-    fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, marginBottom: 2,
-  },
+  taskGroupLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, marginBottom: 2 },
   taskCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.cream, borderRadius: 12,
@@ -449,13 +365,18 @@ const s = StyleSheet.create({
   hintText: { fontSize: 14, color: C.forest, lineHeight: 22, textAlign: 'center' },
 
   inputBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 12,
     borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.cream,
+  },
+  voiceBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
   },
   input: {
     flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 24, paddingVertical: 11, paddingHorizontal: 18,
+    borderRadius: 24, paddingVertical: 11, paddingHorizontal: 16,
     fontSize: 15, color: C.forest,
   },
   sendBtn: {

@@ -1,96 +1,143 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView,
-  SafeAreaView, StyleSheet, Platform,
+  View, Text, TouchableOpacity, ScrollView, TextInput,
+  SafeAreaView, StyleSheet, Platform, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
-import { HOBBIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
+import { generateHobbyMilestone } from '../services/ai';
 
-export default function HobbiesScreen() {
-  const { selectedHobbies, hobbyProgress, completeHobbyStep, toggleHobby } = useApp();
-  const [showAdd, setShowAdd] = useState(false);
+const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
-  const myHobbies   = HOBBIES.filter(h => selectedHobbies.includes(h.id));
-  const moreHobbies = HOBBIES.filter(h => !selectedHobbies.includes(h.id));
+export default function HobbiesScreen({ navigation }) {
+  const { hobbies, addHobby, removeHobby } = useApp();
+  const [showAdd, setShowAdd]       = useState(false);
+  const [hobbyName, setHobbyName]   = useState('');
+  const [skillLevel, setSkillLevel] = useState('Beginner');
+  const [generating, setGenerating] = useState(false);
+
+  const handleAdd = async () => {
+    const name = hobbyName.trim();
+    if (!name || generating) return;
+    setGenerating(true);
+    try {
+      const milestone = await generateHobbyMilestone({
+        hobbyName: name,
+        skillLevel: skillLevel.toLowerCase(),
+        completedMilestones: [],
+      });
+      addHobby(name, skillLevel.toLowerCase(), milestone);
+      setHobbyName('');
+      setSkillLevel('Beginner');
+      setShowAdd(false);
+    } catch {
+      addHobby(name, skillLevel.toLowerCase(), `Spend 20 focused minutes on ${name} — done when you can describe one specific thing you practised.`);
+      setHobbyName('');
+      setSkillLevel('Beginner');
+      setShowAdd(false);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={s.title}>Grow</Text>
-        <Text style={s.sub}>Things you're building, one small step at a time.</Text>
+        <Text style={s.sub}>Hobbies and skills you're building — one milestone at a time.</Text>
 
-        {myHobbies.length === 0 ? (
+        {hobbies.length === 0 && !showAdd && (
           <View style={s.empty}>
-            <Feather name="sun" size={40} color={C.sageLight} style={{ marginBottom: 12 }} />
+            <Feather name="sun" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
             <Text style={s.emptyHead}>Nothing here yet</Text>
-            <Text style={s.emptyText}>Add a hobby below to start tracking your progress.</Text>
+            <Text style={s.emptyText}>
+              Add any hobby — guitar, watercolour, running, anything. Bloom will build you a real curriculum.
+            </Text>
           </View>
-        ) : (
-          myHobbies.map(h => {
-            const progress = hobbyProgress[h.id] ?? 0;
-            const pct = Math.round((progress / h.steps.length) * 100);
-            const nextStep = h.steps[progress];
-            const complete = progress >= h.steps.length;
-            return (
-              <View key={h.id} style={s.hobbyCard}>
-                <View style={s.hobbyRow}>
-                  <View style={s.hobbyIconWrap}>
-                    <Feather name={h.icon ?? 'star'} size={20} color={C.forest} />
-                  </View>
-                  <View style={s.hobbyMeta}>
-                    <Text style={s.hobbyName}>{h.name}</Text>
-                    <Text style={s.hobbyNext} numberOfLines={2}>
-                      {complete ? 'All milestones complete!' : nextStep}
-                    </Text>
-                    <View style={s.barTrack}>
-                      <View style={[s.barFill, { width: `${pct}%` }]} />
-                    </View>
-                    <Text style={s.barLabel}>{pct}% through the milestones</Text>
-                  </View>
-                  {!complete && (
-                    <TouchableOpacity
-                      style={s.doneBtn}
-                      onPress={() => completeHobbyStep(h.id, progress)}
-                    >
-                      <Text style={s.doneBtnText}>Done</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <TouchableOpacity style={s.removeRow} onPress={() => toggleHobby(h.id)}>
-                  <Text style={s.removeText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })
         )}
 
-        {moreHobbies.length > 0 && (
-          <>
-            <TouchableOpacity style={s.addMoreRow} onPress={() => setShowAdd(v => !v)}>
-              <Text style={s.addMoreText}>+ Add a hobby</Text>
-              <Feather name={showAdd ? 'chevron-up' : 'chevron-down'} size={14} color={C.muted} />
-            </TouchableOpacity>
-
-            {showAdd && (
-              <View style={s.moreGrid}>
-                {moreHobbies.map(h => (
-                  <TouchableOpacity
-                    key={h.id}
-                    style={s.moreChip}
-                    onPress={() => { toggleHobby(h.id); setShowAdd(false); }}
-                    activeOpacity={0.75}
-                  >
-                    <Feather name={h.icon ?? 'star'} size={18} color={C.forest} />
-                    <Text style={s.moreName}>{h.name}</Text>
-                    <Feather name="plus" size={16} color={C.sage} />
-                  </TouchableOpacity>
-                ))}
+        {hobbies.map(h => {
+          const total = h.completedMilestones.length + 1;
+          const done  = h.completedMilestones.length;
+          const pct   = Math.round((done / total) * 100);
+          return (
+            <TouchableOpacity
+              key={h.id}
+              style={s.hobbyCard}
+              onPress={() => navigation.navigate('HobbyDetail', { hobby: h })}
+              activeOpacity={0.82}
+            >
+              <View style={s.hobbyCardInner}>
+                <View style={s.hobbyMeta}>
+                  <Text style={s.hobbyName}>{h.name}</Text>
+                  <Text style={s.hobbyLevel}>{h.skillLevel}</Text>
+                  <Text style={s.hobbyMilestone} numberOfLines={3}>{h.currentMilestone}</Text>
+                  <View style={s.barTrack}>
+                    <View style={[s.barFill, { width: `${pct}%` }]} />
+                  </View>
+                  <Text style={s.barLabel}>{done} milestone{done !== 1 ? 's' : ''} completed</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={C.muted} />
               </View>
+              <TouchableOpacity style={s.removeRow} onPress={() => removeHobby(h.id)}>
+                <Text style={s.removeText}>Remove</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          );
+        })}
+
+        {showAdd ? (
+          <View style={s.addCard}>
+            <Text style={s.addCardTitle}>Add a hobby</Text>
+            <TextInput
+              style={s.addInput}
+              placeholder="e.g. Watercolour, Guitar, Running, Baking…"
+              placeholderTextColor={C.muted}
+              value={hobbyName}
+              onChangeText={setHobbyName}
+              autoFocus
+              returnKeyType="done"
+              editable={!generating}
+            />
+            <Text style={s.addLabel}>Skill level</Text>
+            <View style={s.levelRow}>
+              {SKILL_LEVELS.map(l => (
+                <TouchableOpacity
+                  key={l}
+                  style={[s.levelChip, skillLevel === l && s.levelChipActive]}
+                  onPress={() => setSkillLevel(l)}
+                >
+                  <Text style={[s.levelChipText, skillLevel === l && s.levelChipTextActive]}>{l}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={s.addActions}>
+              <TouchableOpacity style={s.cancelBtn} onPress={() => { setShowAdd(false); setHobbyName(''); }}>
+                <Text style={s.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.createBtn, (!hobbyName.trim() || generating) && s.createBtnOff]}
+                onPress={handleAdd}
+                disabled={!hobbyName.trim() || generating}
+              >
+                {generating ? (
+                  <ActivityIndicator size="small" color={C.white} />
+                ) : (
+                  <Text style={s.createBtnText}>Build my curriculum →</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+            {generating && (
+              <Text style={s.generatingNote}>Building your first milestone…</Text>
             )}
-          </>
+          </View>
+        ) : (
+          <TouchableOpacity style={s.addBtn} onPress={() => setShowAdd(true)}>
+            <Feather name="plus" size={16} color={C.clay} />
+            <Text style={s.addBtnText}>Add a hobby</Text>
+          </TouchableOpacity>
         )}
 
         <View style={{ height: 48 }} />
@@ -109,50 +156,65 @@ const s = StyleSheet.create({
   },
   sub: { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 24 },
 
-  empty: { alignItems: 'center', paddingTop: 40 },
-  emptyHead: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 6 },
-  emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 20 },
+  empty: { alignItems: 'center', paddingTop: 40, paddingBottom: 32 },
+  emptyHead: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 8 },
+  emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
 
   hobbyCard: {
-    backgroundColor: C.white, borderRadius: 18,
-    borderWidth: 1, borderColor: C.border,
-    padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    backgroundColor: C.white, borderRadius: 18, borderWidth: 1, borderColor: C.border,
+    padding: 18, marginBottom: 12,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  hobbyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  hobbyIconWrap: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: C.sagePale, alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0,
-  },
+  hobbyCardInner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   hobbyMeta: { flex: 1 },
-  hobbyName: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 5 },
-  hobbyNext: { fontSize: 13, color: C.muted, lineHeight: 19, marginBottom: 10 },
-  barTrack: { height: 4, backgroundColor: C.border, borderRadius: 2, overflow: 'hidden', marginBottom: 4 },
-  barFill:  { height: 4, backgroundColor: C.sage, borderRadius: 2 },
+  hobbyName: { fontSize: 17, fontWeight: '700', color: C.forest, marginBottom: 2 },
+  hobbyLevel: { fontSize: 11, fontWeight: '600', color: C.sage, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 },
+  hobbyMilestone: { fontSize: 13, color: C.muted, lineHeight: 20, marginBottom: 12 },
+  barTrack: { height: 4, backgroundColor: C.border, borderRadius: 2, overflow: 'hidden', marginBottom: 5 },
+  barFill:  { height: 4, backgroundColor: C.sage, borderRadius: 2, minWidth: 4 },
   barLabel: { fontSize: 11, color: C.muted },
-
-  doneBtn: {
-    backgroundColor: C.forest, borderRadius: 20,
-    paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0,
-  },
-  doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
-
   removeRow: { marginTop: 12, alignItems: 'flex-end' },
   removeText: { fontSize: 12, color: C.muted },
 
-  addMoreRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.border, marginTop: 8,
+  addCard: {
+    backgroundColor: C.white, borderRadius: 18, borderWidth: 1.5, borderColor: C.border,
+    padding: 20, marginBottom: 16,
   },
-  addMoreText: { fontSize: 15, fontWeight: '600', color: C.clay },
+  addCardTitle: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 14 },
+  addInput: {
+    backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
+    fontSize: 15, color: C.forest, marginBottom: 16,
+  },
+  addLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1, marginBottom: 10 },
+  levelRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  levelChip: {
+    flex: 1, paddingVertical: 10, borderRadius: 10,
+    borderWidth: 1.5, borderColor: C.border, alignItems: 'center',
+    backgroundColor: C.cream,
+  },
+  levelChipActive: { borderColor: C.forest, backgroundColor: C.sagePale },
+  levelChipText: { fontSize: 13, fontWeight: '600', color: C.muted },
+  levelChipTextActive: { color: C.forest },
+  addActions: { flexDirection: 'row', gap: 10 },
+  cancelBtn: {
+    flex: 1, paddingVertical: 13, borderRadius: 12,
+    borderWidth: 1.5, borderColor: C.border, alignItems: 'center',
+  },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: C.muted },
+  createBtn: {
+    flex: 2, paddingVertical: 13, borderRadius: 12,
+    backgroundColor: C.forest, alignItems: 'center',
+  },
+  createBtnOff: { opacity: 0.4 },
+  createBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
+  generatingNote: { fontSize: 12, color: C.muted, textAlign: 'center', marginTop: 12 },
 
-  moreGrid: { gap: 8, marginBottom: 12 },
-  moreChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: C.white, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: C.border,
+  addBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 14, justifyContent: 'center',
+    borderWidth: 1.5, borderColor: C.clayLight, borderRadius: 14,
+    borderStyle: 'dashed',
   },
-  moreName: { flex: 1, fontSize: 15, fontWeight: '600', color: C.forest },
+  addBtnText: { fontSize: 15, fontWeight: '600', color: C.clay },
 });
