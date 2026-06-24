@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { HOBBIES } from '../constants/data';
+import { getGoalPlan } from '../utils/goalPlans';
 
 const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v2';
 
 const uid = () => Date.now() + Math.floor(Math.random() * 10000);
 const makeTask = (text, priority) => ({ id: uid(), text, priority, done: false });
-const makeGoal = (text, nextAction = '') => ({ id: uid(), text, nextAction, progress: 0 });
+const makeGoal = (text) => {
+  const plan = getGoalPlan(text);
+  return { id: uid(), text, step: 0, nextAction: plan[0] ?? '', progress: 0 };
+};
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const monthStr = () => new Date().toISOString().slice(0, 7);
@@ -133,12 +136,19 @@ export function AppProvider({ children }) {
     setHobbyProgress(prev => ({ ...prev, [hobbyId]: stepIndex + 1 }));
   }, []);
 
-  const addGoal = useCallback((text, nextAction = '') => {
-    setGoals(prev => [...prev, makeGoal(text, nextAction)]);
+  const addGoal = useCallback((text) => {
+    setGoals(prev => [...prev, makeGoal(text)]);
   }, []);
 
-  const updateGoalNextAction = useCallback((id, nextAction) => {
-    setGoals(prev => prev.map(g => g.id === id ? { ...g, nextAction } : g));
+  const advanceGoalStep = useCallback((id) => {
+    setGoals(prev => prev.map(g => {
+      if (g.id !== id) return g;
+      const plan = getGoalPlan(g.text);
+      const nextStep = (g.step ?? 0) + 1;
+      const nextAction = plan[nextStep] ?? "You've completed the initial plan. Set your own next step from here.";
+      const progress = Math.min(100, Math.round((nextStep / plan.length) * 100));
+      return { ...g, step: nextStep, nextAction, progress };
+    }));
   }, []);
 
   const deleteGoal = useCallback((id) => {
@@ -163,7 +173,7 @@ export function AppProvider({ children }) {
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
       totalPoints, dailyPoints, addPoints,
-      goals, addGoal, updateGoalNextAction, deleteGoal,
+      goals, addGoal, advanceGoalStep, deleteGoal,
       userName, setUserName,
     }}>
       {children}

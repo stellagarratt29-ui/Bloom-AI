@@ -3,26 +3,30 @@ import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet, Pla
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-
-const REDIRECTS = [
-  { icon: 'book-open', label: 'Read',   tab: null },
-  { icon: 'pen-tool',  label: 'Create', tab: null },
-  { icon: 'sun',       label: 'Grow',   tab: 'Grow' },
-];
+import { HOBBIES } from '../constants/data';
 
 export default function ScreenAwarenessScreen({ navigation }) {
-  const { dailyPoints } = useApp();
+  const { dailyPoints, selectedHobbies } = useApp();
   const todayPts = dailyPoints?.[6] ?? 0;
 
   const hour = new Date().getHours();
   const isEvening = hour >= 18;
+
   const insight = isEvening
     ? 'You tend to scroll most in the evening. Try putting your phone down 30 minutes before bed.'
     : todayPts > 0
     ? `You've already earned ${todayPts} pts today — you're making real progress.`
     : 'You haven\'t started your tasks yet today. Opening Bloom was a good first step.';
 
-  const showRedirects = isEvening;
+  // Build redirect options from the user's actual hobbies, not a hardcoded list
+  const myHobbies = HOBBIES.filter(h => selectedHobbies.includes(h.id)).slice(0, 3);
+  const fallbackRedirects = [
+    { icon: 'book-open', label: 'Read', tab: null },
+    { icon: 'edit',      label: 'Write', tab: null },
+  ];
+  const redirects = myHobbies.length > 0
+    ? myHobbies.map(h => ({ icon: h.icon ?? 'star', label: h.name, tab: 'GrowTab' }))
+    : fallbackRedirects;
 
   return (
     <SafeAreaView style={s.safe}>
@@ -49,11 +53,13 @@ export default function ScreenAwarenessScreen({ navigation }) {
           <Text style={s.insightText}>{insight}</Text>
         </View>
 
-        {showRedirects && (
+        {isEvening && redirects.length > 0 && (
           <>
-            <Text style={s.redirectLabel}>INSTEAD, TRY</Text>
+            <Text style={s.redirectLabel}>
+              {myHobbies.length > 0 ? 'INSTEAD, WORK ON' : 'INSTEAD, TRY'}
+            </Text>
             <View style={s.redirectRow}>
-              {REDIRECTS.map(r => (
+              {redirects.map(r => (
                 <TouchableOpacity
                   key={r.label}
                   style={s.redirectChip}
@@ -116,9 +122,9 @@ const s = StyleSheet.create({
     fontSize: 10, fontWeight: '700', color: C.muted,
     letterSpacing: 1.4, marginBottom: 12,
   },
-  redirectRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
+  redirectRow: { flexDirection: 'row', gap: 10, marginBottom: 22, flexWrap: 'wrap' },
   redirectChip: {
-    flex: 1, backgroundColor: C.white, borderRadius: 14,
+    flex: 1, minWidth: 80, backgroundColor: C.white, borderRadius: 14,
     paddingVertical: 16, alignItems: 'center',
     borderWidth: 1, borderColor: C.border,
   },

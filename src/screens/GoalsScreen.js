@@ -6,35 +6,17 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-
-function getNextAction(goalText) {
-  const t = (goalText || '').toLowerCase();
-  if (/10k|make money|earn|income|sell|business|freelance/.test(t))
-    return 'Write down 3 ways you could realistically earn money given what you already know how to do.';
-  if (/vet|veterinarian|doctor|nurse|medicine|medical/.test(t))
-    return 'Research the exact qualifications needed and map out the school subjects that matter most.';
-  if (/fit|gym|run|marathon|weight|workout|exercise/.test(t))
-    return 'Do 10 minutes of movement today — just to start the habit.';
-  if (/book|write|novel|blog|publish/.test(t))
-    return 'Write one paragraph today, even a bad one. Starting is the whole game.';
-  if (/learn|language|code|skill|course/.test(t))
-    return 'Find one structured resource (YouTube, app, or course) and do the first lesson today.';
-  if (/travel|trip|move|abroad/.test(t))
-    return 'Pick a destination and research what it would realistically cost.';
-  if (/save|invest|budget|house|property/.test(t))
-    return 'Open your bank app and look at last month\'s spending — awareness is step one.';
-  return 'Write down the single most important next step you could take this week.';
-}
+import { getGoalPlan } from '../utils/goalPlans';
 
 export default function GoalsScreen() {
-  const { goals, addGoal, deleteGoal } = useApp();
+  const { goals, addGoal, advanceGoalStep, deleteGoal } = useApp();
   const [newGoal, setNewGoal] = useState('');
   const [showAdd, setShowAdd] = useState(false);
 
   const handleAdd = () => {
     const text = newGoal.trim();
     if (!text) return;
-    addGoal(text, getNextAction(text));
+    addGoal(text);
     setNewGoal('');
     setShowAdd(false);
   };
@@ -44,7 +26,7 @@ export default function GoalsScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={s.title}>Goals</Text>
-        <Text style={s.sub}>Big things you're working toward.</Text>
+        <Text style={s.sub}>Big things you're working toward — with a real plan to get there.</Text>
 
         <View style={s.sectionRow}>
           <Text style={s.sectionLabel}>YOUR GOALS</Text>
@@ -80,29 +62,47 @@ export default function GoalsScreen() {
             <Feather name="target" size={40} color={C.sageLight} style={{ marginBottom: 12 }} />
             <Text style={s.emptyHead}>No goals yet</Text>
             <Text style={s.emptyText}>
-              Add a big goal above — something like "Make $10k" or "Become a vet." Bloom will give you the first step.
+              Add a big goal — something like "Make $10k" or "Become a vet." Bloom will give you a real step-by-step plan, one action at a time.
             </Text>
           </View>
         ) : (
-          goals.map(g => (
-            <View key={g.id} style={s.goalCard}>
-              <View style={s.goalHeader}>
-                <Text style={s.goalText}>{g.text}</Text>
-                <TouchableOpacity onPress={() => deleteGoal(g.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Feather name="x" size={16} color={C.muted} />
-                </TouchableOpacity>
-              </View>
+          goals.map(g => {
+            const plan = getGoalPlan(g.text);
+            const step = g.step ?? 0;
+            const currentAction = g.nextAction || plan[step] || plan[0];
+            const planDone = step >= plan.length;
+            const pct = Math.min(100, Math.round((step / plan.length) * 100));
+            const stepLabel = planDone ? 'Plan complete' : `Step ${step + 1} of ${plan.length}`;
 
-              <View style={s.nextActionBox}>
-                <Text style={s.nextActionLabel}>NEXT STEP</Text>
-                <Text style={s.nextActionText}>{g.nextAction || getNextAction(g.text)}</Text>
-              </View>
+            return (
+              <View key={g.id} style={s.goalCard}>
+                <View style={s.goalHeader}>
+                  <Text style={s.goalText}>{g.text}</Text>
+                  <TouchableOpacity onPress={() => deleteGoal(g.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="x" size={16} color={C.muted} />
+                  </TouchableOpacity>
+                </View>
 
-              <View style={s.progressTrack}>
-                <View style={[s.progressFill, { width: `${Math.min(100, g.progress ?? 0)}%` }]} />
+                <Text style={s.stepLabel}>{stepLabel.toUpperCase()}</Text>
+
+                <View style={s.nextActionBox}>
+                  <Text style={s.nextActionText}>{currentAction}</Text>
+                </View>
+
+                {!planDone && (
+                  <TouchableOpacity style={s.doneStepBtn} onPress={() => advanceGoalStep(g.id)}>
+                    <Feather name="check" size={14} color={C.white} />
+                    <Text style={s.doneStepBtnText}>This step is done →</Text>
+                  </TouchableOpacity>
+                )}
+
+                <View style={s.progressTrack}>
+                  <View style={[s.progressFill, { width: `${pct}%` }]} />
+                </View>
+                <Text style={s.progressLabel}>{pct}% through the plan</Text>
               </View>
-            </View>
-          ))
+            );
+          })
         )}
 
         <View style={{ height: 48 }} />
@@ -148,32 +148,38 @@ const s = StyleSheet.create({
   goalCard: {
     backgroundColor: C.white, borderRadius: 18,
     borderWidth: 1, borderColor: C.border,
-    padding: 18, marginBottom: 12,
+    padding: 18, marginBottom: 14,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
   goalHeader: {
     flexDirection: 'row', alignItems: 'flex-start',
-    justifyContent: 'space-between', gap: 10, marginBottom: 14,
+    justifyContent: 'space-between', gap: 10, marginBottom: 10,
   },
   goalText: { flex: 1, fontSize: 17, fontWeight: '700', color: C.forest, lineHeight: 26 },
 
+  stepLabel: { fontSize: 10, fontWeight: '700', color: C.clay, letterSpacing: 1.2, marginBottom: 8 },
+
   nextActionBox: {
     backgroundColor: C.clayPale, borderRadius: 12,
-    padding: 13, marginBottom: 14,
+    padding: 14, marginBottom: 14,
     borderWidth: 1, borderColor: C.clayLight,
-  },
-  nextActionLabel: {
-    fontSize: 10, fontWeight: '700', color: C.clay,
-    letterSpacing: 1.2, marginBottom: 5,
   },
   nextActionText: { fontSize: 14, color: C.forest, lineHeight: 22 },
 
+  doneStepBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: C.forest, borderRadius: 20,
+    paddingVertical: 10, paddingHorizontal: 16,
+    alignSelf: 'flex-start', marginBottom: 16,
+  },
+  doneStepBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
+
   progressTrack: {
-    height: 4, backgroundColor: C.border, borderRadius: 2,
+    height: 4, backgroundColor: C.border, borderRadius: 2, marginBottom: 6,
   },
   progressFill: {
-    height: 4, backgroundColor: C.sage, borderRadius: 2,
-    minWidth: 4,
+    height: 4, backgroundColor: C.sage, borderRadius: 2, minWidth: 4,
   },
+  progressLabel: { fontSize: 11, color: C.muted },
 });

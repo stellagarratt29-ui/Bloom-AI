@@ -104,12 +104,46 @@ function getFallback(msg, { userName, goals, tasks }) {
   return `Got it${name}. What do you need to get done today?`;
 }
 
-// Section labels for the 3 priority groups
 const SECTION_LABEL = {
   high:   'School & Health',
   medium: 'Tasks',
   low:    'Fun & Leisure',
 };
+
+function buildBrainDumpResponse(createdTasks, goalItems, userName) {
+  const high = createdTasks.filter(t => t.priority === 'high');
+  const med  = createdTasks.filter(t => t.priority === 'medium');
+  const low  = createdTasks.filter(t => t.priority === 'low');
+  const parts = [];
+
+  if (high.length > 0) {
+    const names = high.slice(0, 2).map(t => `"${t.text}"`).join(' and ');
+    parts.push(
+      high.length === 1
+        ? `Most important today: ${names}.`
+        : `Top of the list: ${names}${high.length > 2 ? `, plus ${high.length - 2} more` : ''}.`
+    );
+  } else if (createdTasks.length > 0) {
+    parts.push(`Got that — ${createdTasks.length} things sorted.`);
+  }
+
+  if (med.length > 0 && high.length > 0) {
+    const ex = med.slice(0, 2).map(t => `"${t.text}"`).join(', ');
+    parts.push(`Middle: ${ex}${med.length > 2 ? ` and ${med.length - 2} more` : ''}.`);
+  }
+
+  if (low.length > 0) {
+    const ex = low.slice(0, 2).map(t => `"${t.text}"`).join(' and ');
+    parts.push(`${ex}${low.length > 2 ? ` (and ${low.length - 2} more)` : ''} — at the bottom as your reward tasks.`);
+  }
+
+  if (goalItems.length > 0) {
+    parts.push(`\n"${goalItems[0].text}" sounds like a bigger goal — added to your Goals tab with a real plan.`);
+  }
+
+  parts.push(`\nTap any task for step-by-step help.`);
+  return parts.join(' ');
+}
 
 export default function BloomChatScreen({ navigation }) {
   const {
@@ -149,15 +183,10 @@ export default function BloomChatScreen({ navigation }) {
           const createdTasks = processBrainDump(items);
           const mood = inferMood(trimmed);
           const ack  = moodAck(mood, userName);
-          const taskCount = createdTasks.length;
           const goalItems = items.filter(i => i.category === 'goal');
 
-          let replyText = ack ? ack + '\n\n' : '';
-          replyText += taskCount === 1
-            ? `Here's your task for today. Tap it for step-by-step help.`
-            : `Here are your ${taskCount} tasks, sorted by priority. Tap any to get started.`;
-          if (goalItems.length > 0)
-            replyText += `\n\n"${goalItems[0].text}" looks like a big goal — added to your Goals tab.`;
+          const specificReply = buildBrainDumpResponse(createdTasks, goalItems, userName);
+          let replyText = ack ? ack + '\n\n' + specificReply : specificReply;
 
           const bloomMsg = {
             id: Date.now() + 1,
