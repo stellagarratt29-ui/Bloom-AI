@@ -163,7 +163,7 @@ Answer their question helpfully and specifically. Keep replies to 3–5 sentence
           >
             <Feather name="check" size={15} color={taskDone ? C.sage : C.white} />
             <Text style={[s.doneBtnText, taskDone && s.doneBtnTextDone]}>
-              {taskDone ? 'Done' : 'Mark done'}
+              {taskDone ? 'Done ✓' : 'Mark done — +5 pts'}
             </Text>
           </TouchableOpacity>
         </View>

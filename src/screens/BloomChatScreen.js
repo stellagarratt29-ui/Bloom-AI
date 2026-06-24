@@ -49,6 +49,8 @@ function looksLikeTaskDump(text) {
   if (/i (need|have|gotta|want) to .{5,} and (i )?(also )?(need|have|gotta|want)/i.test(t)) return true;
   if (text.includes('\n') && text.trim().split('\n').length >= 2) return true;
   if ((text.match(/\band\b/gi) || []).length >= 2 && text.length > 40) return true;
+  // Comma-separated list: 3+ commas strongly suggests a multi-item list
+  if ((text.match(/,/g) || []).length >= 3 && text.length > 50) return true;
   return false;
 }
 
@@ -87,21 +89,41 @@ function getFallback(msg, { userName, goals, tasks }) {
     }
     return `Nothing on your list yet${name}. Tell me what's on your mind today.`;
   }
-  if (/overwhelm|stress|too much|anxious/.test(m))
-    return `That feeling is real. Pick just one task — the smallest thing — and only do that. What is it?`;
-  if (/can'?t start|procrastinat|stuck/.test(m))
-    return `Start anywhere. Set a 10-minute timer and just begin. Which task?`;
+  if (/overwhelm|stress|too much|anxious|worried|nervous/.test(m)) {
+    const aboutMatch = m.match(/(?:about|with|for|over|regarding)\s+(.{3,40}?)(?:\s+(?:and|but|,)|[.!?]|$)/);
+    const topic = aboutMatch?.[1]?.trim();
+    return topic
+      ? `That's a lot — especially with "${topic}" hanging over you. Pick just the single smallest action on it and do only that. What would that be?`
+      : `That feeling is real. Pick just one task — the smallest possible thing — and do only that. What is it?`;
+  }
+  if (/can'?t start|procrastinat|stuck|don'?t know where to start/.test(m)) {
+    const onMatch = m.match(/(?:on|with|the|my)\s+(.{3,35}?)(?:\s+(?:and|but|,)|[.!?]|$)/);
+    const task = onMatch?.[1]?.trim();
+    return task
+      ? `Set a 10-minute timer and just start "${task}" — it doesn't have to be good, it just has to begin. Go.`
+      : `Set a 10-minute timer and just begin. It doesn't have to be good — it just has to start. Which task?`;
+  }
+  if (/done|finished|completed|just did|just finished/.test(m)) {
+    const pending = (tasks || []).filter(t => !t.done);
+    return pending.length > 0
+      ? `Nice. Next up: "${pending[0].text}". Tap it to see how to do it.`
+      : `Great — everything's done. Add more tasks any time you need to plan again.`;
+  }
   if (/goal|progress/.test(m)) {
     const g = goals?.[0]?.text;
-    return g ? `Your goal is "${g}". What could you do toward it in the next hour?` : `Head to the Goals tab to set a big goal — I'll help you figure out the first step.`;
+    return g ? `Your goal: "${g}". Check the Goals tab for your next step on it.` : `Head to the Goals tab to set a big goal — I'll build you a real plan.`;
   }
   if (/why (do you|are you) (reply|respond|answer) so fast/.test(m))
-    return `I'm an AI — no thinking time needed. What do you want to get done?`;
+    return `I'm built-in AI — no thinking time needed. What do you want to get done?`;
   if (/^(huh|hmm+|what|wait)[\s!.?]*$/.test(m))
     return `Not sure what you mean — want to add tasks, talk through something, or get help with a goal?`;
   if (m.split(' ').length <= 2)
     return `Tell me what's on your mind and I'll help you sort it.`;
-  return `Got it${name}. What do you need to get done today?`;
+  // For anything else, try to echo back a key word from their message
+  const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|paint|draw|gym|run|cook|clean)\b/)?.[0];
+  return keyWord
+    ? `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`
+    : `Got it${name}. Tell me everything that's on your mind and I'll sort it into a plan.`;
 }
 
 const SECTION_LABEL = {
