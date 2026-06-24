@@ -24,6 +24,7 @@ import HobbiesScreen         from './src/screens/HobbiesScreen';
 import HobbyDetailScreen     from './src/screens/HobbyDetailScreen';
 import GoalsScreen           from './src/screens/GoalsScreen';
 import GoalDetailScreen      from './src/screens/GoalDetailScreen';
+import CalendarScreen        from './src/screens/CalendarScreen';
 import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
 
 const RootStack     = createNativeStackNavigator();
@@ -33,10 +34,11 @@ const GoalsStackNav = createNativeStackNavigator();
 const Tab           = createBottomTabNavigator();
 
 const TAB_ITEMS = [
-  { name: 'ChatTab',   icon: 'message-circle', label: 'Today'  },
-  { name: 'GrowTab',   icon: 'sun',            label: 'Grow'   },
-  { name: 'GoalsTab',  icon: 'target',         label: 'Goals'  },
-  { name: 'ScreenTab', icon: 'smartphone',     label: 'Screen' },
+  { name: 'ChatTab',     icon: 'message-circle', label: 'Today'    },
+  { name: 'GrowTab',     icon: 'sun',            label: 'Grow'     },
+  { name: 'GoalsTab',    icon: 'target',         label: 'Goals'    },
+  { name: 'CalendarTab', icon: 'calendar',       label: 'Calendar' },
+  { name: 'ScreenTab',   icon: 'smartphone',     label: 'Screen'   },
 ];
 
 const SIDEBAR_W = 200;
@@ -181,10 +183,11 @@ function MainTabs() {
       screenOptions={{ headerShown: false }}
       initialRouteName="ChatTab"
     >
-      <Tab.Screen name="ChatTab"   component={ChatStack} />
-      <Tab.Screen name="GrowTab"   component={GrowStack} />
-      <Tab.Screen name="GoalsTab"  component={GoalsStack} />
-      <Tab.Screen name="ScreenTab" component={ScreenAwarenessScreen} />
+      <Tab.Screen name="ChatTab"     component={ChatStack} />
+      <Tab.Screen name="GrowTab"     component={GrowStack} />
+      <Tab.Screen name="GoalsTab"    component={GoalsStack} />
+      <Tab.Screen name="CalendarTab" component={CalendarScreen} />
+      <Tab.Screen name="ScreenTab"   component={ScreenAwarenessScreen} />
     </Tab.Navigator>
   );
 }

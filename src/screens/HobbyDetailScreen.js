@@ -91,12 +91,20 @@ Write in plain text, no markdown headers.`,
     if (!hobby || advancing) return;
     setAdvancing(true);
     try {
-      const nextMilestone = await generateHobbyMilestone({
-        hobbyName: hobby.name,
-        skillLevel: hobby.skillLevel,
-        completedMilestones: [...hobby.completedMilestones, hobby.currentMilestone],
-      });
-      completeMilestone(hobby.id, nextMilestone);
+      const nextIndex = (hobby.milestoneIndex ?? 0) + 1;
+      const hasPregenerated = hobby.milestones?.length > nextIndex;
+      if (hasPregenerated) {
+        // Use the next pre-generated milestone from the curriculum — no AI call needed
+        completeMilestone(hobby.id);
+      } else {
+        // Exhausted the pre-generated curriculum — generate dynamically
+        const nextMilestone = await generateHobbyMilestone({
+          hobbyName: hobby.name,
+          skillLevel: hobby.skillLevel,
+          completedMilestones: [...(hobby.completedMilestones ?? []), hobby.currentMilestone],
+        });
+        completeMilestone(hobby.id, nextMilestone);
+      }
       navigation.goBack();
     } catch {
       completeMilestone(hobby.id, `Keep practising ${hobby.name} — done when you complete one focused session and can describe what improved.`);
@@ -133,6 +141,32 @@ Write in plain text, no markdown headers.`,
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Curriculum overview strip */}
+        {hobby?.milestones?.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={s.curriculumStrip}
+            contentContainerStyle={s.curriculumStripContent}
+          >
+            {hobby.milestones.map((m, i) => {
+              const idx = hobby.milestoneIndex ?? 0;
+              const isDone    = i < idx;
+              const isCurrent = i === idx;
+              return (
+                <View key={i} style={[s.curriculumStep, isDone && s.curriculumStepDone, isCurrent && s.curriculumStepCurrent]}>
+                  <Text style={[s.curriculumStepNum, isDone && s.curriculumStepNumDone, isCurrent && s.curriculumStepNumCurrent]}>
+                    {isDone ? '✓' : i + 1}
+                  </Text>
+                </View>
+              );
+            })}
+            <Text style={s.curriculumLabel}>
+              Step {(hobby.milestoneIndex ?? 0) + 1} of {hobby.milestones.length}
+            </Text>
+          </ScrollView>
+        )}
 
         <ScrollView
           ref={scrollRef}
@@ -213,6 +247,20 @@ const s = StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0, minWidth: 70, justifyContent: 'center',
   },
   doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
+
+  curriculumStrip: { flexShrink: 0, maxHeight: 44, borderBottomWidth: 1, borderBottomColor: C.border, backgroundColor: C.white },
+  curriculumStripContent: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 6 },
+  curriculumStep: {
+    width: 26, height: 26, borderRadius: 13,
+    borderWidth: 1.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.cream,
+  },
+  curriculumStepDone:    { backgroundColor: C.sage,   borderColor: C.sage   },
+  curriculumStepCurrent: { backgroundColor: C.forest, borderColor: C.forest },
+  curriculumStepNum:     { fontSize: 11, fontWeight: '700', color: C.muted },
+  curriculumStepNumDone:    { color: C.white },
+  curriculumStepNumCurrent: { color: C.white },
+  curriculumLabel: { fontSize: 11, fontWeight: '600', color: C.muted, marginLeft: 6 },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 20, gap: 14, paddingBottom: 32 },

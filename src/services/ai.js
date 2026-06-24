@@ -239,6 +239,127 @@ function _goalFallback(goalText, stepIndex) {
   return `Identify the single biggest obstacle blocking progress on "${goalText}" right now, and write one concrete action that would directly reduce or remove it.`;
 }
 
+// Quick regex check — is this message likely a calendar action?
+export function detectCalendarAction(text) {
+  const t = text.toLowerCase();
+  if (/\b(add|put|schedule|book|create|set up|block off)\b.{0,60}(calendar|diary|appointment|meeting|event|\bat \d|\b(?:tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|this week|this morning|this afternoon|this evening))/i.test(t)) return true;
+  if (/\b(what (?:do i have|am i doing|'?s on)|do i have (?:anything|events?)|am i (?:free|busy|available)|(?:my |the |this )?(?:calendar|schedule|diary))\b/.test(t)) return true;
+  if (/\b(move|reschedule|change|postpone|cancel|delete|remove)\b.{0,60}\b(appointment|meeting|event|session)\b/i.test(t)) return true;
+  return false;
+}
+
+// Generate a FULL hobby curriculum — all milestones at once
+export async function generateHobbyCurriculum({ hobbyName, skillLevel = 'beginner' }) {
+  const system = `You generate a complete, research-backed learning curriculum for someone starting a hobby.
+
+Return ONLY valid JSON (no markdown fences):
+{"milestones": ["milestone 1 text", "milestone 2 text", ...]}
+
+Requirements:
+- 6–8 milestones in genuine pedagogical order — the exact sequence a skilled teacher would use
+- Each milestone: 1–2 sentences. Starts with an action verb. Ends with "done when…" and a specific, testable completion criterion
+- Grounded in how this skill is actually taught — not busywork or arbitrary placeholders
+- Each step builds directly on the previous one
+- First milestone must be achievable in a single 30–60 minute session
+
+Quality standard your output must match:
+
+Guitar (beginner):
+- "Learn to hold the guitar correctly and tune it using a tuner app — done when the guitar is in tune and your fretting arm feels relaxed."
+- "Learn the G, C, D, and Em chord shapes — done when you can finger all four from memory without checking a diagram."
+- "Practice switching cleanly between G and C 10 times — done when both chords ring clearly with no muted strings or pauses."
+- "Learn a basic down-strum pattern on one chord — done when you keep a steady beat for 30 seconds without stopping."
+- "Combine chord switching with strumming across G–C–D–Em — done when you play through all four without stopping."
+- "Learn one complete simple song using G, C, D, Em — done when you can play it start to finish at a slow, consistent tempo."
+
+Watercolor (beginner):
+- "Set up your palette and paint a colour chart — done when you have a labelled dry swatch of every colour on paper."
+- "Practice a flat wash — done when you can pull one smooth, streak-free band of colour across a full page."
+- "Practice a graded wash (light to dark) — done when you can transition from pale to saturated in one continuous stroke."
+- "Practice wet-on-wet: drop paint onto wet paper — done when you've filled a page with blooms and noted how it differs from painting on dry paper."
+- "Plan your whites before painting — done when you've sketched a simple subject and marked all areas that must stay paper-white."
+- "Paint one simple finished subject using big shapes first — done when you have one small completed piece (a leaf, fruit, or single flower)."
+
+Reason about how ${hobbyName} is genuinely taught and sequence accordingly.`;
+
+  try {
+    const key = await getApiKey();
+    if (!key) throw new Error('no key');
+    const reply = await callClaude({
+      system,
+      messages: [{ role: 'user', content: `Hobby: ${hobbyName}\nSkill level: ${skillLevel}` }],
+      maxTokens: 900,
+    });
+    const clean = reply.trim().replace(/^```json?\n?/, '').replace(/\n?```$/, '');
+    const parsed = JSON.parse(clean);
+    if (!Array.isArray(parsed.milestones) || parsed.milestones.length === 0) throw new Error('bad format');
+    return parsed.milestones;
+  } catch {
+    return _curriculumFallback(hobbyName);
+  }
+}
+
+function _curriculumFallback(hobbyName) {
+  const h = hobbyName.toLowerCase();
+  if (/guitar/.test(h)) return [
+    'Learn to hold the guitar correctly and tune it using a tuner app — done when the guitar is in tune and your fretting arm feels relaxed.',
+    'Learn the G, C, D, and Em chord shapes — done when you can finger all four from memory without checking a diagram.',
+    'Practice switching between G and C 10 times each direction — done when both chords ring clearly with no muted strings.',
+    'Learn a basic down-strum pattern on a single chord — done when you keep a steady beat for 30 seconds without stopping.',
+    'Combine chord switching with strumming across G–C–D–Em — done when you play through all four without stopping.',
+    'Learn one complete simple song using G, C, D, Em — done when you can play it start to finish at a slow, consistent tempo.',
+  ];
+  if (/watercolou?r|watercolor/.test(h)) return [
+    'Set up your palette and paint a colour chart — done when you have a labelled dry swatch of every colour on paper.',
+    'Practice a flat wash — done when you can pull one smooth, streak-free band of colour across a full page.',
+    'Practice a graded wash — done when you can transition from pale to saturated in one continuous stroke.',
+    "Practice wet-on-wet: drop paint onto wet paper and let it bloom — done when you've filled a page with blooms.",
+    'Plan your whites before painting — done when you\'ve marked all areas that must stay paper-white on a sketch.',
+    'Paint one simple finished subject using big shapes first — done when you have one small completed piece.',
+    'Paint a slightly more complex piece with 2–3 elements — done when it\'s finished and you can name one improvement from last time.',
+  ];
+  if (/piano|keyboard/.test(h)) return [
+    'Learn the names of all white keys in one octave — done when you can name any key instantly without counting from C.',
+    'Play the C major scale up and down with correct finger numbers — done when you can play it smoothly 5 times in a row.',
+    'Play "Twinkle Twinkle Little Star" with the right hand from memory — done when you can play it without stopping.',
+    'Learn to play C, F, and G as left-hand single bass notes — done when you can hit each on cue without looking.',
+    'Combine right-hand melody with left-hand bass on a simple song — done when both hands play together without stopping.',
+    'Learn the C major chord with your left hand — done when you can hold and release it cleanly 10 times.',
+  ];
+  if (/draw|sketch/.test(h)) return [
+    'Draw the 5 basic 3D forms from memory (cube, sphere, cylinder, cone, pyramid) — done when all five are clearly recognisable.',
+    'Do 5 gesture drawings of a simple pose, 2 minutes each — done when you can capture the main line of action in each.',
+    'Draw one household object from direct observation — done when the proportions are roughly accurate.',
+    'Shade a sphere using cross-hatching to show a clear light source — done when the sphere reads as 3D.',
+    'Draw a still life of 2–3 objects from observation, including basic shading — done when the composition is complete.',
+    'Draw one portrait study from a photo — done when the major proportions are in approximately correct relation.',
+  ];
+  if (/run|jog/.test(h)) return [
+    'Complete a 20-minute brisk walk — done when you finish the full 20 minutes without stopping.',
+    'Complete run/walk intervals: 1 min run, 2 min walk, repeat 6 times — done when you finish all 18 minutes.',
+    'Run continuously for 10 minutes — done when you finish the full 10 minutes at any pace.',
+    'Run continuously for 20 minutes — done when you finish without stopping.',
+    'Run a 5K distance at any pace — done when the full 5K is complete.',
+    'Run a 5K in under 40 minutes — done when your timer confirms the time.',
+  ];
+  if (/cook|bak/.test(h)) return [
+    'Cook one simple dish from scratch following a recipe exactly — done when the dish is edible and every component is homemade.',
+    'Practice sautéing: cook onions and garlic to a consistent golden colour — done when the result is even, not burnt.',
+    'Cook a dish using two different techniques (e.g. sauté + simmer) — done when the dish is finished and edible.',
+    'Cook one dish from memory without checking a recipe — done when you complete it successfully.',
+    'Cook a complete three-component meal (protein, carb, vegetable) where all three are ready to serve at the same time.',
+    'Cook the same dish twice in one week and improve one specific aspect each time — done when you can name what improved.',
+  ];
+  return [
+    `Learn the fundamental setup and safety rules for ${hobbyName} — done when you can describe the 3 most important things a beginner must know.`,
+    `Practice the most basic technique in ${hobbyName} for 30 minutes — done when you can perform it once correctly from start to finish.`,
+    `Repeat the core technique 20 times in one session focusing on consistency — done when at least 15 of 20 repetitions feel controlled.`,
+    `Complete one small finished project using everything learned so far — done when the project is done and you can name one thing you'd improve.`,
+    `Try a harder variation of the main technique — done when you complete it, even imperfectly.`,
+    `Create one piece of work in ${hobbyName} you're proud enough to share — done when it's finished and you've shown it to at least one person.`,
+  ];
+}
+
 // Generate a screen awareness insight from usage data
 export async function generateScreenInsight({ screenTime, unlocks, hobbies = [] }) {
   const hobbyList = hobbies.length ? hobbies.join(', ') : 'none yet';

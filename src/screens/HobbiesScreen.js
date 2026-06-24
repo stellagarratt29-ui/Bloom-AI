@@ -6,7 +6,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { generateHobbyMilestone } from '../services/ai';
+import { generateHobbyCurriculum } from '../services/ai';
 
 const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -22,17 +22,12 @@ export default function HobbiesScreen({ navigation }) {
     if (!name || generating) return;
     setGenerating(true);
     try {
-      const milestone = await generateHobbyMilestone({
+      // generateHobbyCurriculum has its own fallback — never throws
+      const milestones = await generateHobbyCurriculum({
         hobbyName: name,
         skillLevel: skillLevel.toLowerCase(),
-        completedMilestones: [],
       });
-      addHobby(name, skillLevel.toLowerCase(), milestone);
-      setHobbyName('');
-      setSkillLevel('Beginner');
-      setShowAdd(false);
-    } catch {
-      addHobby(name, skillLevel.toLowerCase(), `Spend 20 focused minutes on ${name} — done when you can describe one specific thing you practised.`);
+      addHobby(name, skillLevel.toLowerCase(), milestones);
       setHobbyName('');
       setSkillLevel('Beginner');
       setShowAdd(false);
@@ -59,9 +54,9 @@ export default function HobbiesScreen({ navigation }) {
         )}
 
         {hobbies.map(h => {
-          const total = h.completedMilestones.length + 1;
-          const done  = h.completedMilestones.length;
-          const pct   = Math.round((done / total) * 100);
+          const total = h.milestones?.length ?? (h.completedMilestones?.length + 1 ?? 1);
+          const done  = h.milestoneIndex ?? h.completedMilestones?.length ?? 0;
+          const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
           return (
             <TouchableOpacity
               key={h.id}
@@ -72,12 +67,14 @@ export default function HobbiesScreen({ navigation }) {
               <View style={s.hobbyCardInner}>
                 <View style={s.hobbyMeta}>
                   <Text style={s.hobbyName}>{h.name}</Text>
-                  <Text style={s.hobbyLevel}>{h.skillLevel}</Text>
+                  <View style={s.hobbyMetaRow}>
+                    <Text style={s.hobbyLevel}>{h.skillLevel}</Text>
+                    <Text style={s.milestoneBadge}>Milestone {done + 1} of {total}</Text>
+                  </View>
                   <Text style={s.hobbyMilestone} numberOfLines={3}>{h.currentMilestone}</Text>
                   <View style={s.barTrack}>
                     <View style={[s.barFill, { width: `${pct}%` }]} />
                   </View>
-                  <Text style={s.barLabel}>{done} milestone{done !== 1 ? 's' : ''} completed</Text>
                 </View>
                 <Feather name="chevron-right" size={18} color={C.muted} />
               </View>
@@ -167,12 +164,13 @@ const s = StyleSheet.create({
   },
   hobbyCardInner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   hobbyMeta: { flex: 1 },
-  hobbyName: { fontSize: 17, fontWeight: '700', color: C.forest, marginBottom: 2 },
-  hobbyLevel: { fontSize: 11, fontWeight: '600', color: C.sage, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 },
+  hobbyName:    { fontSize: 17, fontWeight: '700', color: C.forest, marginBottom: 4 },
+  hobbyMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  hobbyLevel:   { fontSize: 11, fontWeight: '600', color: C.sage, letterSpacing: 0.8, textTransform: 'uppercase' },
+  milestoneBadge: { fontSize: 11, fontWeight: '600', color: C.clay, backgroundColor: C.clayPale, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   hobbyMilestone: { fontSize: 13, color: C.muted, lineHeight: 20, marginBottom: 12 },
-  barTrack: { height: 4, backgroundColor: C.border, borderRadius: 2, overflow: 'hidden', marginBottom: 5 },
+  barTrack: { height: 4, backgroundColor: C.border, borderRadius: 2, overflow: 'hidden', marginTop: 10 },
   barFill:  { height: 4, backgroundColor: C.sage, borderRadius: 2, minWidth: 4 },
-  barLabel: { fontSize: 11, color: C.muted },
   removeRow: { marginTop: 12, alignItems: 'flex-end' },
   removeText: { fontSize: 12, color: C.muted },
 

@@ -7,7 +7,8 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction } from '../services/ai';
+import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction, detectCalendarAction } from '../services/ai';
+import { processCalendarRequest } from '../services/calendar';
 
 const PRIORITY_DOT = { high: '#C0392B', medium: C.sage, low: C.clay };
 
@@ -115,6 +116,19 @@ export default function BloomChatScreen({ navigation }) {
     setThinking(true);
 
     try {
+      // Calendar action path — check first so "add dentist to calendar" doesn't become a task
+      if (detectCalendarAction(trimmed)) {
+        const calReply = await processCalendarRequest(trimmed);
+        if (calReply !== null) {
+          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: calReply }]);
+          historyRef.current = [...historyRef.current, { role: 'assistant', content: calReply }];
+          setThinking(false);
+          scrollToEnd();
+          return;
+        }
+        // calReply === null means processCalendarRequest didn't recognise it as a calendar action — fall through
+      }
+
       // Brain dump path
       if (looksLikeTaskDump(trimmed)) {
         const { items, response } = await parseBrainDump(trimmed, userName);
