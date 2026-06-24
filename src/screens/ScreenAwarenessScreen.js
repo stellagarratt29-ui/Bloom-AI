@@ -1,102 +1,132 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
+import { useApp } from '../context/AppContext';
 
-const SUGGESTIONS = [
-  { icon: 'book-open', label: 'Read'   },
-  { icon: 'pen-tool',  label: 'Create' },
-  { icon: 'edit-3',    label: 'Write'  },
+const REDIRECTS = [
+  { icon: 'book-open', label: 'Read',   tab: null },
+  { icon: 'pen-tool',  label: 'Create', tab: null },
+  { icon: 'sun',       label: 'Grow',   tab: 'Grow' },
 ];
 
-export default function ScreenAwarenessScreen() {
+export default function ScreenAwarenessScreen({ navigation }) {
+  const { dailyPoints } = useApp();
+  const todayPts = dailyPoints?.[6] ?? 0;
+
+  const hour = new Date().getHours();
+  const isEvening = hour >= 18;
+  const insight = isEvening
+    ? 'You tend to scroll most in the evening. Try putting your phone down 30 minutes before bed.'
+    : todayPts > 0
+    ? `You've already earned ${todayPts} pts today — you're making real progress.`
+    : 'You haven\'t started your tasks yet today. Opening Bloom was a good first step.';
+
+  const showRedirects = isEvening;
+
   return (
     <SafeAreaView style={s.safe}>
-      <View style={s.container}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
         <Text style={s.title}>Screen{'\n'}Awareness</Text>
-        <Text style={s.sub}>Awareness is the first step toward change.</Text>
+        <Text style={s.sub}>Awareness is the first step.</Text>
 
         <View style={s.statsRow}>
           <View style={s.statCard}>
-            <Text style={s.statValue}>2h 14m</Text>
-            <Text style={s.statLabel}>Today</Text>
+            <Text style={s.statValue}>—</Text>
+            <Text style={s.statLabel}>Screen time</Text>
+            <Text style={s.statNote}>Requires device API</Text>
           </View>
           <View style={s.statCard}>
-            <Text style={s.statValue}>47×</Text>
-            <Text style={s.statLabel}>Opens</Text>
+            <Text style={s.statValue}>—</Text>
+            <Text style={s.statLabel}>Unlocks today</Text>
+            <Text style={s.statNote}>Requires device API</Text>
           </View>
         </View>
 
         <View style={s.insightCard}>
-          <Feather name="smartphone" size={20} color="#C0392B" style={{ marginBottom: 6 }} />
-          <Text style={s.insightTitle}>Screen Habits</Text>
-          <Text style={s.insightText}>
-            You usually scroll after dinner when you're mentally tired.
+          <Text style={s.insightLabel}>BLOOM NOTICED</Text>
+          <Text style={s.insightText}>{insight}</Text>
+        </View>
+
+        {showRedirects && (
+          <>
+            <Text style={s.redirectLabel}>INSTEAD, TRY</Text>
+            <View style={s.redirectRow}>
+              {REDIRECTS.map(r => (
+                <TouchableOpacity
+                  key={r.label}
+                  style={s.redirectChip}
+                  onPress={() => r.tab && navigation?.navigate?.(r.tab)}
+                  activeOpacity={0.75}
+                >
+                  <Feather name={r.icon} size={22} color={C.forest} style={{ marginBottom: 6 }} />
+                  <Text style={s.redirectText}>{r.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        <View style={s.noteCard}>
+          <Feather name="info" size={14} color={C.muted} style={{ marginRight: 8, marginTop: 1 }} />
+          <Text style={s.noteText}>
+            Full screen time data requires native device access. Bloom never blocks or restricts any app — it only observes and gently suggests.
           </Text>
         </View>
 
-        <View style={s.insightCardAlt}>
-          <Text style={s.insightText}>
-            Looks like you're looking for a little break.
-          </Text>
-        </View>
-
-        <Text style={s.suggestLabel}>INSTEAD, TRY</Text>
-        <View style={s.suggestRow}>
-          {SUGGESTIONS.map(sg => (
-            <TouchableOpacity key={sg.label} style={s.suggestChip} activeOpacity={0.8}>
-              <Feather name={sg.icon} size={24} color={C.forest} style={{ marginBottom: 6 }} />
-              <Text style={s.suggestText}>{sg.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={s.note}>
-          Screen time data requires iOS Screen Time API access — this shows a sample.
-        </Text>
-      </View>
+        <View style={{ height: 48 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.cream },
-  container: { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
+  safe:   { flex: 1, backgroundColor: C.cream },
+  scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
-  title: { fontSize: 34, fontWeight: '700', color: C.forest, lineHeight: 42, marginBottom: 8 },
-  sub:   { fontSize: 14, color: C.muted, lineHeight: 22, marginBottom: 24 },
-
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
-  statCard: {
-    flex: 1, backgroundColor: C.white, borderRadius: 16,
-    padding: 20, alignItems: 'center', borderWidth: 1, borderColor: C.border,
+  title: {
+    fontSize: 30, fontWeight: '800', color: C.forest, lineHeight: 38, marginBottom: 6,
+    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
-  statValue: { fontSize: 32, fontWeight: '700', color: C.forest, marginBottom: 4 },
-  statLabel: { fontSize: 12, color: C.muted, fontWeight: '600', letterSpacing: 0.5 },
+  sub: { fontSize: 14, color: C.muted, lineHeight: 22, marginBottom: 24 },
+
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
+  statCard: {
+    flex: 1, backgroundColor: C.white, borderRadius: 18,
+    padding: 18, alignItems: 'center',
+    borderWidth: 1, borderColor: C.border,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  statValue: { fontSize: 30, fontWeight: '700', color: C.forest, marginBottom: 4 },
+  statLabel: { fontSize: 12, color: C.muted, fontWeight: '600', letterSpacing: 0.3 },
+  statNote:  { fontSize: 10, color: C.sageLight, marginTop: 4, textAlign: 'center' },
 
   insightCard: {
-    backgroundColor: '#FEF3F2', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#FDD8D6', marginBottom: 10,
+    backgroundColor: C.white, borderRadius: 18, padding: 18,
+    borderWidth: 1, borderColor: C.border, marginBottom: 22,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  insightTitle: { fontSize: 13, fontWeight: '700', color: '#C0392B', marginBottom: 4 },
-  insightText: { fontSize: 14, color: C.forest, lineHeight: 22 },
+  insightLabel: { fontSize: 10, fontWeight: '700', color: C.sage, letterSpacing: 1.3, marginBottom: 8 },
+  insightText:  { fontSize: 14, color: C.forest, lineHeight: 22 },
 
-  insightCardAlt: {
-    backgroundColor: C.white, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: C.border, marginBottom: 24,
+  redirectLabel: {
+    fontSize: 10, fontWeight: '700', color: C.muted,
+    letterSpacing: 1.4, marginBottom: 12,
   },
-
-  suggestLabel: {
-    fontSize: 11, fontWeight: '700', color: C.muted,
-    letterSpacing: 1.6, marginBottom: 12,
-  },
-  suggestRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  suggestChip: {
+  redirectRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
+  redirectChip: {
     flex: 1, backgroundColor: C.white, borderRadius: 14,
-    paddingVertical: 14, alignItems: 'center',
+    paddingVertical: 16, alignItems: 'center',
     borderWidth: 1, borderColor: C.border,
   },
-  suggestText: { fontSize: 13, fontWeight: '600', color: C.forest },
+  redirectText: { fontSize: 13, fontWeight: '600', color: C.forest },
 
-  note: { fontSize: 12, color: C.muted, fontStyle: 'italic', textAlign: 'center', lineHeight: 18 },
+  noteCard: {
+    flexDirection: 'row', backgroundColor: C.sagePale, borderRadius: 14,
+    padding: 14, borderWidth: 1, borderColor: C.sageLight,
+  },
+  noteText: { flex: 1, fontSize: 12, color: C.muted, lineHeight: 18 },
 });

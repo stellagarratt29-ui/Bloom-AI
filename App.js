@@ -18,28 +18,21 @@ import { AppProvider, useApp } from './src/context/AppContext';
 import { C } from './src/constants/colors';
 
 import OnboardingScreen      from './src/screens/OnboardingScreen';
-import HomeScreen            from './src/screens/HomeScreen';
-import JournalScreen         from './src/screens/JournalScreen';
-import MoodCheckInScreen     from './src/screens/MoodCheckInScreen';
-import SprintScreen          from './src/screens/SprintScreen';
-import HobbiesScreen         from './src/screens/HobbiesScreen';
-import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
 import BloomChatScreen       from './src/screens/BloomChatScreen';
-import GoalsScreen           from './src/screens/GoalsScreen';
-import SettingsScreen        from './src/screens/SettingsScreen';
-import IdeaBankScreen        from './src/screens/IdeaBankScreen';
 import TaskGuideScreen       from './src/screens/TaskGuideScreen';
+import HobbiesScreen         from './src/screens/HobbiesScreen';
+import GoalsScreen           from './src/screens/GoalsScreen';
+import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
 
 const RootStack    = createNativeStackNavigator();
-const HomeStackNav = createNativeStackNavigator();
-const GrowStackNav = createNativeStackNavigator();
 const ChatStackNav = createNativeStackNavigator();
 const Tab          = createBottomTabNavigator();
 
 const TAB_ITEMS = [
-  { name: 'HomeTab', icon: 'home',           label: 'Today' },
-  { name: 'GrowTab', icon: 'sun',            label: 'Grow'  },
-  { name: 'ChatTab', icon: 'message-circle', label: 'Chat'  },
+  { name: 'ChatTab',    icon: 'message-circle', label: 'Today'    },
+  { name: 'GrowTab',    icon: 'sun',            label: 'Grow'     },
+  { name: 'GoalsTab',   icon: 'target',         label: 'Goals'    },
+  { name: 'ScreenTab',  icon: 'smartphone',     label: 'Screen'   },
 ];
 
 const SIDEBAR_W = 200;
@@ -138,7 +131,8 @@ const deskS = StyleSheet.create({
     paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
   },
   logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
-  logoText: { fontSize: 24, fontWeight: '800', color: C.sage, letterSpacing: -0.5 },
+  logoText: { fontSize: 24, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined },
   logoSub:  { fontSize: 11, color: C.muted, marginTop: 2 },
   navItem: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -157,35 +151,11 @@ const mobileTabS = StyleSheet.create({
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
 
-function HomeStack() {
-  return (
-    <HomeStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStackNav.Screen name="Home"        component={HomeScreen} />
-      <HomeStackNav.Screen name="Journal"     component={JournalScreen} />
-      <HomeStackNav.Screen name="TaskGuide"   component={TaskGuideScreen} />
-      <HomeStackNav.Screen name="MoodCheckIn" component={MoodCheckInScreen} />
-      <HomeStackNav.Screen name="IdeaBank"    component={IdeaBankScreen} />
-      <HomeStackNav.Screen name="Sprint"      component={SprintScreen} options={{ presentation: 'fullScreenModal' }} />
-    </HomeStackNav.Navigator>
-  );
-}
-
-function GrowStack() {
-  return (
-    <GrowStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <GrowStackNav.Screen name="HobbyGarden"     component={HobbiesScreen} />
-      <GrowStackNav.Screen name="ScreenAwareness" component={ScreenAwarenessScreen} />
-    </GrowStackNav.Navigator>
-  );
-}
-
 function ChatStack() {
   return (
     <ChatStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ChatStackNav.Screen name="BloomChat"  component={BloomChatScreen} />
-      <ChatStackNav.Screen name="Goals"      component={GoalsScreen} />
-      <ChatStackNav.Screen name="Settings"   component={SettingsScreen} />
-      <ChatStackNav.Screen name="TaskGuide"  component={TaskGuideScreen} />
+      <ChatStackNav.Screen name="BloomChat" component={BloomChatScreen} />
+      <ChatStackNav.Screen name="TaskGuide" component={TaskGuideScreen} />
     </ChatStackNav.Navigator>
   );
 }
@@ -199,9 +169,10 @@ function MainTabs() {
       screenOptions={{ headerShown: false }}
       initialRouteName="ChatTab"
     >
-      <Tab.Screen name="HomeTab" component={HomeStack} />
-      <Tab.Screen name="GrowTab" component={GrowStack} />
-      <Tab.Screen name="ChatTab" component={ChatStack} />
+      <Tab.Screen name="ChatTab"   component={ChatStack} />
+      <Tab.Screen name="GrowTab"   component={HobbiesScreen} />
+      <Tab.Screen name="GoalsTab"  component={GoalsScreen} />
+      <Tab.Screen name="ScreenTab" component={ScreenAwarenessScreen} />
     </Tab.Navigator>
   );
 }
@@ -209,7 +180,8 @@ function MainTabs() {
 function SplashScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 32, fontWeight: '800', color: C.forest, letterSpacing: -0.5 }}>Bloom</Text>
+      <Text style={{ fontSize: 32, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
+        fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined }}>Bloom</Text>
       <Text style={{ fontSize: 14, color: C.muted, marginTop: 8 }}>Gentle guidance. Real progress.</Text>
     </View>
   );

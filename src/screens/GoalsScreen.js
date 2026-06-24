@@ -1,86 +1,55 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  SafeAreaView, StyleSheet,
+  SafeAreaView, StyleSheet, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 
-const GOLD = '#C4A96E';
-const GOLD_LIGHT = '#F5EDD8';
-
-function CircularScore({ score, max }) {
-  const pct = Math.min(1, score / max);
-
-  return (
-    <View style={{ alignItems: 'center', marginVertical: 32 }}>
-      <View style={[gaugeS.ring, { opacity: 0.15 }]} />
-      <View style={[gaugeS.ring, { opacity: pct }]} />
-      <View style={gaugeS.center}>
-        <Text style={gaugeS.score}>{score}</Text>
-        <Text style={gaugeS.max}>of {max}</Text>
-      </View>
-    </View>
-  );
+function getNextAction(goalText) {
+  const t = (goalText || '').toLowerCase();
+  if (/10k|make money|earn|income|sell|business|freelance/.test(t))
+    return 'Write down 3 ways you could realistically earn money given what you already know how to do.';
+  if (/vet|veterinarian|doctor|nurse|medicine|medical/.test(t))
+    return 'Research the exact qualifications needed and map out the school subjects that matter most.';
+  if (/fit|gym|run|marathon|weight|workout|exercise/.test(t))
+    return 'Do 10 minutes of movement today — just to start the habit.';
+  if (/book|write|novel|blog|publish/.test(t))
+    return 'Write one paragraph today, even a bad one. Starting is the whole game.';
+  if (/learn|language|code|skill|course/.test(t))
+    return 'Find one structured resource (YouTube, app, or course) and do the first lesson today.';
+  if (/travel|trip|move|abroad/.test(t))
+    return 'Pick a destination and research what it would realistically cost.';
+  if (/save|invest|budget|house|property/.test(t))
+    return 'Open your bank app and look at last month\'s spending — awareness is step one.';
+  return 'Write down the single most important next step you could take this week.';
 }
 
-const gaugeS = StyleSheet.create({
-  ring: {
-    position: 'absolute',
-    width: 180, height: 180, borderRadius: 90,
-    borderWidth: 14, borderColor: GOLD,
-  },
-  center: { alignItems: 'center' },
-  score: { fontSize: 52, fontWeight: '300', color: C.forest, letterSpacing: -2 },
-  max:   { fontSize: 14, color: C.muted, marginTop: 2 },
-});
-
-const EARN_ROWS = [
-  { icon: 'check',       label: 'Complete a task', pts: '5–20 pts' },
-  { icon: 'sun',         label: 'Hobby step',      pts: '15 pts'   },
-  { icon: 'clock',       label: 'Focus sprint',    pts: '10 pts'   },
-];
-
 export default function GoalsScreen() {
-  const { totalPoints, goals, addGoal, deleteGoal, addTask } = useApp();
+  const { goals, addGoal, deleteGoal } = useApp();
   const [newGoal, setNewGoal] = useState('');
   const [showAdd, setShowAdd] = useState(false);
 
-  const target = 250;
-
   const handleAdd = () => {
-    if (!newGoal.trim()) return;
-    addGoal(newGoal.trim());
+    const text = newGoal.trim();
+    if (!text) return;
+    addGoal(text, getNextAction(text));
     setNewGoal('');
     setShowAdd(false);
   };
-
-  const insightText = totalPoints >= target
-    ? "You've hit your goal! Set a new target to keep growing."
-    : totalPoints >= target * 0.8
-    ? `Almost there! Just ${target - totalPoints} pts to go.`
-    : "You've been consistently making progress lately. Keep it up!";
 
   return (
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={s.title}>Growth</Text>
-        <Text style={s.sub}>No streaks. Just real, gentle progress.</Text>
-
-        <View style={s.scoreCard}>
-          <CircularScore score={totalPoints} max={target} />
-          <View style={s.insightCard}>
-            <Feather name="star" size={18} color={GOLD} style={{ flexShrink: 0 }} />
-            <Text style={s.insightText}>{insightText}</Text>
-          </View>
-        </View>
+        <Text style={s.title}>Goals</Text>
+        <Text style={s.sub}>Big things you're working toward.</Text>
 
         <View style={s.sectionRow}>
           <Text style={s.sectionLabel}>YOUR GOALS</Text>
           <TouchableOpacity onPress={() => setShowAdd(v => !v)}>
-            <Text style={s.addGoalBtn}>+ Add</Text>
+            <Text style={s.addBtn}>+ Add goal</Text>
           </TouchableOpacity>
         </View>
 
@@ -97,51 +66,44 @@ export default function GoalsScreen() {
               autoFocus
             />
             <TouchableOpacity
-              style={[s.addBtn, !newGoal.trim() && s.addBtnOff]}
+              style={[s.saveBtn, !newGoal.trim() && s.saveBtnOff]}
               onPress={handleAdd}
               disabled={!newGoal.trim()}
             >
-              <Text style={s.addBtnText}>Save</Text>
+              <Text style={s.saveBtnText}>Save</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {goals.length === 0 ? (
           <View style={s.empty}>
-            <Feather name="target" size={36} color={C.muted} style={{ marginBottom: 10 }} />
+            <Feather name="target" size={40} color={C.sageLight} style={{ marginBottom: 12 }} />
+            <Text style={s.emptyHead}>No goals yet</Text>
             <Text style={s.emptyText}>
-              Add a big goal — Bloom will help you take the first step.
+              Add a big goal above — something like "Make $10k" or "Become a vet." Bloom will give you the first step.
             </Text>
           </View>
         ) : (
           goals.map(g => (
             <View key={g.id} style={s.goalCard}>
-              <View style={s.goalRow}>
+              <View style={s.goalHeader}>
                 <Text style={s.goalText}>{g.text}</Text>
-                <TouchableOpacity onPress={() => deleteGoal(g.id)} style={s.deleteBtn}>
+                <TouchableOpacity onPress={() => deleteGoal(g.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Feather name="x" size={16} color={C.muted} />
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={s.firstStepBtn}
-                onPress={() => addTask(`Work on: ${g.text}`, 'high')}
-              >
-                <Text style={s.firstStepText}>Add to Today →</Text>
-              </TouchableOpacity>
+
+              <View style={s.nextActionBox}>
+                <Text style={s.nextActionLabel}>NEXT STEP</Text>
+                <Text style={s.nextActionText}>{g.nextAction || getNextAction(g.text)}</Text>
+              </View>
+
+              <View style={s.progressTrack}>
+                <View style={[s.progressFill, { width: `${Math.min(100, g.progress ?? 0)}%` }]} />
+              </View>
             </View>
           ))
         )}
-
-        <View style={s.earnCard}>
-          <Text style={s.earnTitle}>HOW TO EARN POINTS</Text>
-          {EARN_ROWS.map(row => (
-            <View key={row.label} style={s.earnRow}>
-              <Feather name={row.icon} size={16} color={C.forest} style={s.earnIcon} />
-              <Text style={s.earnLabel}>{row.label}</Text>
-              <Text style={s.earnPts}>{row.pts}</Text>
-            </View>
-          ))}
-        </View>
 
         <View style={{ height: 48 }} />
       </ScrollView>
@@ -153,62 +115,65 @@ const s = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: C.cream },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
-  title: { fontSize: 30, fontWeight: '700', color: C.forest, marginBottom: 4 },
-  sub:   { fontSize: 14, color: C.muted, marginBottom: 4 },
-
-  scoreCard: {
-    backgroundColor: C.white, borderRadius: 20,
-    borderWidth: 1, borderColor: C.border,
-    paddingHorizontal: 24, paddingBottom: 20,
-    alignItems: 'center', marginTop: 16, marginBottom: 24,
+  title: {
+    fontSize: 30, fontWeight: '800', color: C.forest, marginBottom: 4,
+    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
-  insightCard: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: GOLD_LIGHT, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: '#EADCBC', width: '100%',
-  },
-  insightText: { flex: 1, fontSize: 14, color: C.forest, lineHeight: 22 },
+  sub: { fontSize: 14, color: C.muted, marginBottom: 20, lineHeight: 22 },
 
   sectionRow: {
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 12,
+    justifyContent: 'space-between', marginBottom: 14,
   },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.6 },
-  addGoalBtn: { fontSize: 14, fontWeight: '700', color: C.forest },
+  addBtn: { fontSize: 14, fontWeight: '700', color: C.clay },
 
-  addRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  addRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   addInput: {
     flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14,
     fontSize: 15, color: C.forest,
   },
-  addBtn: { backgroundColor: C.forest, paddingVertical: 11, paddingHorizontal: 18, borderRadius: 12 },
-  addBtnOff: { opacity: 0.35 },
-  addBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
+  saveBtn: {
+    backgroundColor: C.forest, paddingVertical: 11,
+    paddingHorizontal: 18, borderRadius: 12,
+  },
+  saveBtnOff: { opacity: 0.35 },
+  saveBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
 
-  empty: { alignItems: 'center', paddingVertical: 24 },
+  empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
+  emptyHead: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 8 },
   emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22 },
 
   goalCard: {
-    backgroundColor: C.white, borderRadius: 16,
-    borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 10,
+    backgroundColor: C.white, borderRadius: 18,
+    borderWidth: 1, borderColor: C.border,
+    padding: 18, marginBottom: 12,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  goalRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
-  goalText: { flex: 1, fontSize: 16, fontWeight: '600', color: C.forest, lineHeight: 24 },
-  deleteBtn: { padding: 4 },
-  firstStepBtn: {
-    alignSelf: 'flex-start', backgroundColor: '#EAF0E8',
-    borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16,
+  goalHeader: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    justifyContent: 'space-between', gap: 10, marginBottom: 14,
   },
-  firstStepText: { fontSize: 13, fontWeight: '700', color: C.forest },
+  goalText: { flex: 1, fontSize: 17, fontWeight: '700', color: C.forest, lineHeight: 26 },
 
-  earnCard: {
-    backgroundColor: C.white, borderRadius: 16,
-    borderWidth: 1, borderColor: C.border, padding: 18, marginTop: 4,
+  nextActionBox: {
+    backgroundColor: C.clayPale, borderRadius: 12,
+    padding: 13, marginBottom: 14,
+    borderWidth: 1, borderColor: C.clayLight,
   },
-  earnTitle: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.5, marginBottom: 14 },
-  earnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
-  earnIcon: { width: 24, textAlign: 'center' },
-  earnLabel: { flex: 1, fontSize: 14, color: C.forest },
-  earnPts: { fontSize: 13, fontWeight: '700', color: C.muted },
+  nextActionLabel: {
+    fontSize: 10, fontWeight: '700', color: C.clay,
+    letterSpacing: 1.2, marginBottom: 5,
+  },
+  nextActionText: { fontSize: 14, color: C.forest, lineHeight: 22 },
+
+  progressTrack: {
+    height: 4, backgroundColor: C.border, borderRadius: 2,
+  },
+  progressFill: {
+    height: 4, backgroundColor: C.sage, borderRadius: 2,
+    minWidth: 4,
+  },
 });

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  SafeAreaView, StyleSheet,
+  SafeAreaView, StyleSheet, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { HOBBIES } from '../constants/data';
 import { useApp } from '../context/AppContext';
 
-export default function HobbiesScreen({ navigation }) {
+export default function HobbiesScreen() {
   const { selectedHobbies, hobbyProgress, completeHobbyStep, toggleHobby } = useApp();
   const [showAdd, setShowAdd] = useState(false);
 
@@ -19,24 +19,14 @@ export default function HobbiesScreen({ navigation }) {
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <View style={s.headerRow}>
-          <View>
-            <Text style={s.title}>Hobby Garden</Text>
-            <Text style={s.sub}>Things you're growing, one small step at a time.</Text>
-          </View>
-          <TouchableOpacity
-            style={s.screenBtn}
-            onPress={() => navigation.navigate('ScreenAwareness')}
-          >
-            <Feather name="smartphone" size={18} color={C.muted} />
-            <Text style={s.screenBtnLabel}>Screen</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={s.title}>Grow</Text>
+        <Text style={s.sub}>Things you're building, one small step at a time.</Text>
 
         {myHobbies.length === 0 ? (
           <View style={s.empty}>
-            <Feather name="sun" size={40} color={C.sageMid} style={{ marginBottom: 12 }} />
-            <Text style={s.emptyText}>No hobbies yet. Add one below to start growing!</Text>
+            <Feather name="sun" size={40} color={C.sageLight} style={{ marginBottom: 12 }} />
+            <Text style={s.emptyHead}>Nothing here yet</Text>
+            <Text style={s.emptyText}>Add a hobby below to start tracking your progress.</Text>
           </View>
         ) : (
           myHobbies.map(h => {
@@ -48,16 +38,17 @@ export default function HobbiesScreen({ navigation }) {
               <View key={h.id} style={s.hobbyCard}>
                 <View style={s.hobbyRow}>
                   <View style={s.hobbyIconWrap}>
-                    <Feather name={h.icon ?? 'star'} size={22} color={C.forest} />
+                    <Feather name={h.icon ?? 'star'} size={20} color={C.forest} />
                   </View>
                   <View style={s.hobbyMeta}>
                     <Text style={s.hobbyName}>{h.name}</Text>
-                    <Text style={s.hobbyNext} numberOfLines={1}>
-                      {complete ? '✓ Complete!' : `Next: ${nextStep}`}
+                    <Text style={s.hobbyNext} numberOfLines={2}>
+                      {complete ? 'All milestones complete!' : nextStep}
                     </Text>
                     <View style={s.barTrack}>
                       <View style={[s.barFill, { width: `${pct}%` }]} />
                     </View>
+                    <Text style={s.barLabel}>{pct}% through the milestones</Text>
                   </View>
                   {!complete && (
                     <TouchableOpacity
@@ -68,6 +59,9 @@ export default function HobbiesScreen({ navigation }) {
                     </TouchableOpacity>
                   )}
                 </View>
+                <TouchableOpacity style={s.removeRow} onPress={() => toggleHobby(h.id)}>
+                  <Text style={s.removeText}>Remove</Text>
+                </TouchableOpacity>
               </View>
             );
           })
@@ -86,12 +80,12 @@ export default function HobbiesScreen({ navigation }) {
                   <TouchableOpacity
                     key={h.id}
                     style={s.moreChip}
-                    onPress={() => toggleHobby(h.id)}
+                    onPress={() => { toggleHobby(h.id); setShowAdd(false); }}
                     activeOpacity={0.75}
                   >
-                    <Feather name={h.icon ?? 'star'} size={20} color={C.forest} />
+                    <Feather name={h.icon ?? 'star'} size={18} color={C.forest} />
                     <Text style={s.moreName}>{h.name}</Text>
-                    <Text style={s.moreAdd}>+</Text>
+                    <Feather name="plus" size={16} color={C.sage} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -109,56 +103,56 @@ const s = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: C.cream },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
-  headerRow: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    justifyContent: 'space-between', marginBottom: 24,
+  title: {
+    fontSize: 30, fontWeight: '800', color: C.forest, marginBottom: 4,
+    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
-  title: { fontSize: 30, fontWeight: '700', color: C.forest, marginBottom: 4 },
-  sub:   { fontSize: 14, color: C.muted, lineHeight: 20, maxWidth: 220 },
-  screenBtn: {
-    alignItems: 'center', backgroundColor: C.white,
-    borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12,
-    borderWidth: 1, borderColor: C.border,
-  },
-  screenBtnLabel: { fontSize: 9, fontWeight: '700', color: C.muted, marginTop: 2 },
+  sub: { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 24 },
 
   empty: { alignItems: 'center', paddingTop: 40 },
-  emptyText: { fontSize: 14, color: C.muted, textAlign: 'center' },
+  emptyHead: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 6 },
+  emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 20 },
 
   hobbyCard: {
-    backgroundColor: C.white, borderRadius: 16,
+    backgroundColor: C.white, borderRadius: 18,
     borderWidth: 1, borderColor: C.border,
     padding: 16, marginBottom: 12,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  hobbyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  hobbyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   hobbyIconWrap: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center',
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: C.sagePale, alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
   hobbyMeta: { flex: 1 },
-  hobbyName: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 3 },
-  hobbyNext: { fontSize: 13, color: C.muted, marginBottom: 8 },
-  barTrack: { height: 5, backgroundColor: '#EBF0E8', borderRadius: 3, overflow: 'hidden' },
-  barFill:  { height: 5, backgroundColor: C.forest, borderRadius: 3 },
+  hobbyName: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 5 },
+  hobbyNext: { fontSize: 13, color: C.muted, lineHeight: 19, marginBottom: 10 },
+  barTrack: { height: 4, backgroundColor: C.border, borderRadius: 2, overflow: 'hidden', marginBottom: 4 },
+  barFill:  { height: 4, backgroundColor: C.sage, borderRadius: 2 },
+  barLabel: { fontSize: 11, color: C.muted },
 
   doneBtn: {
     backgroundColor: C.forest, borderRadius: 20,
-    paddingVertical: 7, paddingHorizontal: 14,
+    paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0,
   },
   doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
 
+  removeRow: { marginTop: 12, alignItems: 'flex-end' },
+  removeText: { fontSize: 12, color: C.muted },
+
   addMoreRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.border, marginTop: 4,
+    paddingVertical: 14, borderTopWidth: 1, borderTopColor: C.border, marginTop: 8,
   },
-  addMoreText: { fontSize: 15, fontWeight: '600', color: C.forest },
+  addMoreText: { fontSize: 15, fontWeight: '600', color: C.clay },
 
   moreGrid: { gap: 8, marginBottom: 12 },
   moreChip: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: C.white, borderRadius: 14, padding: 14,
-    borderWidth: 1.5, borderColor: C.border,
+    borderWidth: 1, borderColor: C.border,
   },
   moreName: { flex: 1, fontSize: 15, fontWeight: '600', color: C.forest },
-  moreAdd: { fontSize: 20, color: C.forest, fontWeight: '300' },
 });

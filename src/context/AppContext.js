@@ -1,22 +1,16 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { POINTS, HOBBIES } from '../constants/data';
+import { HOBBIES } from '../constants/data';
 
 const AppContext = createContext(null);
-const STORAGE_KEY = '@bloom_v1';
-const MILESTONES = [25, 50, 100, 250, 500, 1000];
+const STORAGE_KEY = '@bloom_v2';
 
 const uid = () => Date.now() + Math.floor(Math.random() * 10000);
 const makeTask = (text, priority) => ({ id: uid(), text, priority, done: false });
-const makeIdea = (text, returnCondition) => ({ id: uid(), text, returnCondition, surfaced: false });
-const makeGoal = (text) => ({ id: uid(), text });
+const makeGoal = (text, nextAction = '') => ({ id: uid(), text, nextAction, progress: 0 });
 
-const todayStr  = () => new Date().toISOString().slice(0, 10);
-const monthStr  = () => new Date().toISOString().slice(0, 7);
-
-function daysBetween(a, b) {
-  return Math.floor((new Date(b) - new Date(a)) / 86400000);
-}
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const monthStr = () => new Date().toISOString().slice(0, 7);
 
 function rotateDailyPoints(dp, days) {
   let result = [...dp];
@@ -26,66 +20,36 @@ function rotateDailyPoints(dp, days) {
   return result;
 }
 
-const DEFAULT_TASKS = [
-  { id: 1, text: 'Work on my passion project', priority: 'high', done: false },
-  { id: 2, text: 'Go for a 20-minute walk', priority: 'medium', done: false },
-  { id: 3, text: 'Read for 15 minutes', priority: 'low', done: false },
-];
-
 export function AppProvider({ children }) {
-  const [loaded, setLoaded]                 = useState(false);
-  const [hasOnboarded, setHasOnboarded]     = useState(false);
-  const [tasks, setTasks]                   = useState(DEFAULT_TASKS);
-  const [ideas, setIdeas]                   = useState([]);
+  const [loaded, setLoaded]           = useState(false);
+  const [hasOnboarded, setHasOnboarded] = useState(false);
+  const [tasks, setTasks]             = useState([]);
   const [selectedHobbies, setSelectedHobbies] = useState([]);
-  const [hobbyProgress, setHobbyProgress]   = useState({});
-  const [totalPoints, setTotalPoints]       = useState(0);
-  const [monthlyPoints, setMonthlyPoints]   = useState(0);
-  const [dailyPoints, setDailyPoints]       = useState([0, 0, 0, 0, 0, 0, 0]);
-  const [goals, setGoals]                   = useState([]);
-  const [monthlyGoalTarget, setMonthlyGoalTarget] = useState(250);
-  const [userName, setUserName]             = useState('');
-  const [lastActiveDay, setLastActiveDay]   = useState(todayStr());
-  const [currentStreak, setCurrentStreak]   = useState(0);
-  const streakRef                           = useRef({ lastDay: '', count: 0 });
-  const [latestMilestone, setLatestMilestone] = useState(null);
-  const [tasksCompleted, setTasksCompleted] = useState(0);
+  const [hobbyProgress, setHobbyProgress] = useState({});
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [dailyPoints, setDailyPoints] = useState([0,0,0,0,0,0,0]);
+  const [goals, setGoals]             = useState([]);
+  const [userName, setUserName]       = useState('');
   const [lastJournalDate, setLastJournalDate] = useState('');
-  const sessionTaskCount                    = useRef(0);
+  const [lastActiveDay, setLastActiveDay] = useState(todayStr());
 
-  // ── Load from storage on mount ────────────────────────────────────────────
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then(raw => {
         if (raw) {
           try {
             const s = JSON.parse(raw);
-            if (s.hasOnboarded)     setHasOnboarded(true);
-            if (s.tasks)            setTasks(s.tasks);
-            if (s.ideas)            setIdeas(s.ideas);
-            if (s.selectedHobbies)  setSelectedHobbies(s.selectedHobbies);
-            if (s.hobbyProgress)    setHobbyProgress(s.hobbyProgress);
-            if (s.totalPoints)      setTotalPoints(s.totalPoints);
-            // Reset monthly points if a new month has started
-            if (s.lastActiveMonth && s.lastActiveMonth !== monthStr()) {
-              setMonthlyPoints(0);
-            } else if (s.monthlyPoints) {
-              setMonthlyPoints(s.monthlyPoints);
-            }
-            if (s.userName)         setUserName(s.userName);
-            if (s.goals)            setGoals(s.goals);
-            if (s.monthlyGoalTarget) setMonthlyGoalTarget(s.monthlyGoalTarget);
-            if (s.currentStreak) {
-              setCurrentStreak(s.currentStreak);
-              streakRef.current = { lastDay: s.lastStreakDay ?? '', count: s.currentStreak };
-            }
-            if (s.tasksCompleted) setTasksCompleted(s.tasksCompleted);
+            if (s.hasOnboarded)    setHasOnboarded(true);
+            if (s.tasks)           setTasks(s.tasks);
+            if (s.selectedHobbies) setSelectedHobbies(s.selectedHobbies);
+            if (s.hobbyProgress)   setHobbyProgress(s.hobbyProgress);
+            if (s.totalPoints)     setTotalPoints(s.totalPoints);
+            if (s.userName)        setUserName(s.userName);
+            if (s.goals)           setGoals(s.goals);
             if (s.lastJournalDate) setLastJournalDate(s.lastJournalDate);
-
-            // Roll over daily points if new day(s) have passed
             const today = todayStr();
             if (s.lastActiveDay && s.lastActiveDay !== today) {
-              const diff = daysBetween(s.lastActiveDay, today);
+              const diff = Math.floor((new Date(today) - new Date(s.lastActiveDay)) / 86400000);
               setDailyPoints(rotateDailyPoints(s.dailyPoints ?? [0,0,0,0,0,0,0], diff));
             } else if (s.dailyPoints) {
               setDailyPoints(s.dailyPoints);
@@ -98,39 +62,22 @@ export function AppProvider({ children }) {
       .finally(() => setLoaded(true));
   }, []);
 
-  // ── Persist to storage (debounced) ────────────────────────────────────────
   const saveTimer = useRef(null);
   useEffect(() => {
     if (!loaded) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-        hasOnboarded,
-        tasks, ideas, selectedHobbies, hobbyProgress,
-        totalPoints, monthlyPoints, dailyPoints, goals,
-        monthlyGoalTarget, userName, currentStreak, tasksCompleted,
-        lastJournalDate,
-        lastStreakDay: streakRef.current.lastDay,
+        hasOnboarded, tasks, selectedHobbies, hobbyProgress,
+        totalPoints, dailyPoints, goals, userName, lastJournalDate,
         lastActiveDay: todayStr(), lastActiveMonth: monthStr(),
       })).catch(() => {});
     }, 600);
-  }, [loaded, hasOnboarded, tasks, ideas, selectedHobbies, hobbyProgress,
-      totalPoints, monthlyPoints, dailyPoints, goals, monthlyGoalTarget, userName, currentStreak, tasksCompleted]);
+  }, [loaded, hasOnboarded, tasks, selectedHobbies, hobbyProgress,
+      totalPoints, dailyPoints, goals, userName, lastJournalDate]);
 
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const momentum = Math.min(100, Math.round(
-    dailyPoints.reduce((a, b) => a + b, 0) / (7 * 40) * 100
-  ));
-
-  // ── Actions ───────────────────────────────────────────────────────────────
   const addPoints = useCallback((pts) => {
-    setTotalPoints(prev => {
-      const next = prev + pts;
-      const crossed = MILESTONES.filter(m => prev < m && next >= m);
-      if (crossed.length) setLatestMilestone(crossed[crossed.length - 1]);
-      return next;
-    });
-    setMonthlyPoints(p => p + pts);
+    setTotalPoints(prev => prev + pts);
     setDailyPoints(prev => {
       const next = [...prev];
       next[6] = (next[6] || 0) + pts;
@@ -138,29 +85,17 @@ export function AppProvider({ children }) {
     });
   }, []);
 
-  const addTask = useCallback((text, priority) => {
-    setTasks(prev => [...prev, makeTask(text, priority)]);
-    sessionTaskCount.current += 1;
-    return sessionTaskCount.current;
+  const addTask = useCallback((text, priority = 'medium') => {
+    const t = makeTask(text, priority);
+    setTasks(prev => [...prev, t]);
+    return t;
   }, []);
 
   const toggleTask = useCallback((id) => {
     setTasks(prev => prev.map(t => {
       if (t.id !== id) return t;
       const nowDone = !t.done;
-      if (nowDone) {
-        addPoints(5);
-        setTasksCompleted(c => c + 1);
-        const today = todayStr();
-        if (streakRef.current.lastDay !== today) {
-          const diff = streakRef.current.lastDay
-            ? daysBetween(streakRef.current.lastDay, today)
-            : 999;
-          const newCount = diff === 1 ? streakRef.current.count + 1 : 1;
-          streakRef.current = { lastDay: today, count: newCount };
-          setCurrentStreak(newCount);
-        }
-      }
+      if (nowDone) addPoints(5);
       return { ...t, done: nowDone };
     }));
   }, [addPoints]);
@@ -173,72 +108,11 @@ export function AppProvider({ children }) {
     setTasks(prev => prev.filter(t => !t.done));
   }, []);
 
-  const saveIdea = useCallback((text, returnCondition) => {
-    setIdeas(prev => [makeIdea(text, returnCondition), ...prev]);
-  }, []);
-
-  const promoteIdea = useCallback((idea) => {
-    setTasks(prev => [...prev, makeTask(idea.text, 'medium')]);
-    setIdeas(prev => prev.filter(i => i.id !== idea.id));
-  }, []);
-
-  const deleteIdea = useCallback((id) => {
-    setIdeas(prev => prev.filter(i => i.id !== id));
-  }, []);
-
-  const dismissSurfacedIdea = useCallback((id) => {
-    setIdeas(prev => prev.map(i => i.id === id ? { ...i, surfaced: true } : i));
-  }, []);
-
-  const toggleHobby = useCallback((id) => {
-    setSelectedHobbies(prev =>
-      prev.includes(id) ? prev.filter(h => h !== id) : [...prev, id]
-    );
-  }, []);
-
-  const completeHobbyStep = useCallback((hobbyId, stepIndex) => {
-    setHobbyProgress(prev => ({ ...prev, [hobbyId]: stepIndex + 1 }));
-    addPoints(POINTS.hobbyStep);
-  }, [addPoints]);
-
-  const processDump = useCallback((rawText) => {
-    // Split on newlines, "and", semicolons, bullet chars
-    const items = rawText
-      .split(/[\n;]|\band\b/i)
-      .flatMap(chunk => chunk.split(/[.!?]+/))
-      .map(s => s.trim().replace(/^[-•·*\d.]+\s*/, ''))
-      .filter(s => s.length > 3);
-
-    const prioritized = items.map(text => {
-      const lower = text.toLowerCase();
-      let priority = 'medium';
-      if (/urgent|important|must|need|asap|today|have to|got to|critical|call|email|submit|due|deadline/i.test(lower)) priority = 'high';
-      else if (/maybe|could|if time|eventually|later|sometime|want to|like to|might|would love/i.test(lower)) priority = 'low';
-      return { text: text.charAt(0).toUpperCase() + text.slice(1), priority };
-    }).sort((a, b) => {
-      const order = { high: 0, medium: 1, low: 2 };
-      return (order[a.priority] ?? 1) - (order[b.priority] ?? 1);
-    });
-
-    // Replace today's tasks entirely
-    setTasks(prioritized.map(({ text, priority }) => makeTask(text, priority)));
-    setLastJournalDate(todayStr());
-  }, []);
-
-  const loadTasks = useCallback((list) => {
-    setTasks(list.map(({ text, priority }) => makeTask(text, priority ?? 'medium')));
-    setLastJournalDate(todayStr());
-  }, []);
-
-  // Routes categorised brain dump: tasks/hobbies → today list, goals → goals list
   const processBrainDump = useCallback((items) => {
     const taskItems = items.filter(i => i.category !== 'goal');
     const goalItems = items.filter(i => i.category === 'goal');
-
     const newTasks = taskItems.map(({ text, priority }) => makeTask(text, priority ?? 'medium'));
-    if (newTasks.length > 0) {
-      setTasks(newTasks);
-    }
+    if (newTasks.length > 0) setTasks(newTasks);
     goalItems.forEach(g => {
       setGoals(prev => {
         if (prev.some(x => x.text.toLowerCase() === g.text.toLowerCase())) return prev;
@@ -249,31 +123,33 @@ export function AppProvider({ children }) {
     return newTasks;
   }, []);
 
-  const addGoal = useCallback((text) => {
-    setGoals(prev => [...prev, makeGoal(text)]);
+  const toggleHobby = useCallback((id) => {
+    setSelectedHobbies(prev =>
+      prev.includes(id) ? prev.filter(h => h !== id) : [...prev, id]
+    );
+  }, []);
+
+  const completeHobbyStep = useCallback((hobbyId, stepIndex) => {
+    setHobbyProgress(prev => ({ ...prev, [hobbyId]: stepIndex + 1 }));
+  }, []);
+
+  const addGoal = useCallback((text, nextAction = '') => {
+    setGoals(prev => [...prev, makeGoal(text, nextAction)]);
+  }, []);
+
+  const updateGoalNextAction = useCallback((id, nextAction) => {
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, nextAction } : g));
   }, []);
 
   const deleteGoal = useCallback((id) => {
     setGoals(prev => prev.filter(g => g.id !== id));
   }, []);
 
-  const dismissMilestone = useCallback(() => setLatestMilestone(null), []);
-
-  const finishOnboarding = useCallback((hobbyIds, name, goal) => {
+  const finishOnboarding = useCallback((hobbyIds, name, goalText) => {
     setSelectedHobbies(hobbyIds);
     if (name) setUserName(name);
-    if (goal) setGoals([makeGoal(goal)]);
-
-    // Seed welcome tasks from first hobby steps
-    const hobbyStartTasks = hobbyIds.slice(0, 2).map(hid => {
-      const h = HOBBIES.find(x => x.id === hid);
-      return h ? makeTask(h.steps[0], 'medium') : null;
-    }).filter(Boolean);
-    setTasks([
-      makeTask('Plan what matters most today', 'high'),
-      ...hobbyStartTasks,
-    ]);
-
+    if (goalText) setGoals([makeGoal(goalText)]);
+    setTasks([]);
     setHasOnboarded(true);
   }, []);
 
@@ -282,14 +158,12 @@ export function AppProvider({ children }) {
       loaded,
       hasOnboarded, finishOnboarding,
       hasDoneJournalToday: lastJournalDate === todayStr(),
-      processDump, loadTasks, processBrainDump,
+      processBrainDump,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
-      ideas, saveIdea, promoteIdea, deleteIdea, dismissSurfacedIdea,
       selectedHobbies, toggleHobby,
       hobbyProgress, completeHobbyStep,
-      totalPoints, monthlyPoints, dailyPoints, momentum, addPoints,
-      currentStreak, latestMilestone, dismissMilestone, tasksCompleted,
-      goals, addGoal, deleteGoal, monthlyGoalTarget, setMonthlyGoalTarget,
+      totalPoints, dailyPoints, addPoints,
+      goals, addGoal, updateGoalNextAction, deleteGoal,
       userName, setUserName,
     }}>
       {children}
