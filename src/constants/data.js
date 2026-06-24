@@ -65,7 +65,7 @@ export const HOBBIES = [
       'Sit quietly and focus on your breath for 5 minutes',
       'Try a guided 10-minute meditation (YouTube or app)',
       'Meditate for 10 minutes without guidance',
-      'Build a 5-day meditation streak',
+      'Meditate 5 days in a row this week',
       'Complete a 20-minute sitting — fully present',
     ],
   },

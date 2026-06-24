@@ -199,7 +199,7 @@ export default function BloomChatScreen({ navigation }) {
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
     } catch (e) {
       const err = e.code === 'AUTH'
-        ? 'API key looks invalid — check Settings.'
+        ? 'API key looks invalid — please try again.'
         : 'Trouble connecting. Try again.';
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: err }]);
     } finally {
