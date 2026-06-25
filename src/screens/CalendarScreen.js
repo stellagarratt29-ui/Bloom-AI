@@ -11,7 +11,6 @@ import { useTheme } from '../context/ThemeContext';
 import {
   isCalendarConnected, getCalendarClientId, saveCalendarClientId,
   startCalendarOAuth, getUpcomingEvents, clearCalendarToken,
-  extractTokenFromHash,
 } from '../services/calendar';
 import { processCalendarRequest } from '../services/calendar';
 
@@ -45,13 +44,14 @@ export default function CalendarScreen() {
   const { calendarConnected, setCalendarConnected } = useApp();
   const { colors: t } = useTheme();
 
-  const [connected, setConnected] = useState(false);
-  const [clientId, setClientId]   = useState('');
-  const [events, setEvents]       = useState([]);
-  const [loadingEvents, setLoadingEvents] = useState(false);
-  const [messages, setMessages]   = useState([]);
-  const [input, setInput]         = useState('');
-  const [thinking, setThinking]   = useState(false);
+  const [connected, setConnected]             = useState(false);
+  const [clientId, setClientId]               = useState('');
+  const [showConnectForm, setShowConnectForm] = useState(false);
+  const [events, setEvents]                   = useState([]);
+  const [loadingEvents, setLoadingEvents]     = useState(false);
+  const [messages, setMessages]               = useState([]);
+  const [input, setInput]                     = useState('');
+  const [thinking, setThinking]               = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => { checkConnection(); }, [calendarConnected]);
@@ -110,7 +110,7 @@ export default function CalendarScreen() {
       const reply = await processCalendarRequest(trimmed);
       const responseText = reply ?? "I'm not sure what you mean — try asking about specific events or dates.";
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: responseText }]);
-      if (/create|add|update|delete|move|reschedule|cancel/i.test(trimmed)) await loadEvents();
+      if (connected && /create|add|update|delete|move|reschedule|cancel/i.test(trimmed)) await loadEvents();
     } catch (e) {
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: `Something went wrong: ${e.message}` }]);
     } finally {
@@ -121,80 +121,39 @@ export default function CalendarScreen() {
 
   const grouped = groupByDay(events);
 
-  // --- Not connected ---
-  if (!connected) {
-    return (
-      <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
-        <ScrollView contentContainerStyle={s.setupScroll} showsVerticalScrollIndicator={false}>
-          <Text style={[s.title, { color: C.skyDark }]}>Calendar</Text>
-          <Text style={[s.sub, { color: t.subtext }]}>Connect Google Calendar to see your events.</Text>
-
-          {clientId ? (
-            <TouchableOpacity style={[s.connectBtn, { backgroundColor: t.card, borderColor: t.border }]} onPress={handleConnect}>
-              <Text style={[s.connectBtnText, { color: t.subtext }]}>Connect Google Calendar</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={[s.setupCard, { backgroundColor: t.card, borderColor: t.border }]}>
-              <Text style={[s.setupCardTitle, { color: t.text }]}>Paste your Google OAuth Client ID</Text>
-              <Text style={[s.setupStep, { color: t.subtext }]}>
-                Create one at{' '}
-                <Text style={s.setupLink} onPress={() => Linking.openURL('https://console.cloud.google.com')}>
-                  console.cloud.google.com
-                </Text>
-                {' '}→ APIs & Services → Credentials → OAuth 2.0 Client ID (Web app). Add{' '}
-                <Text style={s.setupCode}>https://stellagarratt29-ui.github.io</Text>
-                {' '}as the authorised JavaScript origin.
-              </Text>
-              <TextInput
-                style={[s.clientInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
-                placeholder="123456789-abc…apps.googleusercontent.com"
-                placeholderTextColor={t.subtext}
-                value={clientId}
-                onChangeText={setClientId}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={[s.connectBtn, { backgroundColor: t.card, borderColor: t.border }, !clientId.trim() && s.connectBtnOff]}
-                onPress={handleConnect}
-                disabled={!clientId.trim()}
-              >
-                <Text style={[s.connectBtnText, { color: clientId.trim() ? t.text : t.subtext }]}>Connect Google Calendar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View style={[s.privacyCard, { borderLeftColor: C.clay }]}>
-            <Text style={[s.privacyLabel, { color: C.clay }]}>PRIVACY</Text>
-            <Text style={[s.privacyText, { color: t.text }]}>
-              Bloom reads events to answer questions, writes only when you ask.
-            </Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // --- Connected ---
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
         <View>
           <Text style={[s.headerTitle, { color: C.skyDark }]}>Calendar</Text>
-          <View style={s.connectedBadge}>
-            <View style={s.connectedDot} />
-            <Text style={s.connectedText}>Google Calendar</Text>
-          </View>
+          {connected && (
+            <View style={s.connectedBadge}>
+              <View style={s.connectedDot} />
+              <Text style={s.connectedText}>Google Calendar</Text>
+            </View>
+          )}
         </View>
         <View style={s.headerActions}>
-          <TouchableOpacity style={s.refreshBtn} onPress={loadEvents} disabled={loadingEvents}>
-            {loadingEvents
-              ? <ActivityIndicator size="small" color={C.moss} />
-              : <Feather name="refresh-cw" size={16} color={C.moss} />}
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.disconnectBtn, { borderColor: t.border }]} onPress={handleDisconnect}>
-            <Text style={[s.disconnectText, { color: t.subtext }]}>Disconnect</Text>
-          </TouchableOpacity>
+          {connected ? (
+            <>
+              <TouchableOpacity style={s.refreshBtn} onPress={loadEvents} disabled={loadingEvents}>
+                {loadingEvents
+                  ? <ActivityIndicator size="small" color={C.moss} />
+                  : <Feather name="refresh-cw" size={16} color={C.moss} />}
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.disconnectBtn, { borderColor: t.border }]} onPress={handleDisconnect}>
+                <Text style={[s.disconnectText, { color: t.subtext }]}>Disconnect</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={[s.connectSmallBtn, { borderColor: C.skyDark }]}
+              onPress={() => setShowConnectForm(v => !v)}
+            >
+              <Feather name="calendar" size={13} color={C.skyDark} />
+              <Text style={[s.connectSmallText, { color: C.skyDark }]}>Connect</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -205,36 +164,82 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {loadingEvents && events.length === 0 ? (
-          <View style={s.loadingWrap}>
-            <ActivityIndicator size="small" color={C.sage} />
-            <Text style={[s.loadingText, { color: t.subtext }]}>Loading your events…</Text>
-          </View>
-        ) : grouped.length === 0 ? (
-          <View style={s.emptyEvents}>
-            <Feather name="calendar" size={36} color={C.sageLight} style={{ marginBottom: 12 }} />
-            <Text style={[s.emptyEventsText, { color: t.text }]}>No events in the next 2 weeks.</Text>
-            <Text style={[s.emptyEventsSub, { color: t.subtext }]}>Ask Bloom to add something, or check a wider date range.</Text>
-          </View>
-        ) : (
-          grouped.map(([day, dayEvents]) => (
-            <View key={day} style={s.dayGroup}>
-              <Text style={s.dayLabel}>{formatDayLabel(day)}</Text>
-              {dayEvents.map(e => (
-                <View key={e.id} style={[s.eventCard, { backgroundColor: t.card, borderColor: t.border }]}>
-                  <View style={[s.eventTime, { backgroundColor: t.sagePale }]}>
-                    <Text style={s.eventTimeText}>{formatEventTime(e)}</Text>
-                  </View>
-                  <View style={s.eventBody}>
-                    <Text style={[s.eventTitle, { color: t.text }]}>{e.summary}</Text>
-                    {e.location ? <Text style={[s.eventLocation, { color: t.subtext }]} numberOfLines={1}>{e.location}</Text> : null}
-                  </View>
-                </View>
-              ))}
+        {/* Connect form (shown when user taps Connect) */}
+        {!connected && showConnectForm && (
+          <View style={[s.connectCard, { backgroundColor: t.card, borderColor: t.border }]}>
+            <Text style={[s.connectCardTitle, { color: t.text }]}>Connect Google Calendar</Text>
+            <Text style={[s.connectCardSub, { color: t.subtext }]}>
+              Create an OAuth Client ID at{' '}
+              <Text style={s.setupLink} onPress={() => Linking.openURL('https://console.cloud.google.com')}>
+                console.cloud.google.com
+              </Text>
+              {' '}→ APIs & Services → Credentials. Add{' '}
+              <Text style={s.setupCode}>https://stellagarratt29-ui.github.io</Text>
+              {' '}as the authorised JavaScript origin.
+            </Text>
+            <TextInput
+              style={[s.clientInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+              placeholder="Paste Client ID…"
+              placeholderTextColor={t.subtext}
+              value={clientId}
+              onChangeText={setClientId}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[s.connectBtn, { borderColor: t.border }, !clientId.trim() && s.connectBtnOff]}
+              onPress={handleConnect}
+              disabled={!clientId.trim()}
+            >
+              <Text style={[s.connectBtnText, { color: clientId.trim() ? t.text : t.subtext }]}>Connect →</Text>
+            </TouchableOpacity>
+            <View style={[s.privacyRow, { borderLeftColor: C.clay }]}>
+              <Text style={[s.privacyLabel, { color: C.clay }]}>PRIVACY</Text>
+              <Text style={[s.privacyText, { color: t.subtext }]}>Bloom reads events to answer questions, writes only when you ask.</Text>
             </View>
-          ))
+          </View>
         )}
 
+        {/* Events area */}
+        {connected ? (
+          loadingEvents && events.length === 0 ? (
+            <View style={s.loadingWrap}>
+              <ActivityIndicator size="small" color={C.moss} />
+              <Text style={[s.loadingText, { color: t.subtext }]}>Loading your events…</Text>
+            </View>
+          ) : grouped.length === 0 ? (
+            <View style={s.emptyEvents}>
+              <Feather name="calendar" size={36} color={C.sageLight} style={{ marginBottom: 12 }} />
+              <Text style={[s.emptyEventsText, { color: t.text }]}>No events in the next 2 weeks.</Text>
+              <Text style={[s.emptyEventsSub, { color: t.subtext }]}>Ask Bloom to add something, or check a wider date range.</Text>
+            </View>
+          ) : (
+            grouped.map(([day, dayEvents]) => (
+              <View key={day} style={s.dayGroup}>
+                <Text style={s.dayLabel}>{formatDayLabel(day)}</Text>
+                {dayEvents.map(e => (
+                  <View key={e.id} style={[s.eventCard, { backgroundColor: t.card, borderColor: t.border }]}>
+                    <View style={[s.eventTime, { backgroundColor: t.sagePale }]}>
+                      <Text style={s.eventTimeText}>{formatEventTime(e)}</Text>
+                    </View>
+                    <View style={s.eventBody}>
+                      <Text style={[s.eventTitle, { color: t.text }]}>{e.summary}</Text>
+                      {e.location ? <Text style={[s.eventLocation, { color: t.subtext }]} numberOfLines={1}>{e.location}</Text> : null}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ))
+          )
+        ) : !showConnectForm ? (
+          <View style={s.emptyEvents}>
+            <Feather name="calendar" size={36} color={C.sageLight} style={{ marginBottom: 12 }} />
+            <Text style={[s.emptyEventsText, { color: t.text }]}>No calendar connected</Text>
+            <Text style={[s.emptyEventsSub, { color: t.subtext }]}>Tap Connect above to link Google Calendar, or just chat with Bloom about your schedule below.</Text>
+          </View>
+        ) : null}
+
+        {/* Chat */}
         {messages.length > 0 && (
           <View style={s.chatDivider}>
             <Text style={[s.chatDividerText, { color: t.subtext }]}>BLOOM</Text>
@@ -257,14 +262,16 @@ export default function CalendarScreen() {
 
         {thinking && (
           <View style={[s.bloomBubble, { paddingVertical: 18, backgroundColor: t.card, borderColor: t.border }]}>
-            <ActivityIndicator size="small" color={C.sage} />
+            <ActivityIndicator size="small" color={C.moss} />
           </View>
         )}
 
         {messages.length === 0 && !loadingEvents && (
           <View style={[s.chatHint, { borderLeftColor: C.skyDark }]}>
             <Text style={[s.chatHintText, { color: t.subtext }]}>
-              Ask Bloom about your schedule — "what do I have this week", "am I free Friday afternoon", or "add dentist Thursday at 2pm".
+              {connected
+                ? 'Ask Bloom about your schedule — "what do I have this week", "am I free Friday afternoon", or "add dentist Thursday at 2pm".'
+                : 'Ask Bloom to help you plan your day, think through your schedule, or brainstorm how to fit things in.'}
             </Text>
           </View>
         )}
@@ -275,7 +282,7 @@ export default function CalendarScreen() {
       <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
         <TextInput
           style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
-          placeholder="Ask about your calendar…"
+          placeholder={connected ? 'Ask about your calendar…' : 'Plan your day with Bloom…'}
           placeholderTextColor={t.subtext}
           value={input}
           onChangeText={setInput}
@@ -299,66 +306,61 @@ const s = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { flex: 1 },
 
-  setupScroll: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 48 },
-  title: {
-    fontSize: 30, fontWeight: '800', marginBottom: 6,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
-  },
-  sub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
-
-  setupCard: {
-    borderRadius: 18, borderWidth: 1,
-    padding: 20, marginBottom: 16,
-  },
-  setupCardTitle: { fontSize: 15, fontWeight: '700', marginBottom: 12 },
-  setupStep: { fontSize: 13, lineHeight: 22, marginBottom: 14 },
-  setupLink: { color: C.moss, textDecorationLine: 'underline' },
-  setupCode: {
-    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
-    fontSize: 11, color: C.clay,
-  },
-  clientInput: {
-    borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
-    fontSize: 13, marginBottom: 14,
-    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
-  },
-  connectBtn: {
-    borderRadius: 16, borderWidth: 1,
-    paddingVertical: 16, paddingHorizontal: 18, justifyContent: 'center',
-    alignItems: 'center', marginBottom: 16,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
-  },
-  connectBtnOff: { opacity: 0.4 },
-  connectBtnText: { fontWeight: '600', fontSize: 15 },
-
-  privacyCard: {
-    paddingLeft: 16, paddingVertical: 12,
-    borderLeftWidth: 3,
-  },
-  privacyLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.3, marginBottom: 6 },
-  privacyText: { fontSize: 13, lineHeight: 20 },
-
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 22, paddingTop: 18, paddingBottom: 14,
     borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 26, fontWeight: '800', marginBottom: 4,
+    fontSize: 26, fontWeight: '800', marginBottom: 2,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   connectedBadge: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   connectedDot:   { width: 6, height: 6, borderRadius: 3, backgroundColor: C.moss },
   connectedText:  { fontSize: 11, color: C.moss, fontWeight: '600' },
   headerActions:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  refreshBtn: { padding: 8 },
+  refreshBtn:     { padding: 8 },
   disconnectBtn: {
     borderWidth: 1.5, borderRadius: 10,
     paddingHorizontal: 10, paddingVertical: 6,
   },
   disconnectText: { fontSize: 12, fontWeight: '600' },
+  connectSmallBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderWidth: 1.5, borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 6,
+  },
+  connectSmallText: { fontSize: 12, fontWeight: '600' },
 
   scrollContent: { paddingHorizontal: 18, paddingVertical: 16 },
+
+  connectCard: {
+    borderRadius: 18, borderWidth: 1,
+    padding: 20, marginBottom: 16,
+  },
+  connectCardTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 },
+  connectCardSub: { fontSize: 13, lineHeight: 20, marginBottom: 14 },
+  setupLink: { color: C.moss, textDecorationLine: 'underline' },
+  setupCode: {
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+    fontSize: 11, color: C.clay,
+  },
+  clientInput: {
+    borderWidth: 1.5, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14,
+    fontSize: 13, marginBottom: 12,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+  },
+  connectBtn: {
+    borderRadius: 14, borderWidth: 1.5,
+    paddingVertical: 13, alignItems: 'center', marginBottom: 16,
+  },
+  connectBtnOff: { opacity: 0.4 },
+  connectBtnText: { fontWeight: '600', fontSize: 14 },
+  privacyRow: {
+    paddingLeft: 14, paddingVertical: 8, borderLeftWidth: 3,
+  },
+  privacyLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.3, marginBottom: 4 },
+  privacyText:  { fontSize: 12, lineHeight: 18 },
 
   loadingWrap: { alignItems: 'center', paddingVertical: 40, gap: 10 },
   loadingText: { fontSize: 14 },
@@ -375,13 +377,13 @@ const s = StyleSheet.create({
     borderWidth: 1,
     shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1,
   },
-  eventTime: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, flexShrink: 0 },
+  eventTime:     { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, flexShrink: 0 },
   eventTimeText: { fontSize: 12, fontWeight: '700', color: C.moss },
   eventBody:     { flex: 1 },
   eventTitle:    { fontSize: 14, fontWeight: '600', lineHeight: 20 },
   eventLocation: { fontSize: 12, marginTop: 2 },
 
-  chatDivider: { alignItems: 'center', marginVertical: 16 },
+  chatDivider:     { alignItems: 'center', marginVertical: 16 },
   chatDividerText: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
 
   bloomBubble: {
@@ -390,7 +392,7 @@ const s = StyleSheet.create({
   },
   bloomText: { fontSize: 15, lineHeight: 26 },
 
-  userRow:   { alignItems: 'flex-end', marginBottom: 12 },
+  userRow:    { alignItems: 'flex-end', marginBottom: 12 },
   userBubble: {
     backgroundColor: C.moss, borderRadius: 18, borderBottomRightRadius: 5,
     paddingVertical: 11, paddingHorizontal: 15, maxWidth: '80%',

@@ -19,6 +19,7 @@ export default function GoalsScreen({ navigation }) {
   const [editTarget, setEditTarget] = useState(null);
   const [editText,   setEditText]   = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [menuTarget, setMenuTarget] = useState(null);
 
   const handleAdd = async () => {
     const text = newGoal.trim();
@@ -100,22 +101,9 @@ export default function GoalsScreen({ navigation }) {
               >
                 <View style={s.goalHeader}>
                   <Text style={[s.goalText, { color: t.text }]}>{g.text}</Text>
-                  <View style={s.goalActions}>
-                    <TouchableOpacity
-                      style={s.iconBtn}
-                      onPress={() => { setEditTarget(g); setEditText(g.text); }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Feather name="edit-2" size={13} color={t.subtext} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={s.iconBtn}
-                      onPress={() => setDeleteConfirm(g)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Feather name="trash-2" size={13} color={t.subtext} />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(g)}>
+                    <Feather name="more-vertical" size={18} color={t.subtext} />
+                  </TouchableOpacity>
                 </View>
                 <Text style={[s.nextActionText, { color: t.subtext }]} numberOfLines={3}>
                   {g.currentAction || 'Tap to generate your first action.'}
@@ -127,6 +115,27 @@ export default function GoalsScreen({ navigation }) {
 
         <View style={{ height: 48 }} />
       </ScrollView>
+
+      {/* Goal action menu */}
+      <Modal visible={!!menuTarget} transparent animationType="slide" onRequestClose={() => setMenuTarget(null)}>
+        <TouchableOpacity style={s.menuOverlay} activeOpacity={1} onPress={() => setMenuTarget(null)}>
+          <View style={[s.menuSheet, { backgroundColor: t.card }]}>
+            <Text style={[s.menuItemTitle, { color: t.subtext }]} numberOfLines={1}>{menuTarget?.text}</Text>
+            <View style={[s.menuDivider, { backgroundColor: t.border }]} />
+            <TouchableOpacity style={s.menuItem} onPress={() => { setEditTarget(menuTarget); setEditText(menuTarget?.text ?? ''); setMenuTarget(null); }}>
+              <Feather name="edit-2" size={18} color={t.text} />
+              <Text style={[s.menuItemText, { color: t.text }]}>Edit goal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
+              <Feather name="trash-2" size={18} color={C.pinkDark} />
+              <Text style={[s.menuItemText, { color: C.pinkDark }]}>Remove goal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>
+              <Text style={[s.menuItemText, { color: t.subtext }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Edit modal */}
       <Modal visible={!!editTarget} transparent animationType="slide" onRequestClose={() => setEditTarget(null)}>
@@ -217,10 +226,20 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start',
     justifyContent: 'space-between', gap: 10, marginBottom: 10,
   },
-  goalActions: { flexDirection: 'row', gap: 4 },
-  iconBtn: { padding: 5 },
+  menuBtn: { padding: 6 },
   goalText: { flex: 1, fontSize: 17, fontWeight: '700', lineHeight: 26 },
   nextActionText: { fontSize: 14, lineHeight: 22 },
+
+  menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  menuSheet: {
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 8, paddingBottom: 40,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+  },
+  menuItemTitle: { fontSize: 12, textAlign: 'center', paddingVertical: 10, paddingHorizontal: 20 },
+  menuDivider: { height: 1, marginBottom: 4 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 16, paddingHorizontal: 24 },
+  menuItemText: { fontSize: 16, fontWeight: '500' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalCard: {

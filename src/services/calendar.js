@@ -181,7 +181,16 @@ function buildStartDateTime(dateISO, timeISO) {
 export async function processCalendarRequest(text) {
   const connected = await isCalendarConnected();
   if (!connected) {
-    return "I'd love to help with your calendar, but it's not connected yet. Head to the Calendar tab to set it up — it takes about 2 minutes.";
+    const aiKey = await getApiKey();
+    if (aiKey) {
+      const now = new Date();
+      return await callClaude({
+        system: `You are Bloom, a personal productivity assistant. Today is ${now.toDateString()}. The user is asking about their schedule but Google Calendar isn't connected, so you don't have their actual events. Help them think through their scheduling question, suggest a plan, or offer time management advice based on what they said. Be warm and specific. 2-3 sentences.`,
+        messages: [{ role: 'user', content: text }],
+        maxTokens: 200,
+      }).catch(() => "I can help you think through your schedule! Connect Google Calendar (tap Connect at the top) to see your actual events — or just tell me what you're trying to plan and I'll help you work it out.");
+    }
+    return "I can help you think through your schedule! Connect Google Calendar (tap Connect at the top) to see your actual events — or just tell me what you're trying to plan and I'll help you work it out.";
   }
 
   // Parse intent with AI
