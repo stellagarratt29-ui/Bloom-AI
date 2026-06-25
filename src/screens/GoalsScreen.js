@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  SafeAreaView, StyleSheet, Platform, ActivityIndicator,
+  SafeAreaView, StyleSheet, Platform, ActivityIndicator, Modal,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { C } from '../constants/colors';
+import { C, GOAL_ACCENTS } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { generateGoalAction } from '../services/ai';
 
 export default function GoalsScreen({ navigation }) {
-  const { goals, addGoal, deleteGoal } = useApp();
-  const [newGoal, setNewGoal]   = useState('');
-  const [showAdd, setShowAdd]   = useState(false);
-  const [creating, setCreating] = useState(false);
+  const { goals, addGoal, deleteGoal, updateGoal } = useApp();
+  const { colors: t } = useTheme();
+
+  const [newGoal,   setNewGoal]   = useState('');
+  const [showAdd,   setShowAdd]   = useState(false);
+  const [creating,  setCreating]  = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editText,   setEditText]   = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const handleAdd = async () => {
     const text = newGoal.trim();
@@ -30,26 +36,30 @@ export default function GoalsScreen({ navigation }) {
     }
   };
 
+  const saveEdit = () => {
+    if (!editText.trim()) return;
+    updateGoal(editTarget.id, { text: editText.trim() });
+    setEditTarget(null);
+  };
+
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={s.title}>Goals</Text>
-        <Text style={s.sub}>Big things you're working toward — with a real evolving plan.</Text>
-
-        <View style={s.sectionRow}>
-          <Text style={s.sectionLabel}>YOUR GOALS</Text>
+        <View style={s.titleRow}>
+          <Text style={[s.title, { color: C.pinkDark }]}>Goals</Text>
           <TouchableOpacity onPress={() => setShowAdd(v => !v)}>
-            <Text style={s.addBtn}>+ Add goal</Text>
+            <Text style={[s.addBtn, { color: C.moss }]}>+ Add goal</Text>
           </TouchableOpacity>
         </View>
+        <Text style={[s.sub, { color: t.subtext }]}>Big things you're working toward — with a real evolving plan.</Text>
 
         {showAdd && (
-          <View style={s.addCard}>
+          <View style={[s.addCard, { backgroundColor: t.card, borderColor: t.border }]}>
             <TextInput
-              style={s.addInput}
+              style={[s.addInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
               placeholder="What big thing are you working toward?"
-              placeholderTextColor={C.muted}
+              placeholderTextColor={t.subtext}
               value={newGoal}
               onChangeText={setNewGoal}
               onSubmitEditing={handleAdd}
@@ -62,54 +72,63 @@ export default function GoalsScreen({ navigation }) {
               onPress={handleAdd}
               disabled={!newGoal.trim() || creating}
             >
-              {creating ? (
-                <ActivityIndicator size="small" color={C.white} />
-              ) : (
-                <Text style={s.saveBtnText}>Build my plan →</Text>
-              )}
+              {creating
+                ? <ActivityIndicator size="small" color={C.white} />
+                : <Text style={s.saveBtnText}>Build my plan →</Text>}
             </TouchableOpacity>
-            {creating && <Text style={s.creatingNote}>Building your first action…</Text>}
+            {creating && <Text style={[s.creatingNote, { color: t.subtext }]}>Building your first action…</Text>}
           </View>
         )}
 
         {goals.length === 0 && !showAdd ? (
           <View style={s.empty}>
             <Feather name="target" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
-            <Text style={s.emptyHead}>No goals yet</Text>
-            <Text style={s.emptyText}>
+            <Text style={[s.emptyHead, { color: t.text }]}>No goals yet</Text>
+            <Text style={[s.emptyText, { color: t.subtext }]}>
               Add something big — "Start a business", "Get fit", "Write a book". Bloom will generate a real step-by-step plan, one action at a time.
             </Text>
           </View>
         ) : (
-          goals.map(g => {
-            const done = g.completedActions?.length ?? 0;
+          goals.map((g, idx) => {
+            const accent = GOAL_ACCENTS[idx % GOAL_ACCENTS.length];
+            const done   = g.completedActions?.length ?? 0;
             return (
               <TouchableOpacity
                 key={g.id}
-                style={s.goalCard}
+                style={[s.goalCard, { backgroundColor: t.card, borderColor: t.border, borderLeftColor: accent, borderLeftWidth: 4 }]}
                 onPress={() => navigation.navigate('GoalDetail', { goal: g })}
                 activeOpacity={0.82}
               >
                 <View style={s.goalHeader}>
-                  <Text style={s.goalText}>{g.text}</Text>
-                  <TouchableOpacity
-                    onPress={() => deleteGoal(g.id)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Feather name="x" size={16} color={C.muted} />
-                  </TouchableOpacity>
+                  <Text style={[s.goalText, { color: t.text }]}>{g.text}</Text>
+                  <View style={s.goalActions}>
+                    <TouchableOpacity
+                      style={s.iconBtn}
+                      onPress={() => { setEditTarget(g); setEditText(g.text); }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Feather name="edit-2" size={14} color={t.subtext} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={s.iconBtn}
+                      onPress={() => setDeleteConfirm(g)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Feather name="trash-2" size={14} color={t.subtext} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
-                <Text style={s.stepLabel}>NEXT ACTION</Text>
-                <View style={s.nextActionBox}>
-                  <Text style={s.nextActionText}>{g.currentAction || 'Tap to generate your first action.'}</Text>
+                <Text style={[s.stepLabel, { color: accent }]}>NEXT ACTION</Text>
+                <View style={[s.nextActionBox, { backgroundColor: t.card, borderLeftColor: accent, borderColor: t.border }]}>
+                  <Text style={[s.nextActionText, { color: t.text }]}>{g.currentAction || 'Tap to generate your first action.'}</Text>
                 </View>
 
                 <View style={s.goalFooter}>
-                  <Text style={s.doneCount}>{done} action{done !== 1 ? 's' : ''} completed</Text>
+                  <Text style={[s.doneCount, { color: t.subtext }]}>{done} action{done !== 1 ? 's' : ''} completed</Text>
                   <View style={s.chevronWrap}>
-                    <Text style={s.tapHint}>Tap for guidance</Text>
-                    <Feather name="chevron-right" size={14} color={C.muted} />
+                    <Text style={[s.tapHint, { color: t.subtext }]}>Tap for guidance</Text>
+                    <Feather name="chevron-right" size={14} color={t.subtext} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -119,35 +138,73 @@ export default function GoalsScreen({ navigation }) {
 
         <View style={{ height: 48 }} />
       </ScrollView>
+
+      {/* Edit modal */}
+      <Modal visible={!!editTarget} transparent animationType="slide" onRequestClose={() => setEditTarget(null)}>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalCard, { backgroundColor: t.card }]}>
+            <Text style={[s.modalTitle, { color: t.text }]}>Edit goal</Text>
+            <TextInput
+              style={[s.modalInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+              value={editText}
+              onChangeText={setEditText}
+              autoFocus
+              placeholder="Goal title"
+              placeholderTextColor={t.subtext}
+            />
+            <Text style={[s.modalNote, { color: t.subtext }]}>Your progress and actions are kept as-is.</Text>
+            <View style={s.modalActions}>
+              <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setEditTarget(null)}>
+                <Text style={[s.modalCancelText, { color: t.subtext }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.modalSave} onPress={saveEdit}>
+                <Text style={s.modalSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete confirm */}
+      <Modal visible={!!deleteConfirm} transparent animationType="fade" onRequestClose={() => setDeleteConfirm(null)}>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalCard, { backgroundColor: t.card }]}>
+            <Text style={[s.modalTitle, { color: t.text }]}>Remove goal?</Text>
+            <Text style={[s.modalNote, { color: t.subtext }]} numberOfLines={2}>"{deleteConfirm?.text}"</Text>
+            <View style={s.modalActions}>
+              <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setDeleteConfirm(null)}>
+                <Text style={[s.modalCancelText, { color: t.subtext }]}>Keep</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.modalSave, { backgroundColor: C.pinkDark }]} onPress={() => { deleteGoal(deleteConfirm.id); setDeleteConfirm(null); }}>
+                <Text style={s.modalSaveText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: C.cream },
+  safe:   { flex: 1 },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   title: {
-    fontSize: 30, fontWeight: '800', color: C.ink, marginBottom: 4,
-    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
+    fontSize: 30, fontWeight: '800',
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  sub: { fontSize: 14, color: C.muted, marginBottom: 20, lineHeight: 22 },
-
-  sectionRow: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 14,
-  },
-  sectionLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1.6 },
-  addBtn: { fontSize: 14, fontWeight: '700', color: C.clay },
+  addBtn: { fontSize: 14, fontWeight: '700' },
+  sub: { fontSize: 14, lineHeight: 22, marginBottom: 20 },
 
   addCard: {
-    backgroundColor: C.white, borderRadius: 16, borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 16, borderWidth: 1.5,
     padding: 16, marginBottom: 16, gap: 10,
   },
   addInput: {
-    backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
-    fontSize: 15, color: C.ink,
+    borderWidth: 1.5, borderRadius: 12,
+    paddingVertical: 12, paddingHorizontal: 14, fontSize: 15,
   },
   saveBtn: {
     backgroundColor: C.moss, paddingVertical: 13,
@@ -155,37 +212,61 @@ const s = StyleSheet.create({
   },
   saveBtnOff: { opacity: 0.35 },
   saveBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
-  creatingNote: { fontSize: 12, color: C.muted, textAlign: 'center' },
+  creatingNote: { fontSize: 12, textAlign: 'center' },
 
   empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
-  emptyHead: { fontSize: 18, fontWeight: '700', color: C.ink, marginBottom: 8 },
-  emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
+  emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
 
   goalCard: {
-    backgroundColor: C.white, borderRadius: 18,
-    borderWidth: 1, borderColor: C.border,
+    borderRadius: 18, borderWidth: 1,
     padding: 18, marginBottom: 14,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 }, elevation: 2,
   },
   goalHeader: {
     flexDirection: 'row', alignItems: 'flex-start',
     justifyContent: 'space-between', gap: 10, marginBottom: 12,
   },
-  goalText: { flex: 1, fontSize: 17, fontWeight: '700', color: C.ink, lineHeight: 26 },
+  goalActions: { flexDirection: 'row', gap: 4 },
+  iconBtn: { padding: 5 },
+  goalText: { flex: 1, fontSize: 17, fontWeight: '700', lineHeight: 26 },
 
-  stepLabel: { fontSize: 10, fontWeight: '700', color: C.clay, letterSpacing: 1.2, marginBottom: 8 },
+  stepLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8 },
 
   nextActionBox: {
-    backgroundColor: C.shell, borderRadius: 12,
-    padding: 14, marginBottom: 14,
-    borderWidth: 1, borderColor: C.border,
+    borderRadius: 12, padding: 14, marginBottom: 14,
+    borderWidth: 1, borderLeftWidth: 3,
   },
-  nextActionText: { fontSize: 14, color: C.ink, lineHeight: 22 },
+  nextActionText: { fontSize: 14, lineHeight: 22 },
 
-  goalFooter: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  goalFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  doneCount:  { fontSize: 11 },
+  chevronWrap:{ flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tapHint:    { fontSize: 11 },
+
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalCard: {
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: 40,
   },
-  doneCount: { fontSize: 11, color: C.muted },
-  chevronWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tapHint: { fontSize: 11, color: C.muted },
+  modalTitle:  { fontSize: 18, fontWeight: '700', marginBottom: 14 },
+  modalNote:   { fontSize: 13, lineHeight: 20, marginBottom: 20 },
+  modalInput: {
+    borderWidth: 1.5, borderRadius: 12,
+    paddingVertical: 11, paddingHorizontal: 14,
+    fontSize: 15, marginBottom: 8,
+  },
+  modalActions:     { flexDirection: 'row', gap: 10 },
+  modalCancel: {
+    flex: 1, paddingVertical: 13, borderRadius: 12,
+    borderWidth: 1.5, alignItems: 'center',
+  },
+  modalCancelText: { fontSize: 14, fontWeight: '600' },
+  modalSave: {
+    flex: 2, paddingVertical: 13, borderRadius: 12,
+    backgroundColor: C.moss, alignItems: 'center',
+  },
+  modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
 });

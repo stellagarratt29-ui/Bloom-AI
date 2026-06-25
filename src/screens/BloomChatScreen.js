@@ -7,6 +7,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction, detectCalendarAction } from '../services/ai';
 import { processCalendarRequest } from '../services/calendar';
 
@@ -87,6 +88,7 @@ function getFallback(msg, { userName, goals, tasks }) {
 
 export default function BloomChatScreen() {
   const { userName, goals, tasks, totalPoints, addTask, processBrainDump } = useApp();
+  const { colors: t } = useTheme();
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
   ]);
@@ -185,13 +187,13 @@ export default function BloomChatScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        <View style={s.header}>
+        <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
           <Text style={s.headerTitle}>Bloom</Text>
-          <View style={s.ptsWrap}>
-            <Text style={s.ptsText}>{totalPoints} pts</Text>
+          <View style={[s.ptsWrap, { backgroundColor: t.sagePale }]}>
+            <Text style={[s.ptsText, { color: C.moss }]}>{totalPoints} pts</Text>
           </View>
         </View>
 
@@ -214,8 +216,8 @@ export default function BloomChatScreen() {
             }
             return (
               <View key={m.id} style={s.bloomRow}>
-                <View style={s.bloomBubble}>
-                  <Text style={s.bloomText}>{m.text}</Text>
+                <View style={[s.bloomBubble, { backgroundColor: t.card, borderColor: t.border }]}>
+                  <Text style={[s.bloomText, { color: t.text }]}>{m.text}</Text>
                 </View>
               </View>
             );
@@ -238,11 +240,11 @@ export default function BloomChatScreen() {
           )}
         </ScrollView>
 
-        <View style={s.inputBar}>
+        <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
           <TextInput
-            style={s.input}
+            style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
             placeholder="Tell Bloom what's on your mind…"
-            placeholderTextColor={C.muted}
+            placeholderTextColor={t.subtext}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}

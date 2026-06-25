@@ -6,8 +6,17 @@ const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v3';
 
 const uid = () => Date.now() + Math.floor(Math.random() * 10000);
-const makeTask = (text, priority) => ({ id: uid(), text, priority, done: false });
+const makeTask = (text, priority, category) => ({
+  id: uid(), text, priority, done: false,
+  category: category ?? priorityToCategory(priority),
+});
 const makeGoal = (text, firstAction) => ({ id: uid(), text, currentAction: firstAction ?? '', completedActions: [] });
+
+function priorityToCategory(p) {
+  if (p === 'high') return 'school';
+  if (p === 'low')  return 'leisure';
+  return 'task';
+}
 
 const makeHobby = (name, skillLevel, milestones) => {
   const mArr = Array.isArray(milestones) ? milestones : (milestones ? [milestones] : []);
@@ -21,7 +30,6 @@ const makeHobby = (name, skillLevel, milestones) => {
 };
 
 function migrateHobby(h) {
-  // Migrate v3 hobbies (single currentMilestone) to v4 format (milestones array)
   if (!h.milestones) {
     const mArr = h.currentMilestone ? [h.currentMilestone] : [];
     return { ...h, milestones: mArr, milestoneIndex: h.completedMilestones?.length ?? 0 };
@@ -35,18 +43,19 @@ function migrateHobby(h) {
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export function AppProvider({ children }) {
-  const [loaded, setLoaded]           = useState(false);
+  const [loaded, setLoaded]             = useState(false);
   const [hasOnboarded, setHasOnboarded] = useState(false);
-  const [tasks, setTasks]             = useState([]);
-  const [hobbies, setHobbies]         = useState([]);
-  const [goals, setGoals]             = useState([]);
-  const [totalPoints, setTotalPoints] = useState(0);
-  const [userName, setUserName]       = useState('');
+  const [tasks, setTasks]               = useState([]);
+  const [hobbies, setHobbies]           = useState([]);
+  const [goals, setGoals]               = useState([]);
+  const [totalPoints, setTotalPoints]   = useState(0);
+  const [userName, setUserName]         = useState('');
+  const [userAge, setUserAge]           = useState('');
+  const [userOccupation, setUserOccupation] = useState('');
   const [lastDumpDate, setLastDumpDate] = useState('');
   const [calendarConnected, setCalendarConnected] = useState(false);
 
   useEffect(() => {
-    // Capture Google OAuth token from URL hash if this is a redirect
     if (typeof window !== 'undefined') {
       const tokenData = extractTokenFromHash();
       if (tokenData) {
@@ -61,13 +70,15 @@ export function AppProvider({ children }) {
         if (raw) {
           try {
             const s = JSON.parse(raw);
-            if (s.hasOnboarded)  setHasOnboarded(true);
-            if (s.tasks)         setTasks(s.tasks);
-            if (s.hobbies)       setHobbies(s.hobbies.map(migrateHobby));
-            if (s.goals)         setGoals(s.goals);
-            if (s.totalPoints)   setTotalPoints(s.totalPoints);
-            if (s.userName)      setUserName(s.userName);
-            if (s.lastDumpDate)  setLastDumpDate(s.lastDumpDate);
+            if (s.hasOnboarded)    setHasOnboarded(true);
+            if (s.tasks)           setTasks(s.tasks);
+            if (s.hobbies)         setHobbies(s.hobbies.map(migrateHobby));
+            if (s.goals)           setGoals(s.goals);
+            if (s.totalPoints)     setTotalPoints(s.totalPoints);
+            if (s.userName)        setUserName(s.userName);
+            if (s.userAge)         setUserAge(s.userAge);
+            if (s.userOccupation)  setUserOccupation(s.userOccupation);
+            if (s.lastDumpDate)    setLastDumpDate(s.lastDumpDate);
           } catch (_) {}
         }
       })
@@ -81,16 +92,17 @@ export function AppProvider({ children }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-        hasOnboarded, tasks, hobbies, goals, totalPoints, userName, lastDumpDate,
+        hasOnboarded, tasks, hobbies, goals, totalPoints,
+        userName, userAge, userOccupation, lastDumpDate,
       })).catch(() => {});
     }, 600);
-  }, [loaded, hasOnboarded, tasks, hobbies, goals, totalPoints, userName, lastDumpDate]);
+  }, [loaded, hasOnboarded, tasks, hobbies, goals, totalPoints, userName, userAge, userOccupation, lastDumpDate]);
 
   const addPoints = useCallback((pts) => setTotalPoints(p => p + pts), []);
 
   // Tasks
-  const addTask = useCallback((text, priority = 'medium') => {
-    const t = makeTask(text, priority);
+  const addTask = useCallback((text, priority = 'medium', category) => {
+    const t = makeTask(text, priority, category);
     setTasks(prev => [...prev, t]);
     return t;
   }, []);
@@ -106,6 +118,10 @@ export function AppProvider({ children }) {
 
   const deleteTask = useCallback((id) => setTasks(prev => prev.filter(t => t.id !== id)), []);
   const clearDoneTasks = useCallback(() => setTasks(prev => prev.filter(t => !t.done)), []);
+
+  const updateTask = useCallback((id, changes) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
+  }, []);
 
   const processBrainDump = useCallback((items, goalActions = {}) => {
     const taskItems = items.filter(i => i.category !== 'goal');
@@ -123,7 +139,7 @@ export function AppProvider({ children }) {
     return newTasks;
   }, []);
 
-  // Hobbies — now accept full milestones array
+  // Hobbies
   const addHobby = useCallback((name, skillLevel, milestones) => {
     const h = makeHobby(name, skillLevel, milestones);
     setHobbies(prev => [...prev, h]);
@@ -134,7 +150,6 @@ export function AppProvider({ children }) {
     setHobbies(prev => prev.map(h => {
       if (h.id !== hobbyId) return h;
       const newIndex = (h.milestoneIndex ?? 0) + 1;
-      // Prefer pre-generated next milestone; fall back to provided one
       const next = h.milestones?.[newIndex] ?? nextMilestone ?? '';
       return {
         ...h,
@@ -146,6 +161,20 @@ export function AppProvider({ children }) {
   }, []);
 
   const removeHobby = useCallback((id) => setHobbies(prev => prev.filter(h => h.id !== id)), []);
+
+  const updateHobby = useCallback((id, changes, newMilestones) => {
+    setHobbies(prev => prev.map(h => {
+      if (h.id !== id) return h;
+      const updated = { ...h, ...changes };
+      if (newMilestones) {
+        updated.milestones = newMilestones;
+        updated.milestoneIndex = 0;
+        updated.currentMilestone = newMilestones[0] ?? '';
+        updated.completedMilestones = [];
+      }
+      return updated;
+    }));
+  }, []);
 
   // Goals
   const addGoal = useCallback((text, firstAction = '') => {
@@ -165,24 +194,39 @@ export function AppProvider({ children }) {
 
   const deleteGoal = useCallback((id) => setGoals(prev => prev.filter(g => g.id !== id)), []);
 
-  const finishOnboarding = useCallback((name, goalText, firstGoalAction) => {
-    if (name) setUserName(name);
-    if (goalText) setGoals([makeGoal(goalText, firstGoalAction ?? '')]);
+  const updateGoal = useCallback((id, changes) => {
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, ...changes } : g));
+  }, []);
+
+  const finishOnboarding = useCallback((name, age, occupation, goalText, firstGoalAction, initialHobbies) => {
+    if (name)       setUserName(name);
+    if (age)        setUserAge(age);
+    if (occupation) setUserOccupation(occupation);
+    if (goalText)   setGoals([makeGoal(goalText, firstGoalAction ?? '')]);
     setTasks([]);
     setHobbies([]);
     setHasOnboarded(true);
   }, []);
 
+  const resetOnboarding = useCallback(() => {
+    setHasOnboarded(false);
+    setUserName('');
+    setUserAge('');
+    setUserOccupation('');
+  }, []);
+
   return (
     <AppContext.Provider value={{
       loaded,
-      hasOnboarded, finishOnboarding,
+      hasOnboarded, finishOnboarding, resetOnboarding,
       processBrainDump,
-      tasks, addTask, toggleTask, deleteTask, clearDoneTasks,
-      hobbies, addHobby, completeMilestone, removeHobby,
+      tasks, addTask, toggleTask, deleteTask, clearDoneTasks, updateTask,
+      hobbies, addHobby, completeMilestone, removeHobby, updateHobby,
       totalPoints, addPoints,
-      goals, addGoal, advanceGoalAction, deleteGoal,
+      goals, addGoal, advanceGoalAction, deleteGoal, updateGoal,
       userName, setUserName,
+      userAge, setUserAge,
+      userOccupation, setUserOccupation,
       lastDumpDate,
       calendarConnected, setCalendarConnected,
     }}>

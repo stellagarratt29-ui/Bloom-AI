@@ -1,32 +1,62 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  SafeAreaView, StyleSheet, Platform, ActivityIndicator,
+  SafeAreaView, StyleSheet, Platform, ActivityIndicator, Modal,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { generateHobbyCurriculum } from '../services/ai';
 
 const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
+// Gradient-style icon badges — paired pastel colors per hobby (cycled)
+const BADGE_COLORS = [
+  { from: '#F2B9C4', to: '#C9B8E8', emoji: '🎨' },
+  { from: '#AEDCC4', to: '#A8D4E8', emoji: '🎵' },
+  { from: '#C9B8E8', to: '#A8D4E8', emoji: '🌱' },
+  { from: '#F2B9C4', to: '#AEDCC4', emoji: '✨' },
+  { from: '#A8D4E8', to: '#C9B8E8', emoji: '🎯' },
+];
+
+function HobbyIconBadge({ idx }) {
+  const b = BADGE_COLORS[idx % BADGE_COLORS.length];
+  const gradStyle = Platform.OS === 'web'
+    ? { background: `linear-gradient(135deg, ${b.from}, ${b.to})` }
+    : { backgroundColor: b.from };
+  return (
+    <View style={[hb.badge, gradStyle]}>
+      <Text style={hb.badgeEmoji}>{b.emoji}</Text>
+    </View>
+  );
+}
+
+const hb = StyleSheet.create({
+  badge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  badgeEmoji: { fontSize: 22 },
+});
+
 export default function HobbiesScreen({ navigation }) {
-  const { hobbies, addHobby, removeHobby } = useApp();
-  const [showAdd, setShowAdd]       = useState(false);
-  const [hobbyName, setHobbyName]   = useState('');
-  const [skillLevel, setSkillLevel] = useState('Beginner');
-  const [generating, setGenerating] = useState(false);
+  const { hobbies, addHobby, removeHobby, updateHobby } = useApp();
+  const { colors: t } = useTheme();
+
+  const [showAdd,     setShowAdd]     = useState(false);
+  const [hobbyName,   setHobbyName]   = useState('');
+  const [skillLevel,  setSkillLevel]  = useState('Beginner');
+  const [generating,  setGenerating]  = useState(false);
+  const [editTarget,  setEditTarget]  = useState(null);
+  const [editName,    setEditName]    = useState('');
+  const [editSkill,   setEditSkill]   = useState('Beginner');
+  const [regen,       setRegen]       = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const handleAdd = async () => {
     const name = hobbyName.trim();
     if (!name || generating) return;
     setGenerating(true);
     try {
-      // generateHobbyCurriculum has its own fallback — never throws
-      const milestones = await generateHobbyCurriculum({
-        hobbyName: name,
-        skillLevel: skillLevel.toLowerCase(),
-      });
+      const milestones = await generateHobbyCurriculum({ hobbyName: name, skillLevel: skillLevel.toLowerCase() });
       addHobby(name, skillLevel.toLowerCase(), milestones);
       setHobbyName('');
       setSkillLevel('Beginner');
@@ -36,183 +66,300 @@ export default function HobbiesScreen({ navigation }) {
     }
   };
 
+  const openEdit = (h) => {
+    setEditTarget(h);
+    setEditName(h.name);
+    setEditSkill(h.skillLevel.charAt(0).toUpperCase() + h.skillLevel.slice(1));
+  };
+
+  const saveEdit = async () => {
+    if (!editName.trim()) return;
+    const nameChanged = editName.trim().toLowerCase() !== editTarget.name.toLowerCase();
+    const skillChanged = editSkill.toLowerCase() !== editTarget.skillLevel;
+    if (nameChanged) {
+      // Substantial name change → regenerate milestones
+      setRegen(true);
+      try {
+        const milestones = await generateHobbyCurriculum({ hobbyName: editName.trim(), skillLevel: editSkill.toLowerCase() });
+        updateHobby(editTarget.id, { name: editName.trim(), skillLevel: editSkill.toLowerCase() }, milestones);
+      } catch {
+        updateHobby(editTarget.id, { name: editName.trim(), skillLevel: editSkill.toLowerCase() });
+      } finally {
+        setRegen(false);
+      }
+    } else {
+      updateHobby(editTarget.id, { name: editName.trim(), skillLevel: editSkill.toLowerCase() });
+    }
+    setEditTarget(null);
+  };
+
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={s.title}>Grow</Text>
-        <Text style={s.sub}>Hobbies and skills you're building — one milestone at a time.</Text>
+        <Text style={[s.title, { color: C.mintDark }]}>Grow</Text>
+        <Text style={[s.sub, { color: t.subtext }]}>Hobbies and skills you're building — one milestone at a time.</Text>
 
         {hobbies.length === 0 && !showAdd && (
           <View style={s.empty}>
             <Feather name="sun" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
-            <Text style={s.emptyHead}>Nothing here yet</Text>
-            <Text style={s.emptyText}>
+            <Text style={[s.emptyHead, { color: t.text }]}>Nothing here yet</Text>
+            <Text style={[s.emptyText, { color: t.subtext }]}>
               Add any hobby — guitar, watercolour, running, anything. Bloom will build you a real curriculum.
             </Text>
           </View>
         )}
 
-        {hobbies.map(h => {
-          const total = h.milestones?.length ?? (h.completedMilestones?.length + 1 ?? 1);
-          const done  = h.milestoneIndex ?? h.completedMilestones?.length ?? 0;
+        {hobbies.map((h, idx) => {
+          const total = h.milestones?.length ?? 1;
+          const done  = h.milestoneIndex ?? 0;
           const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
           return (
             <TouchableOpacity
               key={h.id}
-              style={s.hobbyCard}
+              style={[s.hobbyCard, { backgroundColor: t.card, borderColor: t.border }]}
               onPress={() => navigation.navigate('HobbyDetail', { hobby: h })}
               activeOpacity={0.82}
             >
               <View style={s.hobbyCardInner}>
+                <HobbyIconBadge idx={idx} />
                 <View style={s.hobbyMeta}>
-                  <Text style={s.hobbyName}>{h.name}</Text>
+                  <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                   <View style={s.hobbyMetaRow}>
-                    <Text style={s.hobbyLevel}>{h.skillLevel}</Text>
-                    <Text style={s.milestoneBadge}>Milestone {done + 1} of {total}</Text>
+                    <Text style={[s.hobbyLevel, { color: t.subtext }]}>{h.skillLevel}</Text>
+                    <View style={s.milestonePill}>
+                      <Text style={s.milestonePillText}>Milestone {done + 1} of {total}</Text>
+                    </View>
                   </View>
-                  <Text style={s.hobbyMilestone} numberOfLines={3}>{h.currentMilestone}</Text>
-                  <View style={s.barTrack}>
+                  <Text style={[s.hobbyMilestone, { color: t.subtext }]} numberOfLines={2}>{h.currentMilestone}</Text>
+                  <View style={[s.barTrack, { backgroundColor: t.border }]}>
                     <View style={[s.barFill, { width: `${pct}%` }]} />
                   </View>
                 </View>
-                <Feather name="chevron-right" size={18} color={C.muted} />
+                <View style={s.cardActions}>
+                  <TouchableOpacity style={s.iconBtn} onPress={() => openEdit(h)}>
+                    <Feather name="edit-2" size={14} color={t.subtext} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={s.iconBtn} onPress={() => setDeleteConfirm(h)}>
+                    <Feather name="trash-2" size={14} color={t.subtext} />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <TouchableOpacity style={s.removeRow} onPress={() => removeHobby(h.id)}>
-                <Text style={s.removeText}>Remove</Text>
-              </TouchableOpacity>
             </TouchableOpacity>
           );
         })}
 
         {showAdd ? (
-          <View style={s.addCard}>
-            <Text style={s.addCardTitle}>Add a hobby</Text>
+          <View style={[s.addCard, { backgroundColor: t.card, borderColor: t.border }]}>
+            <Text style={[s.addCardTitle, { color: t.text }]}>Add a hobby</Text>
             <TextInput
-              style={s.addInput}
+              style={[s.addInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
               placeholder="e.g. Watercolour, Guitar, Running, Baking…"
-              placeholderTextColor={C.muted}
+              placeholderTextColor={t.subtext}
               value={hobbyName}
               onChangeText={setHobbyName}
               autoFocus
               returnKeyType="done"
               editable={!generating}
             />
-            <Text style={s.addLabel}>Skill level</Text>
+            <Text style={[s.addLabel, { color: t.subtext }]}>SKILL LEVEL</Text>
             <View style={s.levelRow}>
               {SKILL_LEVELS.map(l => (
                 <TouchableOpacity
                   key={l}
-                  style={[s.levelChip, skillLevel === l && s.levelChipActive]}
+                  style={[s.levelChip, { borderColor: t.border, backgroundColor: t.bg }, skillLevel === l && s.levelChipActive]}
                   onPress={() => setSkillLevel(l)}
                 >
-                  <Text style={[s.levelChipText, skillLevel === l && s.levelChipTextActive]}>{l}</Text>
+                  <Text style={[s.levelChipText, { color: t.subtext }, skillLevel === l && { color: C.moss }]}>{l}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <View style={s.addActions}>
-              <TouchableOpacity style={s.cancelBtn} onPress={() => { setShowAdd(false); setHobbyName(''); }}>
-                <Text style={s.cancelBtnText}>Cancel</Text>
+              <TouchableOpacity style={[s.cancelBtn, { borderColor: t.border }]} onPress={() => { setShowAdd(false); setHobbyName(''); }}>
+                <Text style={[s.cancelBtnText, { color: t.subtext }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.createBtn, (!hobbyName.trim() || generating) && s.createBtnOff]}
                 onPress={handleAdd}
                 disabled={!hobbyName.trim() || generating}
               >
-                {generating ? (
-                  <ActivityIndicator size="small" color={C.white} />
-                ) : (
-                  <Text style={s.createBtnText}>Build my curriculum →</Text>
-                )}
+                {generating
+                  ? <ActivityIndicator size="small" color={C.white} />
+                  : <Text style={s.createBtnText}>Build my curriculum →</Text>}
               </TouchableOpacity>
             </View>
-            {generating && (
-              <Text style={s.generatingNote}>Building your first milestone…</Text>
-            )}
+            {generating && <Text style={[s.generatingNote, { color: t.subtext }]}>Building your curriculum…</Text>}
           </View>
         ) : (
-          <TouchableOpacity style={s.addBtn} onPress={() => setShowAdd(true)}>
+          <TouchableOpacity style={[s.addBtn, { borderColor: C.clayLight }]} onPress={() => setShowAdd(true)}>
             <Feather name="plus" size={16} color={C.clay} />
-            <Text style={s.addBtnText}>Add a hobby</Text>
+            <Text style={[s.addBtnText, { color: C.clay }]}>Add a hobby</Text>
           </TouchableOpacity>
         )}
 
         <View style={{ height: 48 }} />
       </ScrollView>
+
+      {/* Edit modal */}
+      <Modal visible={!!editTarget} transparent animationType="slide" onRequestClose={() => setEditTarget(null)}>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalCard, { backgroundColor: t.card }]}>
+            <Text style={[s.modalTitle, { color: t.text }]}>Edit hobby</Text>
+            <Text style={[s.modalLabel, { color: t.subtext }]}>NAME</Text>
+            <TextInput
+              style={[s.modalInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+              value={editName}
+              onChangeText={setEditName}
+              autoFocus
+              placeholder="Hobby name"
+              placeholderTextColor={t.subtext}
+            />
+            <Text style={[s.modalNote, { color: t.subtext }]}>Changing the name substantially will regenerate milestones.</Text>
+            <Text style={[s.modalLabel, { color: t.subtext }]}>SKILL LEVEL</Text>
+            <View style={s.levelRow}>
+              {SKILL_LEVELS.map(l => (
+                <TouchableOpacity
+                  key={l}
+                  style={[s.levelChip, { borderColor: t.border, backgroundColor: t.bg }, editSkill === l && s.levelChipActive]}
+                  onPress={() => setEditSkill(l)}
+                >
+                  <Text style={[s.levelChipText, { color: t.subtext }, editSkill === l && { color: C.moss }]}>{l}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={s.modalActions}>
+              <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setEditTarget(null)}>
+                <Text style={[s.modalCancelText, { color: t.subtext }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.modalSave, regen && { opacity: 0.6 }]} onPress={saveEdit} disabled={regen}>
+                {regen
+                  ? <ActivityIndicator size="small" color={C.white} />
+                  : <Text style={s.modalSaveText}>Save</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete confirm */}
+      <Modal visible={!!deleteConfirm} transparent animationType="fade" onRequestClose={() => setDeleteConfirm(null)}>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalCard, { backgroundColor: t.card }]}>
+            <Text style={[s.modalTitle, { color: t.text }]}>Remove hobby?</Text>
+            <Text style={[s.modalNote, { color: t.subtext }]}>"{deleteConfirm?.name}" and all its milestones will be removed.</Text>
+            <View style={s.modalActions}>
+              <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setDeleteConfirm(null)}>
+                <Text style={[s.modalCancelText, { color: t.subtext }]}>Keep</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.modalSave, { backgroundColor: C.pinkDark }]} onPress={() => { removeHobby(deleteConfirm.id); setDeleteConfirm(null); }}>
+                <Text style={s.modalSaveText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: C.cream },
+  safe:   { flex: 1 },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 30, fontWeight: '800', color: C.ink, marginBottom: 4,
-    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
+    fontSize: 30, fontWeight: '800', marginBottom: 4,
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  sub: { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 24 },
+  sub: { fontSize: 14, lineHeight: 20, marginBottom: 24 },
 
   empty: { alignItems: 'center', paddingTop: 40, paddingBottom: 32 },
-  emptyHead: { fontSize: 18, fontWeight: '700', color: C.ink, marginBottom: 8 },
-  emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
+  emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
 
   hobbyCard: {
-    backgroundColor: C.white, borderRadius: 18, borderWidth: 1, borderColor: C.border,
-    padding: 18, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    borderRadius: 18, borderWidth: 1,
+    padding: 16, marginBottom: 12,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   hobbyCardInner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   hobbyMeta: { flex: 1 },
-  hobbyName:    { fontSize: 17, fontWeight: '700', color: C.ink, marginBottom: 4 },
-  hobbyMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  hobbyLevel:   { fontSize: 11, fontWeight: '600', color: C.sage, letterSpacing: 0.8, textTransform: 'uppercase' },
-  milestoneBadge: { fontSize: 11, fontWeight: '600', color: C.clay, backgroundColor: C.clayPale, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  hobbyMilestone: { fontSize: 13, color: C.muted, lineHeight: 20, marginBottom: 12 },
-  barTrack: { height: 4, backgroundColor: C.border, borderRadius: 2, overflow: 'hidden', marginTop: 10 },
-  barFill:  { height: 4, backgroundColor: C.sage, borderRadius: 2, minWidth: 4 },
-  removeRow: { marginTop: 12, alignItems: 'flex-end' },
-  removeText: { fontSize: 12, color: C.muted },
+  cardActions: { flexDirection: 'column', gap: 4 },
+  iconBtn: { padding: 5 },
+  hobbyName:    { fontSize: 17, fontWeight: '700', marginBottom: 4 },
+  hobbyMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  hobbyLevel:   { fontSize: 11, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase' },
+  milestonePill: {
+    backgroundColor: C.moss, borderRadius: 10,
+    paddingHorizontal: 7, paddingVertical: 2,
+  },
+  milestonePillText: { fontSize: 10, fontWeight: '700', color: C.white },
+  hobbyMilestone: { fontSize: 12, lineHeight: 18, marginBottom: 10 },
+  barTrack: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  barFill:  { height: 4, backgroundColor: C.moss, borderRadius: 2, minWidth: 4 },
 
   addCard: {
-    backgroundColor: C.white, borderRadius: 18, borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 18, borderWidth: 1.5,
     padding: 20, marginBottom: 16,
   },
-  addCardTitle: { fontSize: 16, fontWeight: '700', color: C.ink, marginBottom: 14 },
+  addCardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 14 },
   addInput: {
-    backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
-    fontSize: 15, color: C.ink, marginBottom: 16,
+    borderWidth: 1.5, borderRadius: 12,
+    paddingVertical: 12, paddingHorizontal: 14,
+    fontSize: 15, marginBottom: 16,
   },
-  addLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1, marginBottom: 10 },
+  addLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
   levelRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   levelChip: {
     flex: 1, paddingVertical: 10, borderRadius: 10,
-    borderWidth: 1.5, borderColor: C.border, alignItems: 'center',
-    backgroundColor: C.cream,
+    borderWidth: 1.5, alignItems: 'center',
   },
-  levelChipActive: { borderColor: C.moss, backgroundColor: C.sagePale },
-  levelChipText: { fontSize: 13, fontWeight: '600', color: C.muted },
-  levelChipTextActive: { color: C.ink },
+  levelChipActive: { borderColor: C.moss },
+  levelChipText: { fontSize: 13, fontWeight: '600' },
   addActions: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
     flex: 1, paddingVertical: 13, borderRadius: 12,
-    borderWidth: 1.5, borderColor: C.border, alignItems: 'center',
+    borderWidth: 1.5, alignItems: 'center',
   },
-  cancelBtnText: { fontSize: 14, fontWeight: '600', color: C.muted },
+  cancelBtnText: { fontSize: 14, fontWeight: '600' },
   createBtn: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
     backgroundColor: C.moss, alignItems: 'center',
   },
   createBtnOff: { opacity: 0.4 },
   createBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
-  generatingNote: { fontSize: 12, color: C.muted, textAlign: 'center', marginTop: 12 },
+  generatingNote: { fontSize: 12, textAlign: 'center', marginTop: 12 },
 
   addBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 14, justifyContent: 'center',
-    borderWidth: 1.5, borderColor: C.clayLight, borderRadius: 14,
-    borderStyle: 'dashed',
+    borderWidth: 1.5, borderRadius: 14, borderStyle: 'dashed',
   },
-  addBtnText: { fontSize: 15, fontWeight: '600', color: C.clay },
+  addBtnText: { fontSize: 15, fontWeight: '600' },
+
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalCard: {
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: 40,
+  },
+  modalTitle:  { fontSize: 18, fontWeight: '700', marginBottom: 14 },
+  modalLabel:  { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8 },
+  modalNote:   { fontSize: 13, lineHeight: 20, marginBottom: 14 },
+  modalInput: {
+    borderWidth: 1.5, borderRadius: 12,
+    paddingVertical: 11, paddingHorizontal: 14,
+    fontSize: 15, marginBottom: 10,
+  },
+  modalActions:     { flexDirection: 'row', gap: 10, marginTop: 8 },
+  modalCancel: {
+    flex: 1, paddingVertical: 13, borderRadius: 12,
+    borderWidth: 1.5, alignItems: 'center',
+  },
+  modalCancelText: { fontSize: 14, fontWeight: '600' },
+  modalSave: {
+    flex: 2, paddingVertical: 13, borderRadius: 12,
+    backgroundColor: C.moss, alignItems: 'center',
+  },
+  modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
 });

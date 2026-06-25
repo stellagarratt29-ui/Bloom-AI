@@ -15,6 +15,7 @@ if (Platform.OS !== 'web') {
 }
 
 import { AppProvider, useApp } from './src/context/AppContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { C } from './src/constants/colors';
 
 import OnboardingScreen      from './src/screens/OnboardingScreen';
@@ -27,6 +28,7 @@ import GoalsScreen           from './src/screens/GoalsScreen';
 import GoalDetailScreen      from './src/screens/GoalDetailScreen';
 import CalendarScreen        from './src/screens/CalendarScreen';
 import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
+import SettingsScreen        from './src/screens/SettingsScreen';
 
 const RootStack      = createNativeStackNavigator();
 const ChatStackNav   = createNativeStackNavigator();
@@ -42,9 +44,10 @@ const TAB_ITEMS = [
   { name: 'GoalsTab',    icon: 'target',         label: 'Goals'    },
   { name: 'CalendarTab', icon: 'calendar',       label: 'Calendar' },
   { name: 'ScreenTab',   icon: 'smartphone',     label: 'Screen'   },
+  { name: 'SettingsTab', icon: 'settings',       label: 'Settings' },
 ];
 
-const SIDEBAR_W = 200;
+const SIDEBAR_W = 220;
 
 function useLayout() {
   const { width } = useWindowDimensions();
@@ -61,7 +64,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.error) {
       return (
         <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 12 }}>Something went wrong</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: C.ink, marginBottom: 12 }}>Something went wrong</Text>
           <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', fontFamily: 'monospace' }}>
             {this.state.error.message}
           </Text>
@@ -73,10 +76,11 @@ class ErrorBoundary extends React.Component {
 }
 
 function TabIcon({ iconName, label, focused }) {
+  const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Feather name={iconName} size={20} color={focused ? C.moss : C.muted} />
-      <Text style={{ fontSize: 10, marginTop: 3, fontWeight: focused ? '700' : '500', color: focused ? C.moss : C.muted }}>
+      <Feather name={iconName} size={19} color={focused ? C.moss : colors.subtext} />
+      <Text style={{ fontSize: 9, marginTop: 2, fontWeight: focused ? '700' : '500', color: focused ? C.moss : colors.subtext }}>
         {label}
       </Text>
     </View>
@@ -85,25 +89,26 @@ function TabIcon({ iconName, label, focused }) {
 
 function CustomTabBar({ state, navigation }) {
   const layout = useLayout();
+  const { colors } = useTheme();
 
   if (layout === 'desktop') {
     return (
-      <View style={deskS.sidebar}>
+      <View style={[deskS.sidebar, { backgroundColor: colors.card, borderRightColor: colors.border }]}>
         <View style={deskS.logoWrap}>
-          <Text style={deskS.logoText}>Bloom</Text>
-          <Text style={deskS.logoSub}>Gentle progress.</Text>
+          <Text style={[deskS.logoText, { color: C.clay }]}>Bloom</Text>
+          <Text style={[deskS.logoSub, { color: colors.subtext }]}>Gentle progress.</Text>
         </View>
         {TAB_ITEMS.map((item, index) => {
           const focused = state.index === index;
           return (
             <TouchableOpacity
               key={item.name}
-              style={[deskS.navItem, focused && deskS.navItemActive]}
+              style={[deskS.navItem, focused && { backgroundColor: C.sagePale }]}
               onPress={() => navigation.navigate(item.name)}
               activeOpacity={0.7}
             >
-              <Feather name={item.icon} size={18} color={focused ? C.forest : C.muted} />
-              <Text style={[deskS.navLabel, focused && deskS.navLabelActive]}>{item.label}</Text>
+              <Feather name={item.icon} size={18} color={focused ? C.moss : colors.subtext} />
+              <Text style={[deskS.navLabel, { color: colors.subtext }, focused && { fontWeight: '700', color: C.moss }]}>{item.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -112,7 +117,7 @@ function CustomTabBar({ state, navigation }) {
   }
 
   return (
-    <View style={mobileTabS.bar}>
+    <View style={[mobileTabS.bar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
       {TAB_ITEMS.map((item, index) => {
         const focused = state.index === index;
         return (
@@ -131,22 +136,20 @@ function CustomTabBar({ state, navigation }) {
 
 const deskS = StyleSheet.create({
   sidebar: {
-    width: SIDEBAR_W, backgroundColor: C.white,
-    borderRightWidth: 1, borderRightColor: C.border,
+    width: SIDEBAR_W,
+    borderRightWidth: 1,
     paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
   },
-  logoWrap:      { marginBottom: 40, paddingHorizontal: 8 },
-  logoText:      { fontSize: 24, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined },
-  logoSub:       { fontSize: 11, color: C.muted, marginTop: 2 },
-  navItem:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 14, borderRadius: 12, marginBottom: 2 },
-  navItemActive: { backgroundColor: C.sagePale },
-  navLabel:      { fontSize: 14, fontWeight: '500', color: C.muted },
-  navLabelActive:{ fontWeight: '700', color: C.forest },
+  logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
+  logoText: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined },
+  logoSub:  { fontSize: 11, marginTop: 2 },
+  navItem:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, marginBottom: 2 },
+  navLabel: { fontSize: 14, fontWeight: '500' },
 });
 
 const mobileTabS = StyleSheet.create({
-  bar:  { backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.border, height: 68, paddingBottom: 6, flexDirection: 'row' },
+  bar:  { borderTopWidth: 1, height: 64, paddingBottom: 4, flexDirection: 'row' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', outlineStyle: 'none' },
 });
 
@@ -179,8 +182,8 @@ function GrowStack() {
 function GoalsStack() {
   return (
     <GoalsStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <GoalsStackNav.Screen name="GoalsList"   component={GoalsScreen} />
-      <GoalsStackNav.Screen name="GoalDetail"  component={GoalDetailScreen} />
+      <GoalsStackNav.Screen name="GoalsList"  component={GoalsScreen} />
+      <GoalsStackNav.Screen name="GoalDetail" component={GoalDetailScreen} />
     </GoalsStackNav.Navigator>
   );
 }
@@ -200,6 +203,7 @@ function MainTabs() {
       <Tab.Screen name="GoalsTab"    component={GoalsStack} />
       <Tab.Screen name="CalendarTab" component={CalendarScreen} />
       <Tab.Screen name="ScreenTab"   component={ScreenAwarenessScreen} />
+      <Tab.Screen name="SettingsTab" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
@@ -208,7 +212,7 @@ function SplashScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ fontSize: 32, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
-        fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined }}>Bloom</Text>
+        fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined }}>Bloom</Text>
       <Text style={{ fontSize: 14, color: C.muted, marginTop: 8 }}>Gentle guidance. Real progress.</Text>
     </View>
   );
@@ -227,14 +231,15 @@ function RootNavigator() {
   );
 }
 
-function ResponsiveShell({ children }) {
+function ThemedShell({ children }) {
+  const { colors } = useTheme();
   const layout = useLayout();
   if (Platform.OS !== 'web' || layout !== 'phone') {
-    return <View style={{ flex: 1, backgroundColor: C.cream }}>{children}</View>;
+    return <View style={{ flex: 1, backgroundColor: colors.bg }}>{children}</View>;
   }
   return (
     <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#EAE5DE' }}>
-      <View style={{ flex: 1, width: '100%', maxWidth: 430, backgroundColor: C.cream, overflow: 'hidden' }}>
+      <View style={{ flex: 1, width: '100%', maxWidth: 430, backgroundColor: colors.bg, overflow: 'hidden' }}>
         {children}
       </View>
     </View>
@@ -246,9 +251,11 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AppProvider>
-          <ResponsiveShell>
-            <RootNavigator />
-          </ResponsiveShell>
+          <ThemeProvider>
+            <ThemedShell>
+              <RootNavigator />
+            </ThemedShell>
+          </ThemeProvider>
         </AppProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
