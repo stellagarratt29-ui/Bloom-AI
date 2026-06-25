@@ -22,6 +22,7 @@ export default function TasksScreen({ navigation }) {
   const [editText,   setEditText]   = useState('');
   const [editPrio,   setEditPrio]   = useState('medium');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [menuTarget, setMenuTarget] = useState(null);
 
   const openEdit = (task) => {
     setEditTarget(task);
@@ -86,11 +87,8 @@ export default function TasksScreen({ navigation }) {
                       </Text>
                       {!task.done && <Text style={[ss.ptsLabel, { color: sec.ptsColor }]}>+5</Text>}
                     </TouchableOpacity>
-                    <TouchableOpacity style={ss.iconBtn} onPress={() => openEdit(task)}>
-                      <Feather name="edit-2" size={13} color={t.subtext} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={ss.iconBtn} onPress={() => confirmDelete(task)}>
-                      <Feather name="trash-2" size={13} color={t.subtext} />
+                    <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
+                      <Feather name="more-vertical" size={18} color={t.subtext} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -101,6 +99,27 @@ export default function TasksScreen({ navigation }) {
 
         <View style={{ height: 48 }} />
       </ScrollView>
+
+      {/* Three-dot action menu */}
+      <Modal visible={!!menuTarget} transparent animationType="slide" onRequestClose={() => setMenuTarget(null)}>
+        <TouchableOpacity style={ss.menuOverlay} activeOpacity={1} onPress={() => setMenuTarget(null)}>
+          <View style={[ss.menuSheet, { backgroundColor: t.card }]}>
+            <Text style={[ss.menuItemTitle, { color: t.subtext }]} numberOfLines={1}>{menuTarget?.text}</Text>
+            <View style={[ss.menuDivider, { backgroundColor: t.border }]} />
+            <TouchableOpacity style={ss.menuItem} onPress={() => { openEdit(menuTarget); setMenuTarget(null); }}>
+              <Feather name="edit-2" size={18} color={t.text} />
+              <Text style={[ss.menuItemText, { color: t.text }]}>Edit task</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={ss.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
+              <Feather name="trash-2" size={18} color={C.pinkDark} />
+              <Text style={[ss.menuItemText, { color: C.pinkDark }]}>Delete task</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[ss.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>
+              <Text style={[ss.menuItemText, { color: t.subtext }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Edit modal */}
       <Modal visible={!!editTarget} transparent animationType="slide" onRequestClose={() => setEditTarget(null)}>
@@ -197,7 +216,18 @@ const ss = StyleSheet.create({
   taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
   taskTextDone: { textDecorationLine: 'line-through' },
   ptsLabel: { fontSize: 12, fontWeight: '700' },
-  iconBtn: { padding: 5 },
+  menuBtn: { padding: 6 },
+
+  menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  menuSheet: {
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 8, paddingBottom: 40,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+  },
+  menuItemTitle: { fontSize: 12, textAlign: 'center', paddingVertical: 10, paddingHorizontal: 20 },
+  menuDivider: { height: 1, marginBottom: 4 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 16, paddingHorizontal: 24 },
+  menuItemText: { fontSize: 16, fontWeight: '500' },
 
   empty: { alignItems: 'center', paddingTop: 60, paddingBottom: 32, paddingHorizontal: 24 },
   emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 10 },

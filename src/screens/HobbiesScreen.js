@@ -26,6 +26,7 @@ export default function HobbiesScreen({ navigation }) {
   const [editSkill,   setEditSkill]   = useState('Beginner');
   const [regen,       setRegen]       = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [menuTarget, setMenuTarget] = useState(null);
 
   const handleAdd = async () => {
     const name = hobbyName.trim();
@@ -98,14 +99,9 @@ export default function HobbiesScreen({ navigation }) {
               <View style={s.hobbyCardTop}>
                 <Text style={s.hobbyEmoji}>{emoji}</Text>
                 <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
-                <View style={s.cardActions}>
-                  <TouchableOpacity style={s.iconBtn} onPress={() => openEdit(h)}>
-                    <Feather name="edit-2" size={13} color={t.subtext} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.iconBtn} onPress={() => setDeleteConfirm(h)}>
-                    <Feather name="trash-2" size={13} color={t.subtext} />
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(h)}>
+                  <Feather name="more-vertical" size={18} color={t.subtext} />
+                </TouchableOpacity>
               </View>
               <Text style={[s.milestoneLabel, { color: t.subtext }]}>MILESTONE {done + 1} OF {total}</Text>
               <Text style={[s.hobbyMilestone, { color: t.text }]} numberOfLines={3}>{h.currentMilestone}</Text>
@@ -163,6 +159,27 @@ export default function HobbiesScreen({ navigation }) {
 
         <View style={{ height: 48 }} />
       </ScrollView>
+
+      {/* Three-dot action menu */}
+      <Modal visible={!!menuTarget} transparent animationType="slide" onRequestClose={() => setMenuTarget(null)}>
+        <TouchableOpacity style={s.menuOverlay} activeOpacity={1} onPress={() => setMenuTarget(null)}>
+          <View style={[s.menuSheet, { backgroundColor: t.card }]}>
+            <Text style={[s.menuItemTitle, { color: t.subtext }]} numberOfLines={1}>{menuTarget?.name}</Text>
+            <View style={[s.menuDivider, { backgroundColor: t.border }]} />
+            <TouchableOpacity style={s.menuItem} onPress={() => { openEdit(menuTarget); setMenuTarget(null); }}>
+              <Feather name="edit-2" size={18} color={t.text} />
+              <Text style={[s.menuItemText, { color: t.text }]}>Edit hobby</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
+              <Feather name="trash-2" size={18} color={C.pinkDark} />
+              <Text style={[s.menuItemText, { color: C.pinkDark }]}>Remove hobby</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>
+              <Text style={[s.menuItemText, { color: t.subtext }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Edit modal */}
       <Modal visible={!!editTarget} transparent animationType="slide" onRequestClose={() => setEditTarget(null)}>
@@ -249,8 +266,18 @@ const s = StyleSheet.create({
   hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   hobbyEmoji: { fontSize: 28, lineHeight: 34 },
   hobbyName: { flex: 1, fontSize: 17, fontWeight: '700' },
-  cardActions: { flexDirection: 'row', gap: 2 },
-  iconBtn: { padding: 5 },
+  menuBtn: { padding: 6 },
+
+  menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  menuSheet: {
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 8, paddingBottom: 40,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+  },
+  menuItemTitle: { fontSize: 12, textAlign: 'center', paddingVertical: 10, paddingHorizontal: 20 },
+  menuDivider: { height: 1, marginBottom: 4 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 16, paddingHorizontal: 24 },
+  menuItemText: { fontSize: 16, fontWeight: '500' },
   milestoneLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 6 },
   hobbyMilestone: { fontSize: 14, lineHeight: 22 },
 
