@@ -128,7 +128,7 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 30, fontWeight: '800', color: C.forest, marginBottom: 4,
+    fontSize: 30, fontWeight: '800', color: C.ink, marginBottom: 4,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
   sub: { fontSize: 14, color: C.muted, marginBottom: 20, lineHeight: 22 },
@@ -147,10 +147,10 @@ const s = StyleSheet.create({
   addInput: {
     backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
-    fontSize: 15, color: C.forest,
+    fontSize: 15, color: C.ink,
   },
   saveBtn: {
-    backgroundColor: C.forest, paddingVertical: 13,
+    backgroundColor: C.moss, paddingVertical: 13,
     paddingHorizontal: 18, borderRadius: 12, alignItems: 'center',
   },
   saveBtnOff: { opacity: 0.35 },
@@ -158,7 +158,7 @@ const s = StyleSheet.create({
   creatingNote: { fontSize: 12, color: C.muted, textAlign: 'center' },
 
   empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
-  emptyHead: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 8 },
+  emptyHead: { fontSize: 18, fontWeight: '700', color: C.ink, marginBottom: 8 },
   emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
 
   goalCard: {
@@ -171,16 +171,16 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start',
     justifyContent: 'space-between', gap: 10, marginBottom: 12,
   },
-  goalText: { flex: 1, fontSize: 17, fontWeight: '700', color: C.forest, lineHeight: 26 },
+  goalText: { flex: 1, fontSize: 17, fontWeight: '700', color: C.ink, lineHeight: 26 },
 
   stepLabel: { fontSize: 10, fontWeight: '700', color: C.clay, letterSpacing: 1.2, marginBottom: 8 },
 
   nextActionBox: {
-    backgroundColor: C.clayPale, borderRadius: 12,
+    backgroundColor: C.shell, borderRadius: 12,
     padding: 14, marginBottom: 14,
-    borderWidth: 1, borderColor: C.clayLight,
+    borderWidth: 1, borderColor: C.border,
   },
-  nextActionText: { fontSize: 14, color: C.forest, lineHeight: 22 },
+  nextActionText: { fontSize: 14, color: C.ink, lineHeight: 22 },
 
   goalFooter: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

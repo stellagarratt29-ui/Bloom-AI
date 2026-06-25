@@ -113,7 +113,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
 
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={22} color={C.forest} />
+            <Feather name="arrow-left" size={22} color={C.ink} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <Text style={s.headerGoal} numberOfLines={1}>{goal?.text ?? 'Goal'}</Text>
@@ -137,7 +137,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
 
         {doneCount > 0 && (
           <View style={s.progressBanner}>
-            <Feather name="trending-up" size={13} color={C.sage} />
+            <Feather name="trending-up" size={13} color={C.moss} />
             <Text style={s.progressText}>{doneCount} action{doneCount !== 1 ? 's' : ''} completed toward this goal</Text>
           </View>
         )}
@@ -151,7 +151,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
         >
           {thinking && messages.length === 0 && (
             <View style={s.loadingWrap}>
-              <ActivityIndicator color={C.sage} size="small" />
+              <ActivityIndicator color={C.moss} size="small" />
               <Text style={s.loadingText}>Working out your next step…</Text>
             </View>
           )}
@@ -172,7 +172,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
 
           {thinking && messages.length > 0 && (
             <View style={[s.bloomBubble, { paddingVertical: 16 }]}>
-              <ActivityIndicator color={C.sage} size="small" />
+              <ActivityIndicator color={C.moss} size="small" />
             </View>
           )}
         </ScrollView>
@@ -193,7 +193,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="arrow-up" size={17} color={C.white} />
+            <Feather name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 
@@ -214,10 +214,10 @@ const s = StyleSheet.create({
   backBtn: { padding: 4, flexShrink: 0 },
   headerCenter: { flex: 1 },
   headerGoal: { fontSize: 11, fontWeight: '700', color: C.clay, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
-  headerAction: { fontSize: 13, color: C.forest, lineHeight: 18, fontWeight: '500' },
+  headerAction: { fontSize: 13, color: C.ink, lineHeight: 18, fontWeight: '500' },
   doneBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: C.forest, borderRadius: 20,
+    backgroundColor: C.moss, borderRadius: 20,
     paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0, minWidth: 70, justifyContent: 'center',
   },
   doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
@@ -227,7 +227,7 @@ const s = StyleSheet.create({
     backgroundColor: C.sagePale, paddingHorizontal: 16, paddingVertical: 8,
     borderBottomWidth: 1, borderBottomColor: C.sageLight,
   },
-  progressText: { fontSize: 12, color: C.forest },
+  progressText: { fontSize: 12, color: C.ink },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 20, gap: 14, paddingBottom: 32 },
@@ -239,11 +239,11 @@ const s = StyleSheet.create({
     backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 6,
     padding: 16, borderWidth: 1, borderColor: C.border,
   },
-  bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
+  bloomText: { fontSize: 15, color: C.ink, lineHeight: 26 },
 
   userRow: { alignItems: 'flex-end' },
   userBubble: {
-    backgroundColor: C.forest, borderRadius: 18, borderBottomRightRadius: 6,
+    backgroundColor: C.moss, borderRadius: 18, borderBottomRightRadius: 6,
     paddingVertical: 12, paddingHorizontal: 16, maxWidth: '80%',
   },
   userText: { fontSize: 15, color: C.white, lineHeight: 22 },
@@ -256,11 +256,11 @@ const s = StyleSheet.create({
   input: {
     flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 24, paddingVertical: 11, paddingHorizontal: 18,
-    fontSize: 15, color: C.forest,
+    fontSize: 15, color: C.ink,
   },
   sendBtn: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
 });

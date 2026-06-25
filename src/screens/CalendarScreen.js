@@ -190,8 +190,8 @@ export default function CalendarScreen() {
         <View style={s.headerActions}>
           <TouchableOpacity style={s.refreshBtn} onPress={loadEvents} disabled={loadingEvents}>
             {loadingEvents
-              ? <ActivityIndicator size="small" color={C.sage} />
-              : <Feather name="refresh-cw" size={16} color={C.sage} />}
+              ? <ActivityIndicator size="small" color={C.moss} />
+              : <Feather name="refresh-cw" size={16} color={C.moss} />}
           </TouchableOpacity>
           <TouchableOpacity style={s.disconnectBtn} onPress={handleDisconnect}>
             <Text style={s.disconnectText}>Disconnect</Text>
@@ -305,7 +305,7 @@ const s = StyleSheet.create({
   // Setup
   setupScroll: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 48 },
   title: {
-    fontSize: 30, fontWeight: '800', color: C.forest, marginBottom: 6,
+    fontSize: 30, fontWeight: '800', color: C.ink, marginBottom: 6,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
   sub: { fontSize: 14, color: C.muted, lineHeight: 22, marginBottom: 24 },
@@ -348,12 +348,12 @@ const s = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: C.border, backgroundColor: C.cream,
   },
   headerTitle: {
-    fontSize: 26, fontWeight: '800', color: C.forest, marginBottom: 4,
+    fontSize: 26, fontWeight: '800', color: C.ink, marginBottom: 4,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
   connectedBadge: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  connectedDot:   { width: 6, height: 6, borderRadius: 3, backgroundColor: C.sage },
-  connectedText:  { fontSize: 11, color: C.sage, fontWeight: '600' },
+  connectedDot:   { width: 6, height: 6, borderRadius: 3, backgroundColor: C.moss },
+  connectedText:  { fontSize: 11, color: C.moss, fontWeight: '600' },
   headerActions:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   refreshBtn: { padding: 8 },
   disconnectBtn: {
@@ -368,7 +368,7 @@ const s = StyleSheet.create({
   loadingText: { fontSize: 14, color: C.muted },
 
   emptyEvents: { alignItems: 'center', paddingVertical: 40 },
-  emptyEventsText: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 6 },
+  emptyEventsText: { fontSize: 16, fontWeight: '700', color: C.ink, marginBottom: 6 },
   emptyEventsSub:  { fontSize: 13, color: C.muted, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
 
   dayGroup:  { marginBottom: 20 },
@@ -382,9 +382,9 @@ const s = StyleSheet.create({
   eventTime: {
     backgroundColor: C.sagePale, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, flexShrink: 0,
   },
-  eventTimeText: { fontSize: 12, fontWeight: '700', color: C.sage },
+  eventTimeText: { fontSize: 12, fontWeight: '700', color: C.moss },
   eventBody:     { flex: 1 },
-  eventTitle:    { fontSize: 14, fontWeight: '600', color: C.forest, lineHeight: 20 },
+  eventTitle:    { fontSize: 14, fontWeight: '600', color: C.ink, lineHeight: 20 },
   eventLocation: { fontSize: 12, color: C.muted, marginTop: 2 },
 
   chatDivider: { alignItems: 'center', marginVertical: 16 },
@@ -395,7 +395,7 @@ const s = StyleSheet.create({
     padding: 16, borderWidth: 1, borderColor: C.border, marginBottom: 12,
     shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1,
   },
-  bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
+  bloomText: { fontSize: 15, color: C.ink, lineHeight: 26 },
 
   userRow:   { alignItems: 'flex-end', marginBottom: 12 },
   userBubble: {
@@ -408,7 +408,7 @@ const s = StyleSheet.create({
     backgroundColor: C.sagePale, borderRadius: 14, padding: 14,
     borderWidth: 1, borderColor: C.sageLight, marginTop: 8,
   },
-  chatHintText: { fontSize: 13, color: C.forest, lineHeight: 22, textAlign: 'center' },
+  chatHintText: { fontSize: 13, color: C.ink, lineHeight: 22, textAlign: 'center' },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -418,7 +418,7 @@ const s = StyleSheet.create({
   input: {
     flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 24, paddingVertical: 11, paddingHorizontal: 16,
-    fontSize: 15, color: C.forest,
+    fontSize: 15, color: C.ink,
   },
   sendBtn: {
     width: 42, height: 42, borderRadius: 21,

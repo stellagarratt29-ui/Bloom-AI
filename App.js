@@ -37,7 +37,7 @@ const Tab            = createBottomTabNavigator();
 
 const TAB_ITEMS = [
   { name: 'ChatTab',     icon: 'message-circle', label: 'Chat'     },
-  { name: 'TasksTab',    icon: 'check-square',   label: 'Tasks'    },
+  { name: 'TasksTab',    icon: 'list',           label: 'Tasks'    },
   { name: 'GrowTab',     icon: 'sun',            label: 'Grow'     },
   { name: 'GoalsTab',    icon: 'target',         label: 'Goals'    },
   { name: 'CalendarTab', icon: 'calendar',       label: 'Calendar' },
@@ -75,8 +75,8 @@ class ErrorBoundary extends React.Component {
 function TabIcon({ iconName, label, focused }) {
   return (
     <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Feather name={iconName} size={21} color={focused ? C.forest : C.muted} />
-      <Text style={{ fontSize: 10, marginTop: 3, fontWeight: focused ? '700' : '500', color: focused ? C.forest : C.muted }}>
+      <Feather name={iconName} size={20} color={focused ? C.moss : C.muted} />
+      <Text style={{ fontSize: 10, marginTop: 3, fontWeight: focused ? '700' : '500', color: focused ? C.moss : C.muted }}>
         {label}
       </Text>
     </View>
@@ -146,8 +146,8 @@ const deskS = StyleSheet.create({
 });
 
 const mobileTabS = StyleSheet.create({
-  bar:  { backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.border, height: 72, paddingBottom: 8, flexDirection: 'row' },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  bar:  { backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.border, height: 68, paddingBottom: 6, flexDirection: 'row' },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', outlineStyle: 'none' },
 });
 
 function ChatStack() {

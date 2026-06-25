@@ -148,13 +148,13 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 30, fontWeight: '800', color: C.forest, marginBottom: 4,
+    fontSize: 30, fontWeight: '800', color: C.ink, marginBottom: 4,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
   sub: { fontSize: 14, color: C.muted, lineHeight: 20, marginBottom: 24 },
 
   empty: { alignItems: 'center', paddingTop: 40, paddingBottom: 32 },
-  emptyHead: { fontSize: 18, fontWeight: '700', color: C.forest, marginBottom: 8 },
+  emptyHead: { fontSize: 18, fontWeight: '700', color: C.ink, marginBottom: 8 },
   emptyText: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
 
   hobbyCard: {
@@ -164,7 +164,7 @@ const s = StyleSheet.create({
   },
   hobbyCardInner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   hobbyMeta: { flex: 1 },
-  hobbyName:    { fontSize: 17, fontWeight: '700', color: C.forest, marginBottom: 4 },
+  hobbyName:    { fontSize: 17, fontWeight: '700', color: C.ink, marginBottom: 4 },
   hobbyMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   hobbyLevel:   { fontSize: 11, fontWeight: '600', color: C.sage, letterSpacing: 0.8, textTransform: 'uppercase' },
   milestoneBadge: { fontSize: 11, fontWeight: '600', color: C.clay, backgroundColor: C.clayPale, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
@@ -178,11 +178,11 @@ const s = StyleSheet.create({
     backgroundColor: C.white, borderRadius: 18, borderWidth: 1.5, borderColor: C.border,
     padding: 20, marginBottom: 16,
   },
-  addCardTitle: { fontSize: 16, fontWeight: '700', color: C.forest, marginBottom: 14 },
+  addCardTitle: { fontSize: 16, fontWeight: '700', color: C.ink, marginBottom: 14 },
   addInput: {
     backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
-    fontSize: 15, color: C.forest, marginBottom: 16,
+    fontSize: 15, color: C.ink, marginBottom: 16,
   },
   addLabel: { fontSize: 11, fontWeight: '700', color: C.muted, letterSpacing: 1, marginBottom: 10 },
   levelRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
@@ -191,9 +191,9 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderColor: C.border, alignItems: 'center',
     backgroundColor: C.cream,
   },
-  levelChipActive: { borderColor: C.forest, backgroundColor: C.sagePale },
+  levelChipActive: { borderColor: C.moss, backgroundColor: C.sagePale },
   levelChipText: { fontSize: 13, fontWeight: '600', color: C.muted },
-  levelChipTextActive: { color: C.forest },
+  levelChipTextActive: { color: C.ink },
   addActions: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
     flex: 1, paddingVertical: 13, borderRadius: 12,
@@ -202,7 +202,7 @@ const s = StyleSheet.create({
   cancelBtnText: { fontSize: 14, fontWeight: '600', color: C.muted },
   createBtn: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
-    backgroundColor: C.forest, alignItems: 'center',
+    backgroundColor: C.moss, alignItems: 'center',
   },
   createBtnOff: { opacity: 0.4 },
   createBtnText: { fontSize: 14, fontWeight: '700', color: C.white },

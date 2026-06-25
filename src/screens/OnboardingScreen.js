@@ -147,29 +147,29 @@ const s = StyleSheet.create({
 
   dots: { flexDirection: 'row', gap: 6, marginBottom: 40 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.border },
-  dotActive: { backgroundColor: C.forest, width: 22 },
+  dotActive: { backgroundColor: C.moss, width: 22 },
   dotDone: { backgroundColor: C.sageMid },
 
   wordmark: {
-    fontSize: 52, fontWeight: '800', color: C.forest, letterSpacing: -1, marginBottom: 16,
+    fontSize: 52, fontWeight: '800', color: C.ink, letterSpacing: -1, marginBottom: 16,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
-  tagline:  { fontSize: 24, fontWeight: '700', color: C.forest, textAlign: 'center', lineHeight: 32, marginBottom: 20 },
+  tagline:  { fontSize: 24, fontWeight: '700', color: C.ink, textAlign: 'center', lineHeight: 32, marginBottom: 20 },
   body:     { fontSize: 16, color: C.muted, textAlign: 'center', lineHeight: 26, marginBottom: 40 },
 
-  stepTitle: { fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 8, textAlign: 'center', lineHeight: 36 },
+  stepTitle: { fontSize: 28, fontWeight: '700', color: C.ink, marginBottom: 8, textAlign: 'center', lineHeight: 36 },
   stepSub:   { fontSize: 15, color: C.muted, lineHeight: 22, marginBottom: 32, textAlign: 'center' },
-  readyTitle:{ fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 20, textAlign: 'center', lineHeight: 36 },
+  readyTitle:{ fontSize: 28, fontWeight: '700', color: C.ink, marginBottom: 20, textAlign: 'center', lineHeight: 36 },
 
   textInput: {
     width: '100%', backgroundColor: C.white,
     borderWidth: 1.5, borderColor: C.border,
     borderRadius: 14, paddingVertical: 16, paddingHorizontal: 18,
-    fontSize: 17, color: C.forest, marginBottom: 24,
+    fontSize: 17, color: C.ink, marginBottom: 24,
   },
 
   primaryBtn: {
-    backgroundColor: C.forest, borderRadius: 14,
+    backgroundColor: C.moss, borderRadius: 14,
     paddingVertical: 17, paddingHorizontal: 32,
     alignItems: 'center', width: '100%',
   },

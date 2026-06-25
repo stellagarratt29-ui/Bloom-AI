@@ -73,7 +73,7 @@ const s = StyleSheet.create({
   circleDone: { backgroundColor: C.sage, borderColor: C.sage },
   tick: { color: C.white, fontSize: 13, fontWeight: '800', lineHeight: 15 },
 
-  text: { flex: 1, fontSize: 15, color: C.forest, lineHeight: 21 },
+  text: { flex: 1, fontSize: 15, color: C.ink, lineHeight: 21 },
   textDone: { color: C.muted, textDecorationLine: 'line-through' },
 
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginLeft: 8, flexShrink: 0 },
@@ -89,7 +89,7 @@ const s = StyleSheet.create({
   deleteBtn: { marginLeft: 6, padding: 4 },
   deleteBtnText: { fontSize: 13, color: C.muted },
 
-  deletePrompt: { flex: 1, fontSize: 14, color: C.forest, fontStyle: 'italic' },
+  deletePrompt: { flex: 1, fontSize: 14, color: C.ink, fontStyle: 'italic' },
   confirmBtn: {
     backgroundColor: C.peachLight, borderRadius: 10,
     paddingVertical: 6, paddingHorizontal: 12, marginLeft: 8,

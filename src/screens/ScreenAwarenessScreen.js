@@ -75,7 +75,7 @@ export default function ScreenAwarenessScreen({ navigation }) {
                   onPress={() => navigation?.navigate?.('GrowTab')}
                   activeOpacity={0.75}
                 >
-                  <Feather name="sun" size={20} color={C.forest} style={{ marginBottom: 6 }} />
+                  <Feather name="sun" size={20} color={C.moss} style={{ marginBottom: 6 }} />
                   <Text style={s.redirectText}>{h.name}</Text>
                 </TouchableOpacity>
               ))}
@@ -101,7 +101,7 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 30, fontWeight: '800', color: C.forest, lineHeight: 38, marginBottom: 6,
+    fontSize: 30, fontWeight: '800', color: C.ink, lineHeight: 38, marginBottom: 6,
     fontFamily: Platform.OS === 'web' ? 'Georgia, serif' : undefined,
   },
   sub: { fontSize: 14, color: C.muted, lineHeight: 22, marginBottom: 24 },
@@ -113,7 +113,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.border,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  statValue: { fontSize: 28, fontWeight: '700', color: C.forest, marginBottom: 4 },
+  statValue: { fontSize: 28, fontWeight: '700', color: C.ink, marginBottom: 4 },
   statLabel: { fontSize: 12, color: C.muted, fontWeight: '600', letterSpacing: 0.3, textAlign: 'center' },
   statNote:  { fontSize: 10, color: C.sageLight, marginTop: 4 },
 
@@ -136,7 +136,7 @@ const s = StyleSheet.create({
     paddingVertical: 16, alignItems: 'center',
     borderWidth: 1, borderColor: C.border,
   },
-  redirectText: { fontSize: 13, fontWeight: '600', color: C.forest },
+  redirectText: { fontSize: 13, fontWeight: '600', color: C.ink },
 
   noteCard: {
     flexDirection: 'row', backgroundColor: C.sagePale, borderRadius: 14,

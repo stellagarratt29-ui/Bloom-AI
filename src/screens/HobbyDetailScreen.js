@@ -120,7 +120,7 @@ Write in plain text, no markdown headers.`,
 
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={22} color={C.forest} />
+            <Feather name="arrow-left" size={22} color={C.ink} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <Text style={s.headerHobby}>{hobby?.name ?? 'Hobby'}</Text>
@@ -240,7 +240,7 @@ const s = StyleSheet.create({
   backBtn: { padding: 4, flexShrink: 0 },
   headerCenter: { flex: 1 },
   headerHobby: { fontSize: 13, fontWeight: '700', color: C.sage, letterSpacing: 0.5, marginBottom: 3 },
-  headerMilestone: { fontSize: 13, color: C.forest, lineHeight: 18, fontWeight: '500' },
+  headerMilestone: { fontSize: 13, color: C.ink, lineHeight: 18, fontWeight: '500' },
   doneBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: C.moss, borderRadius: 20,
@@ -272,7 +272,7 @@ const s = StyleSheet.create({
     backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 6,
     padding: 16, borderWidth: 1, borderColor: C.border,
   },
-  bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
+  bloomText: { fontSize: 15, color: C.ink, lineHeight: 26 },
 
   userRow: { alignItems: 'flex-end' },
   userBubble: {

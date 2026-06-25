@@ -110,7 +110,7 @@ Write in plain text. No markdown headers. Be encouraging but not generic.`,
 
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={22} color={C.forest} />
+            <Feather name="arrow-left" size={22} color={C.ink} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <View style={[s.priorityDot, { backgroundColor: priorityColor }]} />
@@ -229,7 +229,7 @@ const s = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8,
   },
   priorityDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0 },
-  headerTask: { flex: 1, fontSize: 15, fontWeight: '700', color: C.forest, lineHeight: 22 },
+  headerTask: { flex: 1, fontSize: 15, fontWeight: '700', color: C.ink, lineHeight: 22 },
   doneBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: C.moss, borderRadius: 20,
@@ -249,7 +249,7 @@ const s = StyleSheet.create({
     backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 6,
     padding: 16, borderWidth: 1, borderColor: C.border,
   },
-  bloomText: { fontSize: 15, color: C.forest, lineHeight: 26 },
+  bloomText: { fontSize: 15, color: C.ink, lineHeight: 26 },
 
   userRow: { alignItems: 'flex-end' },
   userBubble: {
