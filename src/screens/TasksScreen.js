@@ -8,44 +8,20 @@ import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
-// Section metadata
 const SECTIONS = [
-  {
-    key: 'high',
-    label: 'School & Health',
-    pillBg:   C.pillPinkBg,
-    pillText: C.pillPinkText,
-    cbColor:  C.pillPinkText,
-  },
-  {
-    key: 'medium',
-    label: 'Tasks',
-    pillBg:   C.pillLavBg,
-    pillText: C.pillLavText,
-    cbColor:  C.pillLavText,
-  },
-  {
-    key: 'low',
-    label: 'Fun & Leisure',
-    pillBg:   C.pillSkyBg,
-    pillText: C.pillSkyText,
-    cbColor:  C.pillSkyText,
-  },
+  { key: 'high',   label: 'School & Health', labelColor: C.clay,    cbColor: C.pillPinkText, ptsColor: C.pillPinkText },
+  { key: 'medium', label: 'Tasks',           labelColor: C.lavDark,  cbColor: C.lavDark,      ptsColor: C.lavDark     },
+  { key: 'low',    label: 'Fun & Leisure',   labelColor: C.skyDark,  cbColor: C.skyDark,      ptsColor: C.skyDark     },
 ];
-
-const PRIORITY_CATS = ['high', 'medium', 'low'];
 
 export default function TasksScreen({ navigation }) {
   const { tasks, totalPoints, toggleTask, deleteTask, updateTask } = useApp();
   const { colors: t } = useTheme();
 
-  const [editTarget, setEditTarget] = useState(null); // { id, text, priority }
+  const [editTarget, setEditTarget] = useState(null);
   const [editText,   setEditText]   = useState('');
   const [editPrio,   setEditPrio]   = useState('medium');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-
-  const pending = tasks.filter(t => !t.done);
-  const done    = tasks.filter(t =>  t.done);
 
   const openEdit = (task) => {
     setEditTarget(task);
@@ -66,15 +42,13 @@ export default function TasksScreen({ navigation }) {
     <SafeAreaView style={[ss.safe, { backgroundColor: t.bg }]}>
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
         <Text style={[ss.title, { color: C.lavDark }]}>Tasks</Text>
-        <View style={[ss.ptsWrap, { backgroundColor: t.sagePale }]}>
-          <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
-        </View>
+        <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
       </View>
 
       <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
-        {pending.length === 0 ? (
+        {tasks.length === 0 ? (
           <View style={ss.empty}>
-            <Feather name="check-circle" size={44} color={C.sage} style={{ marginBottom: 14 }} />
+            <Feather name="check-circle" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
             <Text style={[ss.emptyHead, { color: t.text }]}>All clear</Text>
             <Text style={[ss.emptyText, { color: t.subtext }]}>
               Go to Chat, tell Bloom what's on your mind, and your tasks will appear here sorted by priority.
@@ -82,58 +56,47 @@ export default function TasksScreen({ navigation }) {
           </View>
         ) : (
           SECTIONS.map(sec => {
-            const items = pending.filter(t => t.priority === sec.key);
+            const items = tasks.filter(tk => tk.priority === sec.key);
             if (!items.length) return null;
             return (
               <View key={sec.key} style={ss.group}>
-                <View style={[ss.sectionPill, { backgroundColor: sec.pillBg }]}>
-                  <Text style={[ss.sectionLabel, { color: sec.pillText }]}>{sec.label.toUpperCase()}</Text>
-                </View>
+                <Text style={[ss.sectionLabel, { color: sec.labelColor }]}>{sec.label.toUpperCase()}</Text>
                 {items.map(task => (
-                  <View key={task.id} style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border }]}>
+                  <View
+                    key={task.id}
+                    style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border }, task.done && ss.taskCardDone]}
+                  >
                     <TouchableOpacity
-                      style={[ss.checkbox, { borderColor: sec.cbColor }]}
+                      style={[ss.checkbox, { borderColor: task.done ? t.subtext : sec.cbColor }]}
                       onPress={() => toggleTask(task.id)}
                       activeOpacity={0.7}
                     >
-                      <View style={{ width: 10, height: 10 }} />
+                      {task.done && <View style={[ss.checkFill, { backgroundColor: t.subtext }]} />}
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={ss.taskBody}
-                      onPress={() => navigation.navigate('TaskGuide', { task })}
+                      onPress={() => !task.done && navigation.navigate('TaskGuide', { task })}
                       activeOpacity={0.72}
                     >
-                      <Text style={[ss.taskText, { color: t.text }]} numberOfLines={2}>{task.text}</Text>
-                      <View style={[ss.pts, { backgroundColor: t.goldPale }]}>
-                        <Text style={[ss.ptsText, { color: C.gold }]}>+5</Text>
-                      </View>
+                      <Text
+                        style={[ss.taskText, { color: task.done ? t.subtext : t.text }, task.done && ss.taskTextDone]}
+                        numberOfLines={2}
+                      >
+                        {task.text}
+                      </Text>
+                      {!task.done && <Text style={[ss.ptsLabel, { color: sec.ptsColor }]}>+5</Text>}
                     </TouchableOpacity>
                     <TouchableOpacity style={ss.iconBtn} onPress={() => openEdit(task)}>
-                      <Feather name="edit-2" size={14} color={t.subtext} />
+                      <Feather name="edit-2" size={13} color={t.subtext} />
                     </TouchableOpacity>
                     <TouchableOpacity style={ss.iconBtn} onPress={() => confirmDelete(task)}>
-                      <Feather name="trash-2" size={14} color={t.subtext} />
+                      <Feather name="trash-2" size={13} color={t.subtext} />
                     </TouchableOpacity>
                   </View>
                 ))}
               </View>
             );
           })
-        )}
-
-        {done.length > 0 && (
-          <View style={ss.doneSection}>
-            <Text style={[ss.doneLabel, { color: t.subtext }]}>DONE</Text>
-            {done.slice(-5).reverse().map(task => (
-              <View key={task.id} style={[ss.doneCard, { backgroundColor: t.sagePale }]}>
-                <Feather name="check" size={13} color={C.moss} />
-                <Text style={[ss.doneText, { color: t.subtext }]} numberOfLines={1}>{task.text}</Text>
-                <TouchableOpacity onPress={() => confirmDelete(task)}>
-                  <Feather name="x" size={13} color={t.subtext} />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
         )}
 
         <View style={{ height: 48 }} />
@@ -158,10 +121,10 @@ export default function TasksScreen({ navigation }) {
               {SECTIONS.map(sec => (
                 <TouchableOpacity
                   key={sec.key}
-                  style={[ss.prioChip, { backgroundColor: sec.pillBg, borderColor: editPrio === sec.key ? sec.pillText : 'transparent', borderWidth: 2 }]}
+                  style={[ss.prioChip, { backgroundColor: t.bg, borderColor: editPrio === sec.key ? sec.labelColor : t.border, borderWidth: 2 }]}
                   onPress={() => setEditPrio(sec.key)}
                 >
-                  <Text style={[ss.prioChipText, { color: sec.pillText }]}>{sec.label}</Text>
+                  <Text style={[ss.prioChipText, { color: editPrio === sec.key ? sec.labelColor : t.subtext }]}>{sec.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -210,52 +173,37 @@ const ss = StyleSheet.create({
     fontSize: 30, fontWeight: '800',
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  ptsWrap: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  ptsTotal: { fontSize: 13, fontWeight: '700' },
+  ptsTotal: { fontSize: 14, fontWeight: '700' },
 
   scroll: { paddingHorizontal: 18, paddingTop: 18 },
 
-  group: { marginBottom: 18 },
-  sectionPill: {
-    alignSelf: 'flex-start', borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 5, marginBottom: 10,
-  },
-  sectionLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
+  group: { marginBottom: 22 },
+  sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 10 },
 
   taskCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: 14, paddingVertical: 12, paddingHorizontal: 12,
-    borderWidth: 1, marginBottom: 6,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 14,
+    borderWidth: 1, marginBottom: 8,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
+  taskCardDone: { opacity: 0.55 },
   checkbox: {
-    width: 20, height: 20, borderRadius: 10, borderWidth: 2,
+    width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
+  checkFill: { width: 10, height: 10, borderRadius: 5 },
   taskBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
-  pts: { borderRadius: 8, paddingVertical: 2, paddingHorizontal: 6 },
-  ptsText: { fontSize: 11, fontWeight: '700' },
-  iconBtn: { padding: 6 },
+  taskTextDone: { textDecorationLine: 'line-through' },
+  ptsLabel: { fontSize: 12, fontWeight: '700' },
+  iconBtn: { padding: 5 },
 
   empty: { alignItems: 'center', paddingTop: 60, paddingBottom: 32, paddingHorizontal: 24 },
   emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 10 },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22 },
 
-  doneSection: { marginTop: 8, marginBottom: 4 },
-  doneLabel:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 8 },
-  doneCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 9,
-    paddingVertical: 9, paddingHorizontal: 12, borderRadius: 10, marginBottom: 4,
-  },
-  doneText: { flex: 1, fontSize: 13, fontWeight: '500' },
-
-  // Modals
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalCard: {
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 24, paddingBottom: 40,

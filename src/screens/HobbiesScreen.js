@@ -11,31 +11,7 @@ import { generateHobbyCurriculum } from '../services/ai';
 
 const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
-// Gradient-style icon badges — paired pastel colors per hobby (cycled)
-const BADGE_COLORS = [
-  { from: '#F2B9C4', to: '#C9B8E8', emoji: '🎨' },
-  { from: '#AEDCC4', to: '#A8D4E8', emoji: '🎵' },
-  { from: '#C9B8E8', to: '#A8D4E8', emoji: '🌱' },
-  { from: '#F2B9C4', to: '#AEDCC4', emoji: '✨' },
-  { from: '#A8D4E8', to: '#C9B8E8', emoji: '🎯' },
-];
-
-function HobbyIconBadge({ idx }) {
-  const b = BADGE_COLORS[idx % BADGE_COLORS.length];
-  const gradStyle = Platform.OS === 'web'
-    ? { background: `linear-gradient(135deg, ${b.from}, ${b.to})` }
-    : { backgroundColor: b.from };
-  return (
-    <View style={[hb.badge, gradStyle]}>
-      <Text style={hb.badgeEmoji}>{b.emoji}</Text>
-    </View>
-  );
-}
-
-const hb = StyleSheet.create({
-  badge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  badgeEmoji: { fontSize: 22 },
-});
+const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
 
 export default function HobbiesScreen({ navigation }) {
   const { hobbies, addHobby, removeHobby, updateHobby } = useApp();
@@ -75,9 +51,7 @@ export default function HobbiesScreen({ navigation }) {
   const saveEdit = async () => {
     if (!editName.trim()) return;
     const nameChanged = editName.trim().toLowerCase() !== editTarget.name.toLowerCase();
-    const skillChanged = editSkill.toLowerCase() !== editTarget.skillLevel;
     if (nameChanged) {
-      // Substantial name change → regenerate milestones
       setRegen(true);
       try {
         const milestones = await generateHobbyCurriculum({ hobbyName: editName.trim(), skillLevel: editSkill.toLowerCase() });
@@ -98,7 +72,7 @@ export default function HobbiesScreen({ navigation }) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={[s.title, { color: C.mintDark }]}>Grow</Text>
-        <Text style={[s.sub, { color: t.subtext }]}>Hobbies and skills you're building — one milestone at a time.</Text>
+        <Text style={[s.sub, { color: t.subtext }]}>Hobbies you're building, one milestone at a time.</Text>
 
         {hobbies.length === 0 && !showAdd && (
           <View style={s.empty}>
@@ -113,7 +87,7 @@ export default function HobbiesScreen({ navigation }) {
         {hobbies.map((h, idx) => {
           const total = h.milestones?.length ?? 1;
           const done  = h.milestoneIndex ?? 0;
-          const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+          const emoji = HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length];
           return (
             <TouchableOpacity
               key={h.id}
@@ -121,30 +95,20 @@ export default function HobbiesScreen({ navigation }) {
               onPress={() => navigation.navigate('HobbyDetail', { hobby: h })}
               activeOpacity={0.82}
             >
-              <View style={s.hobbyCardInner}>
-                <HobbyIconBadge idx={idx} />
-                <View style={s.hobbyMeta}>
-                  <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
-                  <View style={s.hobbyMetaRow}>
-                    <Text style={[s.hobbyLevel, { color: t.subtext }]}>{h.skillLevel}</Text>
-                    <View style={s.milestonePill}>
-                      <Text style={s.milestonePillText}>Milestone {done + 1} of {total}</Text>
-                    </View>
-                  </View>
-                  <Text style={[s.hobbyMilestone, { color: t.subtext }]} numberOfLines={2}>{h.currentMilestone}</Text>
-                  <View style={[s.barTrack, { backgroundColor: t.border }]}>
-                    <View style={[s.barFill, { width: `${pct}%` }]} />
-                  </View>
-                </View>
+              <View style={s.hobbyCardTop}>
+                <Text style={s.hobbyEmoji}>{emoji}</Text>
+                <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                 <View style={s.cardActions}>
                   <TouchableOpacity style={s.iconBtn} onPress={() => openEdit(h)}>
-                    <Feather name="edit-2" size={14} color={t.subtext} />
+                    <Feather name="edit-2" size={13} color={t.subtext} />
                   </TouchableOpacity>
                   <TouchableOpacity style={s.iconBtn} onPress={() => setDeleteConfirm(h)}>
-                    <Feather name="trash-2" size={14} color={t.subtext} />
+                    <Feather name="trash-2" size={13} color={t.subtext} />
                   </TouchableOpacity>
                 </View>
               </View>
+              <Text style={[s.milestoneLabel, { color: t.subtext }]}>MILESTONE {done + 1} OF {total}</Text>
+              <Text style={[s.hobbyMilestone, { color: t.text }]} numberOfLines={3}>{h.currentMilestone}</Text>
             </TouchableOpacity>
           );
         })}
@@ -278,25 +242,17 @@ const s = StyleSheet.create({
 
   hobbyCard: {
     borderRadius: 18, borderWidth: 1,
-    padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8,
+    padding: 18, marginBottom: 12,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  hobbyCardInner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  hobbyMeta: { flex: 1 },
-  cardActions: { flexDirection: 'column', gap: 4 },
+  hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  hobbyEmoji: { fontSize: 28, lineHeight: 34 },
+  hobbyName: { flex: 1, fontSize: 17, fontWeight: '700' },
+  cardActions: { flexDirection: 'row', gap: 2 },
   iconBtn: { padding: 5 },
-  hobbyName:    { fontSize: 17, fontWeight: '700', marginBottom: 4 },
-  hobbyMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  hobbyLevel:   { fontSize: 11, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase' },
-  milestonePill: {
-    backgroundColor: C.moss, borderRadius: 10,
-    paddingHorizontal: 7, paddingVertical: 2,
-  },
-  milestonePillText: { fontSize: 10, fontWeight: '700', color: C.white },
-  hobbyMilestone: { fontSize: 12, lineHeight: 18, marginBottom: 10 },
-  barTrack: { height: 4, borderRadius: 2, overflow: 'hidden' },
-  barFill:  { height: 4, backgroundColor: C.moss, borderRadius: 2, minWidth: 4 },
+  milestoneLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 6 },
+  hobbyMilestone: { fontSize: 14, lineHeight: 22 },
 
   addCard: {
     borderRadius: 18, borderWidth: 1.5,
@@ -337,7 +293,6 @@ const s = StyleSheet.create({
   },
   addBtnText: { fontSize: 15, fontWeight: '600' },
 
-  // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalCard: {
     borderTopLeftRadius: 24, borderTopRightRadius: 24,

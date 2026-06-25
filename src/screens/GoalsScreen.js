@@ -52,7 +52,7 @@ export default function GoalsScreen({ navigation }) {
             <Text style={[s.addBtn, { color: C.moss }]}>+ Add goal</Text>
           </TouchableOpacity>
         </View>
-        <Text style={[s.sub, { color: t.subtext }]}>Big things you're working toward — with a real evolving plan.</Text>
+        <Text style={[s.sub, { color: t.subtext }]}>Big things you're working toward.</Text>
 
         {showAdd && (
           <View style={[s.addCard, { backgroundColor: t.card, borderColor: t.border }]}>
@@ -91,11 +91,10 @@ export default function GoalsScreen({ navigation }) {
         ) : (
           goals.map((g, idx) => {
             const accent = GOAL_ACCENTS[idx % GOAL_ACCENTS.length];
-            const done   = g.completedActions?.length ?? 0;
             return (
               <TouchableOpacity
                 key={g.id}
-                style={[s.goalCard, { backgroundColor: t.card, borderColor: t.border, borderLeftColor: accent, borderLeftWidth: 4 }]}
+                style={[s.goalCard, { backgroundColor: t.card, borderColor: t.border, borderLeftColor: accent }]}
                 onPress={() => navigation.navigate('GoalDetail', { goal: g })}
                 activeOpacity={0.82}
               >
@@ -107,30 +106,20 @@ export default function GoalsScreen({ navigation }) {
                       onPress={() => { setEditTarget(g); setEditText(g.text); }}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Feather name="edit-2" size={14} color={t.subtext} />
+                      <Feather name="edit-2" size={13} color={t.subtext} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={s.iconBtn}
                       onPress={() => setDeleteConfirm(g)}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Feather name="trash-2" size={14} color={t.subtext} />
+                      <Feather name="trash-2" size={13} color={t.subtext} />
                     </TouchableOpacity>
                   </View>
                 </View>
-
-                <Text style={[s.stepLabel, { color: accent }]}>NEXT ACTION</Text>
-                <View style={[s.nextActionBox, { backgroundColor: t.card, borderLeftColor: accent, borderColor: t.border }]}>
-                  <Text style={[s.nextActionText, { color: t.text }]}>{g.currentAction || 'Tap to generate your first action.'}</Text>
-                </View>
-
-                <View style={s.goalFooter}>
-                  <Text style={[s.doneCount, { color: t.subtext }]}>{done} action{done !== 1 ? 's' : ''} completed</Text>
-                  <View style={s.chevronWrap}>
-                    <Text style={[s.tapHint, { color: t.subtext }]}>Tap for guidance</Text>
-                    <Feather name="chevron-right" size={14} color={t.subtext} />
-                  </View>
-                </View>
+                <Text style={[s.nextActionText, { color: t.subtext }]} numberOfLines={3}>
+                  {g.currentAction || 'Tap to generate your first action.'}
+                </Text>
               </TouchableOpacity>
             );
           })
@@ -219,33 +208,20 @@ const s = StyleSheet.create({
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
 
   goalCard: {
-    borderRadius: 18, borderWidth: 1,
+    borderRadius: 18, borderWidth: 1, borderLeftWidth: 4,
     padding: 18, marginBottom: 14,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   goalHeader: {
     flexDirection: 'row', alignItems: 'flex-start',
-    justifyContent: 'space-between', gap: 10, marginBottom: 12,
+    justifyContent: 'space-between', gap: 10, marginBottom: 10,
   },
   goalActions: { flexDirection: 'row', gap: 4 },
   iconBtn: { padding: 5 },
   goalText: { flex: 1, fontSize: 17, fontWeight: '700', lineHeight: 26 },
-
-  stepLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8 },
-
-  nextActionBox: {
-    borderRadius: 12, padding: 14, marginBottom: 14,
-    borderWidth: 1, borderLeftWidth: 3,
-  },
   nextActionText: { fontSize: 14, lineHeight: 22 },
 
-  goalFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  doneCount:  { fontSize: 11 },
-  chevronWrap:{ flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tapHint:    { fontSize: 11 },
-
-  // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalCard: {
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
