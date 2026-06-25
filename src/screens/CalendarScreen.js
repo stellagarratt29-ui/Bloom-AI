@@ -132,45 +132,43 @@ export default function CalendarScreen() {
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.setupScroll} showsVerticalScrollIndicator={false}>
           <Text style={s.title}>Calendar</Text>
-          <Text style={s.sub}>Connect Google Calendar to see events and manage your schedule by talking to Bloom.</Text>
+          <Text style={s.sub}>Connect Google Calendar to see your events and manage your schedule with Bloom.</Text>
 
-          <View style={s.setupCard}>
-            <Text style={s.setupCardTitle}>Step 1 — Get a Google Client ID</Text>
-            <Text style={s.setupStep}>1. Go to <Text style={s.setupLink} onPress={() => Linking.openURL('https://console.cloud.google.com')}>console.cloud.google.com</Text></Text>
-            <Text style={s.setupStep}>2. Create a project → Enable the Google Calendar API</Text>
-            <Text style={s.setupStep}>3. Credentials → Create OAuth 2.0 Client ID → Web application</Text>
-            <Text style={s.setupStep}>4. Add authorized JavaScript origin:</Text>
-            <Text style={s.setupCode}>https://stellagarratt29-ui.github.io</Text>
-            <Text style={s.setupStep}>5. Add authorized redirect URI:</Text>
-            <Text style={s.setupCode}>https://stellagarratt29-ui.github.io/Bloom-AI/</Text>
-            <Text style={s.setupStep}>6. Copy the Client ID and paste it below</Text>
-          </View>
-
-          <View style={s.setupCard}>
-            <Text style={s.setupCardTitle}>Step 2 — Paste your Client ID</Text>
-            <TextInput
-              style={s.clientInput}
-              placeholder="123456789-abc...apps.googleusercontent.com"
-              placeholderTextColor={C.muted}
-              value={clientId}
-              onChangeText={setClientId}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <TouchableOpacity
-              style={[s.connectBtn, !clientId.trim() && s.connectBtnOff]}
-              onPress={handleConnect}
-              disabled={!clientId.trim()}
-            >
+          {clientId ? (
+            <TouchableOpacity style={s.connectBtn} onPress={handleConnect}>
               <Feather name="calendar" size={16} color={C.white} />
-              <Text style={s.connectBtnText}>Connect Google Calendar →</Text>
+              <Text style={s.connectBtnText}>Connect Google Calendar</Text>
             </TouchableOpacity>
-          </View>
+          ) : (
+            <View style={s.setupCard}>
+              <Text style={s.setupCardTitle}>Paste your Google OAuth Client ID</Text>
+              <Text style={s.setupStep}>
+                Create one at <Text style={s.setupLink} onPress={() => Linking.openURL('https://console.cloud.google.com')}>console.cloud.google.com</Text> → APIs & Services → Credentials → OAuth 2.0 Client ID (Web app). Add <Text style={s.setupCode}>https://stellagarratt29-ui.github.io</Text> as the authorised JavaScript origin.
+              </Text>
+              <TextInput
+                style={s.clientInput}
+                placeholder="123456789-abc…apps.googleusercontent.com"
+                placeholderTextColor={C.muted}
+                value={clientId}
+                onChangeText={setClientId}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={[s.connectBtn, !clientId.trim() && s.connectBtnOff]}
+                onPress={handleConnect}
+                disabled={!clientId.trim()}
+              >
+                <Feather name="calendar" size={16} color={C.white} />
+                <Text style={s.connectBtnText}>Connect Google Calendar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={s.noteCard}>
             <Feather name="lock" size={13} color={C.muted} style={{ marginRight: 8, marginTop: 1, flexShrink: 0 }} />
             <Text style={s.noteText}>
-              Bloom only reads your events to answer questions and writes events when you ask it to. No data is sent anywhere except Google's own servers.
+              Bloom reads your events to answer questions and writes events only when you ask. Your data goes directly to Google's servers.
             </Text>
           </View>
         </ScrollView>
@@ -293,7 +291,7 @@ export default function CalendarScreen() {
           onPress={() => send(input)}
           disabled={!input.trim() || thinking}
         >
-          <Feather name="arrow-up" size={17} color={C.white} />
+          <Feather name="send" size={16} color={C.white} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -314,27 +312,26 @@ const s = StyleSheet.create({
 
   setupCard: {
     backgroundColor: C.white, borderRadius: 18, borderWidth: 1, borderColor: C.border,
-    padding: 20, marginBottom: 14,
+    padding: 20, marginBottom: 16,
   },
-  setupCardTitle: { fontSize: 15, fontWeight: '700', color: C.forest, marginBottom: 14 },
-  setupStep: { fontSize: 13, color: C.forest, lineHeight: 22, marginBottom: 4 },
-  setupLink: { color: C.sage, textDecorationLine: 'underline' },
+  setupCardTitle: { fontSize: 15, fontWeight: '700', color: C.ink, marginBottom: 12 },
+  setupStep: { fontSize: 13, color: C.ink, lineHeight: 22, marginBottom: 14 },
+  setupLink: { color: C.moss, textDecorationLine: 'underline' },
   setupCode: {
     fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
-    fontSize: 11, color: C.clay, backgroundColor: C.clayPale,
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-    marginBottom: 8, marginTop: 2,
+    fontSize: 11, color: C.clay,
   },
   clientInput: {
     backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
-    fontSize: 13, color: C.forest, marginBottom: 14,
+    fontSize: 13, color: C.ink, marginBottom: 14,
     fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
   },
   connectBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: C.forest, borderRadius: 14,
+    backgroundColor: C.moss, borderRadius: 14,
     paddingVertical: 14, paddingHorizontal: 18, justifyContent: 'center',
+    marginBottom: 16,
   },
   connectBtnOff: { opacity: 0.4 },
   connectBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
@@ -402,7 +399,7 @@ const s = StyleSheet.create({
 
   userRow:   { alignItems: 'flex-end', marginBottom: 12 },
   userBubble: {
-    backgroundColor: C.forest, borderRadius: 18, borderBottomRightRadius: 5,
+    backgroundColor: C.moss, borderRadius: 18, borderBottomRightRadius: 5,
     paddingVertical: 11, paddingHorizontal: 15, maxWidth: '80%',
   },
   userText: { fontSize: 15, color: C.white, lineHeight: 22 },
@@ -425,7 +422,7 @@ const s = StyleSheet.create({
   },
   sendBtn: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
 });

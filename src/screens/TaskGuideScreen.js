@@ -101,8 +101,8 @@ Write in plain text. No markdown headers. Be encouraging but not generic.`,
     navigation.goBack();
   };
 
-  const PRIORITY_COLOR = { high: '#C0392B', medium: C.sage, low: C.muted };
-  const priorityColor = PRIORITY_COLOR[task?.priority] ?? C.sage;
+  const PRIORITY_COLOR = { high: '#C0392B', medium: C.moss, low: C.muted };
+  const priorityColor = PRIORITY_COLOR[task?.priority] ?? C.moss;
 
   return (
     <SafeAreaView style={s.safe}>
@@ -178,7 +178,7 @@ Write in plain text. No markdown headers. Be encouraging but not generic.`,
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="arrow-up" size={17} color={C.white} />
+            <Feather name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 
@@ -232,12 +232,12 @@ const s = StyleSheet.create({
   headerTask: { flex: 1, fontSize: 15, fontWeight: '700', color: C.forest, lineHeight: 22 },
   doneBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: C.forest, borderRadius: 20,
+    backgroundColor: C.moss, borderRadius: 20,
     paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0,
   },
-  doneBtnDone: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: C.sage },
+  doneBtnDone: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: C.moss },
   doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
-  doneBtnTextDone: { color: C.sage },
+  doneBtnTextDone: { color: C.moss },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 20, gap: 14, paddingBottom: 32 },
@@ -253,7 +253,7 @@ const s = StyleSheet.create({
 
   userRow: { alignItems: 'flex-end' },
   userBubble: {
-    backgroundColor: C.forest, borderRadius: 18, borderBottomRightRadius: 6,
+    backgroundColor: C.moss, borderRadius: 18, borderBottomRightRadius: 6,
     paddingVertical: 12, paddingHorizontal: 16, maxWidth: '80%',
   },
   userText: { fontSize: 15, color: C.white, lineHeight: 22 },
@@ -268,11 +268,11 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: C.white,
     borderWidth: 1.5, borderColor: C.border,
     borderRadius: 24, paddingVertical: 11, paddingHorizontal: 18,
-    fontSize: 15, color: C.forest,
+    fontSize: 15, color: C.ink,
   },
   sendBtn: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
 });

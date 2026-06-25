@@ -20,6 +20,7 @@ import { C } from './src/constants/colors';
 import OnboardingScreen      from './src/screens/OnboardingScreen';
 import BloomChatScreen       from './src/screens/BloomChatScreen';
 import TaskGuideScreen       from './src/screens/TaskGuideScreen';
+import TasksScreen           from './src/screens/TasksScreen';
 import HobbiesScreen         from './src/screens/HobbiesScreen';
 import HobbyDetailScreen     from './src/screens/HobbyDetailScreen';
 import GoalsScreen           from './src/screens/GoalsScreen';
@@ -27,14 +28,16 @@ import GoalDetailScreen      from './src/screens/GoalDetailScreen';
 import CalendarScreen        from './src/screens/CalendarScreen';
 import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
 
-const RootStack     = createNativeStackNavigator();
-const ChatStackNav  = createNativeStackNavigator();
-const GrowStackNav  = createNativeStackNavigator();
-const GoalsStackNav = createNativeStackNavigator();
-const Tab           = createBottomTabNavigator();
+const RootStack      = createNativeStackNavigator();
+const ChatStackNav   = createNativeStackNavigator();
+const TasksStackNav  = createNativeStackNavigator();
+const GrowStackNav   = createNativeStackNavigator();
+const GoalsStackNav  = createNativeStackNavigator();
+const Tab            = createBottomTabNavigator();
 
 const TAB_ITEMS = [
-  { name: 'ChatTab',     icon: 'message-circle', label: 'Today'    },
+  { name: 'ChatTab',     icon: 'message-circle', label: 'Chat'     },
+  { name: 'TasksTab',    icon: 'check-square',   label: 'Tasks'    },
   { name: 'GrowTab',     icon: 'sun',            label: 'Grow'     },
   { name: 'GoalsTab',    icon: 'target',         label: 'Goals'    },
   { name: 'CalendarTab', icon: 'calendar',       label: 'Calendar' },
@@ -150,9 +153,17 @@ const mobileTabS = StyleSheet.create({
 function ChatStack() {
   return (
     <ChatStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ChatStackNav.Screen name="BloomChat"  component={BloomChatScreen} />
-      <ChatStackNav.Screen name="TaskGuide"  component={TaskGuideScreen} />
+      <ChatStackNav.Screen name="BloomChat" component={BloomChatScreen} />
     </ChatStackNav.Navigator>
+  );
+}
+
+function TasksStack() {
+  return (
+    <TasksStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <TasksStackNav.Screen name="TasksList" component={TasksScreen} />
+      <TasksStackNav.Screen name="TaskGuide" component={TaskGuideScreen} />
+    </TasksStackNav.Navigator>
   );
 }
 
@@ -184,6 +195,7 @@ function MainTabs() {
       initialRouteName="ChatTab"
     >
       <Tab.Screen name="ChatTab"     component={ChatStack} />
+      <Tab.Screen name="TasksTab"    component={TasksStack} />
       <Tab.Screen name="GrowTab"     component={GrowStack} />
       <Tab.Screen name="GoalsTab"    component={GoalsStack} />
       <Tab.Screen name="CalendarTab" component={CalendarScreen} />

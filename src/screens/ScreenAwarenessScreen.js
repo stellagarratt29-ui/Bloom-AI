@@ -120,10 +120,11 @@ const s = StyleSheet.create({
   insightCard: {
     backgroundColor: C.white, borderRadius: 18, padding: 18,
     borderWidth: 1, borderColor: C.border, marginBottom: 22,
+    borderLeftWidth: 4, borderLeftColor: C.sky,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  insightLabel: { fontSize: 10, fontWeight: '700', color: C.sage, letterSpacing: 1.3, marginBottom: 10 },
-  insightText:  { fontSize: 14, color: C.forest, lineHeight: 22 },
+  insightLabel: { fontSize: 10, fontWeight: '700', color: C.sky, letterSpacing: 1.3, marginBottom: 10 },
+  insightText:  { fontSize: 14, color: C.ink, lineHeight: 22 },
 
   redirectLabel: {
     fontSize: 10, fontWeight: '700', color: C.muted,

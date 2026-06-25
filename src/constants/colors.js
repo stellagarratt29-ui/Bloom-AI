@@ -1,18 +1,26 @@
 export const C = {
-  cream:     '#FBF7EF',
-  forest:    '#3A4A3D',
-  sage:      '#7C9473',
-  sageMid:   '#A3BA9B',
-  sageLight: '#C8D9C3',
+  // === Core palette (spec-exact) ===
+  cream:   '#FBF7EF',   // main background
+  linen:   '#F3EDE0',   // secondary sections
+  ink:     '#3A4A3D',   // all text / headings
+  moss:    '#7C9473',   // primary accent — buttons, active states
+  sage:    '#A9BBA0',   // borders, subtle highlights
+  clay:    '#C98B6B',   // warm accent — tags, labels
+  gold:    '#E0B45C',   // sparingly — progress
+  sky:     '#9FBCC4',   // Screen Awareness insight callouts ONLY
+  shell:   '#EADFCB',   // card fills on cream
+  white:   '#FFFEFB',   // inputs, chat bubbles
+
+  // === Backward-compat aliases ===
+  forest:    '#3A4A3D',   // alias for ink
   sagePale:  '#EBF2E8',
-  clay:      '#C98B6B',
+  sageLight: '#C8D9C3',
+  sageMid:   '#A9BBA0',
   clayLight: '#E8C4AF',
   clayPale:  '#FAF0E8',
-  gold:      '#E0B45C',
   goldLight: '#F5DFA0',
   goldPale:  '#FDF6E3',
   muted:     '#8A8A80',
   border:    '#E4DDD1',
-  white:     '#FFFFFF',
   overlay:   'rgba(58,74,61,0.32)',
 };

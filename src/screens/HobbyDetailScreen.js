@@ -136,7 +136,7 @@ Write in plain text, no markdown headers.`,
             ) : (
               <>
                 <Feather name="check" size={14} color={C.white} />
-                <Text style={s.doneBtnText}>Done</Text>
+                <Text style={s.doneBtnText}>Milestone done</Text>
               </>
             )}
           </TouchableOpacity>
@@ -219,7 +219,7 @@ Write in plain text, no markdown headers.`,
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="arrow-up" size={17} color={C.white} />
+            <Feather name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 
@@ -243,7 +243,7 @@ const s = StyleSheet.create({
   headerMilestone: { fontSize: 13, color: C.forest, lineHeight: 18, fontWeight: '500' },
   doneBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: C.sage, borderRadius: 20,
+    backgroundColor: C.moss, borderRadius: 20,
     paddingVertical: 8, paddingHorizontal: 14, flexShrink: 0, minWidth: 70, justifyContent: 'center',
   },
   doneBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
@@ -255,8 +255,8 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center',
     backgroundColor: C.cream,
   },
-  curriculumStepDone:    { backgroundColor: C.sage,   borderColor: C.sage   },
-  curriculumStepCurrent: { backgroundColor: C.forest, borderColor: C.forest },
+  curriculumStepDone:    { backgroundColor: C.moss,  borderColor: C.moss  },
+  curriculumStepCurrent: { backgroundColor: C.ink,   borderColor: C.ink   },
   curriculumStepNum:     { fontSize: 11, fontWeight: '700', color: C.muted },
   curriculumStepNumDone:    { color: C.white },
   curriculumStepNumCurrent: { color: C.white },
@@ -276,7 +276,7 @@ const s = StyleSheet.create({
 
   userRow: { alignItems: 'flex-end' },
   userBubble: {
-    backgroundColor: C.forest, borderRadius: 18, borderBottomRightRadius: 6,
+    backgroundColor: C.moss, borderRadius: 18, borderBottomRightRadius: 6,
     paddingVertical: 12, paddingHorizontal: 16, maxWidth: '80%',
   },
   userText: { fontSize: 15, color: C.white, lineHeight: 22 },
@@ -289,11 +289,11 @@ const s = StyleSheet.create({
   input: {
     flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
     borderRadius: 24, paddingVertical: 11, paddingHorizontal: 18,
-    fontSize: 15, color: C.forest,
+    fontSize: 15, color: C.ink,
   },
   sendBtn: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
 });
