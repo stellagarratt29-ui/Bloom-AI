@@ -188,9 +188,9 @@ export async function processCalendarRequest(text) {
         system: `You are Bloom, a personal productivity assistant. Today is ${now.toDateString()}. The user is asking about their schedule but Google Calendar isn't connected, so you don't have their actual events. Help them think through their scheduling question, suggest a plan, or offer time management advice based on what they said. Be warm and specific. 2-3 sentences.`,
         messages: [{ role: 'user', content: text }],
         maxTokens: 200,
-      }).catch(() => "I can help you think through your schedule! Connect Google Calendar (tap Connect at the top) to see your actual events — or just tell me what you're trying to plan and I'll help you work it out.");
+      }).catch(() => "I can help you think through your schedule — just tell me what you're working with and I'll help you plan it out.");
     }
-    return "I can help you think through your schedule! Connect Google Calendar (tap Connect at the top) to see your actual events — or just tell me what you're trying to plan and I'll help you work it out.";
+    return "I can help you think through your schedule — just tell me what you're working with and I'll help you plan it out.";
   }
 
   // Parse intent with AI
