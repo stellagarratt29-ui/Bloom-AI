@@ -195,8 +195,8 @@ export default function CalendarScreen() {
 
             <TouchableOpacity
               style={[s.connectBigBtn, Platform.OS === 'web'
-                ? { background: `linear-gradient(135deg, ${C.skyDark}, ${C.moss})` }
-                : { backgroundColor: C.skyDark }]}
+                ? { background: `linear-gradient(135deg, ${t.chatBubble}, ${t.calloutAccent})` }
+                : { backgroundColor: t.chatBubble }]}
               onPress={() => {
                 if (clientId.trim()) { handleConnect(); }
                 else { setShowConnectForm(true); }
@@ -206,8 +206,8 @@ export default function CalendarScreen() {
               <Text style={s.connectBigBtnText}>Connect Google Calendar</Text>
             </TouchableOpacity>
 
-            <View style={[s.privacyRow, { borderLeftColor: C.clay, marginTop: 24 }]}>
-              <Text style={[s.privacyLabel, { color: C.clay }]}>PRIVACY</Text>
+            <View style={[s.privacyRow, { borderLeftColor: t.calloutAccent, marginTop: 24 }]}>
+              <Text style={[s.privacyLabel, { color: t.calloutAccent }]}>PRIVACY</Text>
               <Text style={[s.privacyText, { color: t.subtext }]}>Bloom reads events to answer questions, writes only when you ask.</Text>
             </View>
           </View>

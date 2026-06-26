@@ -6,8 +6,17 @@ const THEME_KEY = '@bloom_theme_v1';
 
 const ThemeContext = createContext(null);
 
+const ACCENT_PAIRS = {
+  cream:    { chatBubble: C.moss,     calloutAccent: C.clay     },
+  lavender: { chatBubble: C.lavDark,  calloutAccent: C.pinkDark },
+  mint:     { chatBubble: C.mintDark, calloutAccent: C.skyDark  },
+  sky:      { chatBubble: C.skyDark,  calloutAccent: C.lavDark  },
+  pink:     { chatBubble: C.pinkDark, calloutAccent: C.gold     },
+};
+
 function makeColors(bgTheme, isDark) {
   const bgColor = BG_THEMES[bgTheme] ?? C.cream;
+  const pair = ACCENT_PAIRS[bgTheme] ?? ACCENT_PAIRS.cream;
   if (isDark) {
     return {
       bg:       C.darkBg,
@@ -34,6 +43,9 @@ function makeColors(bgTheme, isDark) {
       mintDark: '#5AB890',
       skyDark:  '#5AACC8',
       pinkDark: '#E07090',
+      // theme-aware chat/callout accents
+      chatBubble:    pair.chatBubble,
+      calloutAccent: pair.calloutAccent,
     };
   }
   return {
@@ -59,6 +71,9 @@ function makeColors(bgTheme, isDark) {
     mintDark: C.mintDark,
     skyDark:  C.skyDark,
     pinkDark: C.pinkDark,
+    // theme-aware chat/callout accents
+    chatBubble:    pair.chatBubble,
+    calloutAccent: pair.calloutAccent,
   };
 }
 

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
 
 if (Platform.OS !== 'web') {
   require('react-native-gesture-handler');
@@ -252,6 +253,21 @@ function ThemedShell({ children }) {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    'feather': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 32, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
+            fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined }}>Bloom</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>

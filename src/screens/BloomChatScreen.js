@@ -208,7 +208,7 @@ export default function BloomChatScreen() {
             if (m.from === 'user') {
               return (
                 <View key={m.id} style={s.userRow}>
-                  <View style={s.userBubble}>
+                  <View style={[s.userBubble, { backgroundColor: t.chatBubble }]}>
                     <Text style={s.userText}>{m.text}</Text>
                   </View>
                 </View>
@@ -253,7 +253,7 @@ export default function BloomChatScreen() {
             editable={!thinking}
           />
           <TouchableOpacity
-            style={[s.sendBtn, (!input.trim() || thinking) && s.sendBtnOff]}
+            style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
