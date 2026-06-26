@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet, Platform, TextInput, Switch,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C, BG_THEMES } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -37,7 +37,7 @@ function Row({ label, value, onPress, t, last }) {
       <Text style={[s.rowLabel, { color: t.text }]}>{label}</Text>
       <View style={s.rowRight}>
         {value ? <Text style={[s.rowValue, { color: t.subtext }]}>{value}</Text> : null}
-        <Feather name="chevron-right" size={16} color={t.subtext} />
+        <Icon name="chevron-right" size={16} color={t.subtext} />
       </View>
     </TouchableOpacity>
   );
@@ -136,7 +136,7 @@ export default function SettingsScreen() {
                 onPress={() => setBgTheme(sw.key)}
               >
                 {bgTheme === sw.key && (
-                  <Feather name="check" size={16} color={sw.key === 'cream' ? C.ink : '#fff'} />
+                  <Icon name="check" size={16} color={sw.key === 'cream' ? C.ink : '#fff'} />
                 )}
               </TouchableOpacity>
             ))}

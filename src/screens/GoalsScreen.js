@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   SafeAreaView, StyleSheet, Platform, ActivityIndicator, Modal,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C, GOAL_ACCENTS } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -83,7 +83,7 @@ export default function GoalsScreen({ navigation }) {
 
         {goals.length === 0 && !showAdd ? (
           <View style={s.empty}>
-            <Feather name="target" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
+            <Icon name="target" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
             <Text style={[s.emptyHead, { color: t.text }]}>No goals yet</Text>
             <Text style={[s.emptyText, { color: t.subtext }]}>
               Add something big — "Start a business", "Get fit", "Write a book". Bloom will generate a real step-by-step plan, one action at a time.
@@ -102,7 +102,7 @@ export default function GoalsScreen({ navigation }) {
                 <View style={s.goalHeader}>
                   <Text style={[s.goalText, { color: t.text }]}>{g.text}</Text>
                   <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(g)}>
-                    <Feather name="more-vertical" size={18} color={t.subtext} />
+                    <Icon name="more-vertical" size={18} color={t.subtext} />
                   </TouchableOpacity>
                 </View>
                 {g.currentAction ? (
@@ -135,11 +135,11 @@ export default function GoalsScreen({ navigation }) {
             <Text style={[s.menuItemTitle, { color: t.subtext }]} numberOfLines={1}>{menuTarget?.text}</Text>
             <View style={[s.menuDivider, { backgroundColor: t.border }]} />
             <TouchableOpacity style={s.menuItem} onPress={() => { setEditTarget(menuTarget); setEditText(menuTarget?.text ?? ''); setMenuTarget(null); }}>
-              <Feather name="edit-2" size={18} color={t.text} />
+              <Icon name="edit-2" size={18} color={t.text} />
               <Text style={[s.menuItemText, { color: t.text }]}>Edit goal</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
-              <Feather name="trash-2" size={18} color={C.pinkDark} />
+              <Icon name="trash-2" size={18} color={C.pinkDark} />
               <Text style={[s.menuItemText, { color: C.pinkDark }]}>Remove goal</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[s.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>

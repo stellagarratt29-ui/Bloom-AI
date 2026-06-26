@@ -4,7 +4,7 @@ import {
   SafeAreaView, StyleSheet, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey, generateHobbyMilestone } from '../services/ai';
@@ -120,7 +120,7 @@ Write in plain text, no markdown headers.`,
 
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={22} color={C.ink} />
+            <Icon name="arrow-left" size={22} color={C.ink} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <Text style={s.headerHobby}>{hobby?.name ?? 'Hobby'}</Text>
@@ -135,7 +135,7 @@ Write in plain text, no markdown headers.`,
               <ActivityIndicator size="small" color={C.white} />
             ) : (
               <>
-                <Feather name="check" size={14} color={C.white} />
+                <Icon name="check" size={14} color={C.white} />
                 <Text style={s.doneBtnText}>Milestone done</Text>
               </>
             )}
@@ -219,7 +219,7 @@ Write in plain text, no markdown headers.`,
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="send" size={16} color={C.white} />
+            <Icon name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 

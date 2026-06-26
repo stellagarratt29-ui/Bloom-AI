@@ -7,8 +7,7 @@ import {
   StyleSheet, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import { useFonts } from 'expo-font';
+import Icon from './src/components/Icon';
 
 if (Platform.OS !== 'web') {
   require('react-native-gesture-handler');
@@ -84,7 +83,7 @@ function TabIcon({ iconName, label, focused }) {
         { borderRadius: 12, paddingHorizontal: 13, paddingVertical: 4, marginBottom: 1 },
         focused && { backgroundColor: C.sagePale },
       ]}>
-        <Feather name={iconName} size={18} color={focused ? C.moss : colors.subtext} />
+        <Icon name={iconName} size={18} color={focused ? C.moss : colors.subtext} />
       </View>
       <Text style={{ fontSize: 9, fontWeight: focused ? '700' : '500', color: focused ? C.moss : colors.subtext }}>
         {label}
@@ -113,7 +112,7 @@ function CustomTabBar({ state, navigation }) {
               onPress={() => navigation.navigate(item.name)}
               activeOpacity={0.7}
             >
-              <Feather name={item.icon} size={18} color={focused ? C.moss : colors.subtext} />
+              <Icon name={item.icon} size={18} color={focused ? C.moss : colors.subtext} />
               <Text style={[deskS.navLabel, { color: colors.subtext }, focused && { fontWeight: '700', color: C.moss }]}>{item.label}</Text>
             </TouchableOpacity>
           );
@@ -253,21 +252,6 @@ function ThemedShell({ children }) {
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    'feather': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf'),
-  });
-
-  if (!fontsLoaded) {
-    return (
-      <SafeAreaProvider>
-        <View style={{ flex: 1, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 32, fontWeight: '800', color: C.clay, letterSpacing: -0.5,
-            fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined }}>Bloom</Text>
-        </View>
-      </SafeAreaProvider>
-    );
-  }
-
   return (
     <ErrorBoundary>
       <SafeAreaProvider>

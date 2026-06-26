@@ -4,7 +4,7 @@ import {
   ScrollView, SafeAreaView, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -257,7 +257,7 @@ export default function BloomChatScreen() {
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="send" size={16} color={C.white} />
+            <Icon name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 

@@ -4,7 +4,7 @@ import {
   SafeAreaView, StyleSheet, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey } from '../services/ai';
@@ -110,7 +110,7 @@ Write in plain text. No markdown headers. Be encouraging but not generic.`,
 
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={22} color={C.ink} />
+            <Icon name="arrow-left" size={22} color={C.ink} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <View style={[s.priorityDot, { backgroundColor: priorityColor }]} />
@@ -120,7 +120,7 @@ Write in plain text. No markdown headers. Be encouraging but not generic.`,
             style={[s.doneBtn, taskDone && s.doneBtnDone]}
             onPress={handleMarkDone}
           >
-            <Feather name="check" size={15} color={taskDone ? C.sage : C.white} />
+            <Icon name="check" size={15} color={taskDone ? C.sage : C.white} />
             <Text style={[s.doneBtnText, taskDone && s.doneBtnTextDone]}>
               {taskDone ? 'Done ✓' : 'Mark done — +5 pts'}
             </Text>
@@ -178,7 +178,7 @@ Write in plain text. No markdown headers. Be encouraging but not generic.`,
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="send" size={16} color={C.white} />
+            <Icon name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 

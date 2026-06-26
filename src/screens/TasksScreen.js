@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet, Platform, TextInput, Modal,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -76,7 +76,7 @@ export default function TasksScreen({ navigation }) {
         {!isDone && <Text style={[ss.ptsLabel, { color: sec?.cbColor ?? C.moss }]}>+5</Text>}
       </TouchableOpacity>
       <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
-        <Feather name="more-vertical" size={18} color={t.subtext} />
+        <Icon name="more-vertical" size={18} color={t.subtext} />
       </TouchableOpacity>
     </View>
   );
@@ -88,7 +88,7 @@ export default function TasksScreen({ navigation }) {
         <View style={ss.headerRight}>
           <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
           <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.lavDark }]} onPress={() => setShowAddTask(true)}>
-            <Feather name="plus" size={14} color={C.white} />
+            <Icon name="plus" size={14} color={C.white} />
             <Text style={ss.addTaskBtnText}>Add</Text>
           </TouchableOpacity>
         </View>
@@ -97,7 +97,7 @@ export default function TasksScreen({ navigation }) {
       <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
         {tasks.length === 0 ? (
           <View style={ss.empty}>
-            <Feather name="check-circle" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
+            <Icon name="check-circle" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
             <Text style={[ss.emptyHead, { color: t.text }]}>All clear</Text>
             <Text style={[ss.emptyText, { color: t.subtext }]}>
               Go to Chat, tell Bloom what's on your mind, and your tasks will appear here sorted by priority.
@@ -143,11 +143,11 @@ export default function TasksScreen({ navigation }) {
             <Text style={[ss.menuItemTitle, { color: t.subtext }]} numberOfLines={1}>{menuTarget?.text}</Text>
             <View style={[ss.menuDivider, { backgroundColor: t.border }]} />
             <TouchableOpacity style={ss.menuItem} onPress={() => { openEdit(menuTarget); setMenuTarget(null); }}>
-              <Feather name="edit-2" size={18} color={t.text} />
+              <Icon name="edit-2" size={18} color={t.text} />
               <Text style={[ss.menuItemText, { color: t.text }]}>Edit task</Text>
             </TouchableOpacity>
             <TouchableOpacity style={ss.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
-              <Feather name="trash-2" size={18} color={C.pinkDark} />
+              <Icon name="trash-2" size={18} color={C.pinkDark} />
               <Text style={[ss.menuItemText, { color: C.pinkDark }]}>Delete task</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[ss.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>

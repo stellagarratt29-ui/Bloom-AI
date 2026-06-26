@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   SafeAreaView, StyleSheet, Platform, ActivityIndicator, Modal,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -86,7 +86,7 @@ export default function HobbiesScreen({ navigation }) {
 
         {hobbies.length === 0 && !showAdd && (
           <View style={s.empty}>
-            <Feather name="sun" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
+            <Icon name="sun" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
             <Text style={[s.emptyHead, { color: t.text }]}>Nothing here yet</Text>
             <Text style={[s.emptyText, { color: t.subtext }]}>
               Add any hobby — guitar, watercolour, running, anything. Bloom will build you a real curriculum.
@@ -118,7 +118,7 @@ export default function HobbiesScreen({ navigation }) {
                 </View>
                 <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                 <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(h)}>
-                  <Feather name="more-vertical" size={18} color={t.subtext} />
+                  <Icon name="more-vertical" size={18} color={t.subtext} />
                 </TouchableOpacity>
               </View>
               <View style={[s.progressTrack, { backgroundColor: t.border }]}>
@@ -173,7 +173,7 @@ export default function HobbiesScreen({ navigation }) {
           </View>
         ) : (
           <TouchableOpacity style={[s.addBtn, { borderColor: C.clayLight }]} onPress={() => setShowAdd(true)}>
-            <Feather name="plus" size={16} color={C.clay} />
+            <Icon name="plus" size={16} color={C.clay} />
             <Text style={[s.addBtnText, { color: C.clay }]}>Add a hobby</Text>
           </TouchableOpacity>
         )}
@@ -188,11 +188,11 @@ export default function HobbiesScreen({ navigation }) {
             <Text style={[s.menuItemTitle, { color: t.subtext }]} numberOfLines={1}>{menuTarget?.name}</Text>
             <View style={[s.menuDivider, { backgroundColor: t.border }]} />
             <TouchableOpacity style={s.menuItem} onPress={() => { openEdit(menuTarget); setMenuTarget(null); }}>
-              <Feather name="edit-2" size={18} color={t.text} />
+              <Icon name="edit-2" size={18} color={t.text} />
               <Text style={[s.menuItemText, { color: t.text }]}>Edit hobby</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
-              <Feather name="trash-2" size={18} color={C.pinkDark} />
+              <Icon name="trash-2" size={18} color={C.pinkDark} />
               <Text style={[s.menuItemText, { color: C.pinkDark }]}>Remove hobby</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[s.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>

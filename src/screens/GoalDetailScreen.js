@@ -4,7 +4,7 @@ import {
   SafeAreaView, StyleSheet, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey, generateGoalAction } from '../services/ai';
@@ -113,7 +113,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
 
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Feather name="arrow-left" size={22} color={C.ink} />
+            <Icon name="arrow-left" size={22} color={C.ink} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
             <Text style={s.headerGoal} numberOfLines={1}>{goal?.text ?? 'Goal'}</Text>
@@ -128,7 +128,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
               <ActivityIndicator size="small" color={C.white} />
             ) : (
               <>
-                <Feather name="check" size={14} color={C.white} />
+                <Icon name="check" size={14} color={C.white} />
                 <Text style={s.doneBtnText}>Done</Text>
               </>
             )}
@@ -137,7 +137,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
 
         {doneCount > 0 && (
           <View style={s.progressBanner}>
-            <Feather name="trending-up" size={13} color={C.moss} />
+            <Icon name="trending-up" size={13} color={C.moss} />
             <Text style={s.progressText}>{doneCount} action{doneCount !== 1 ? 's' : ''} completed toward this goal</Text>
           </View>
         )}
@@ -193,7 +193,7 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Feather name="send" size={16} color={C.white} />
+            <Icon name="send" size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 
