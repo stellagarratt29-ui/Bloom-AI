@@ -1,31 +1,38 @@
 export const C = {
-  // === Core palette ===
-  cream:   '#FBF7EF',
-  linen:   '#F3EDE0',
-  ink:     '#3A4A3D',
-  moss:    '#7C9473',
-  sage:    '#A9BBA0',
-  clay:    '#C98B6B',
-  gold:    '#E0B45C',
-  sky:     '#9FBCC4',
-  shell:   '#EADFCB',
-  white:   '#FFFEFB',
+  // === Core palette (spec-exact) ===
+  cream:    '#FBF7EF',
+  linen:    '#F3EDE0',
+  ink:      '#3A4A3D',
+  moss:     '#7C9473',
+  mossDark: '#62795B',
+  sage:     '#A9BBA0',
+  clay:     '#C98B6B',
+  clayDark: '#B5714F',
+  gold:     '#E0B45C',
+  white:    '#FFFEFB',
+  shell:    '#F1E8D8',
 
-  // === Tab/heading accent darks ===
-  lavDark:  '#5E4B8B',
-  mintDark: '#2A7A58',
-  skyDark:  '#1A6A8A',
-  pinkDark: '#B83A55',
+  // === Pastel accent tones ===
+  lavender: '#C9B8E8',
+  mint:     '#AEDCC4',
+  sky:      '#A8D4E8',
+  pink:     '#F2B9C4',
+
+  // === Tab/heading accent darks (soft pastels per spec) ===
+  lavDark:  '#9F87CE',
+  mintDark: '#6FB492',
+  skyDark:  '#6FAFCB',
+  pinkDark: '#D88A9B',
 
   // === Category pill colors ===
-  pillPinkBg:   '#FAE0E5',
-  pillPinkText: '#B83A55',
-  pillLavBg:    '#EDE6F9',
-  pillLavText:  '#5E4B8B',
-  pillSkyBg:    '#DFF0F8',
-  pillSkyText:  '#1A6A8A',
-  pillMintBg:   '#D5F3E4',
-  pillMintText: '#2A7A58',
+  pillPinkBg:   '#FADADF',
+  pillPinkText: '#C4607A',
+  pillLavBg:    '#EBE3F5',
+  pillLavText:  '#7A65B8',
+  pillSkyBg:    '#DBF0F8',
+  pillSkyText:  '#4A9EC0',
+  pillMintBg:   '#CEEEE0',
+  pillMintText: '#4A9470',
 
   // === Background washes ===
   lavWash:  '#F2EDFB',
@@ -41,7 +48,7 @@ export const C = {
   darkSubtext: '#8A9E88',
   darkInput:   '#1C2820',
 
-  // === Backward-compat aliases ===
+  // === Aliases ===
   forest:    '#3A4A3D',
   sagePale:  '#EBF2E8',
   sageLight: '#C8D9C3',
@@ -55,7 +62,7 @@ export const C = {
   overlay:   'rgba(58,74,61,0.32)',
 };
 
-// Background theme map
+// Background theme hex values (for swatches and bg)
 export const BG_THEMES = {
   cream:    '#FBF7EF',
   lavender: '#F2EDFB',
@@ -64,5 +71,5 @@ export const BG_THEMES = {
   pink:     '#FDF0F3',
 };
 
-// Goal card accent colors (cycled)
-export const GOAL_ACCENTS = ['#B83A55', '#1A6A8A', '#5E4B8B', '#2A7A58', '#C98B6B'];
+// Goal card accent colors — soft pastel darks
+export const GOAL_ACCENTS = ['#D88A9B', '#6FAFCB', '#9F87CE', '#6FB492', '#C98B6B'];

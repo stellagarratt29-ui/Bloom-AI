@@ -13,6 +13,15 @@ const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
 const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
 
+const BADGE_GRADIENTS = [
+  ['#F2B9C4', '#C9B8E8'],
+  ['#AEDCC4', '#A8D4E8'],
+  ['#C9B8E8', '#A8D4E8'],
+  ['#F2B9C4', '#AEDCC4'],
+  ['#A8D4E8', '#AEDCC4'],
+  ['#C9B8E8', '#F2B9C4'],
+];
+
 export default function HobbiesScreen({ navigation }) {
   const { hobbies, addHobby, removeHobby, updateHobby } = useApp();
   const { colors: t } = useTheme();
@@ -89,6 +98,8 @@ export default function HobbiesScreen({ navigation }) {
           const total = h.milestones?.length ?? 1;
           const done  = h.milestoneIndex ?? 0;
           const emoji = HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length];
+          const gradColors = BADGE_GRADIENTS[idx % BADGE_GRADIENTS.length];
+          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
           return (
             <TouchableOpacity
               key={h.id}
@@ -97,11 +108,21 @@ export default function HobbiesScreen({ navigation }) {
               activeOpacity={0.82}
             >
               <View style={s.hobbyCardTop}>
-                <Text style={s.hobbyEmoji}>{emoji}</Text>
+                <View style={[
+                  s.emojiCircle,
+                  Platform.OS === 'web'
+                    ? { background: `linear-gradient(135deg, ${gradColors[0]}, ${gradColors[1]})` }
+                    : { backgroundColor: gradColors[0] },
+                ]}>
+                  <Text style={s.hobbyEmoji}>{emoji}</Text>
+                </View>
                 <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                 <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(h)}>
                   <Feather name="more-vertical" size={18} color={t.subtext} />
                 </TouchableOpacity>
+              </View>
+              <View style={[s.progressTrack, { backgroundColor: t.border }]}>
+                <View style={[s.progressFill, { backgroundColor: C.mintDark, width: `${pct}%` }]} />
               </View>
               <Text style={[s.milestoneLabel, { color: t.subtext }]}>MILESTONE {done + 1} OF {total}</Text>
               <Text style={[s.hobbyMilestone, { color: t.text }]} numberOfLines={3}>{h.currentMilestone}</Text>
@@ -263,9 +284,17 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  hobbyEmoji: { fontSize: 28, lineHeight: 34 },
+  hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  emojiCircle: {
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  hobbyEmoji: { fontSize: 22, lineHeight: 26 },
   hobbyName: { flex: 1, fontSize: 17, fontWeight: '700' },
+
+  progressTrack: { height: 4, borderRadius: 2, marginBottom: 8, overflow: 'hidden' },
+  progressFill:  { height: 4, borderRadius: 2 },
   menuBtn: { padding: 6 },
 
   menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },

@@ -105,9 +105,21 @@ export default function GoalsScreen({ navigation }) {
                     <Feather name="more-vertical" size={18} color={t.subtext} />
                   </TouchableOpacity>
                 </View>
-                <Text style={[s.nextActionText, { color: t.subtext }]} numberOfLines={3}>
-                  {g.currentAction || 'Tap to generate your first action.'}
-                </Text>
+                {g.currentAction ? (
+                  <View style={[s.actionBox, { backgroundColor: t.white ?? t.card, borderLeftColor: accent, borderColor: t.border }]}>
+                    <Text style={[s.actionText, { color: t.text }]} numberOfLines={3}>{g.currentAction}</Text>
+                  </View>
+                ) : (
+                  <Text style={[s.nextActionText, { color: t.subtext }]}>Tap to generate your first action.</Text>
+                )}
+                {g.completedActions?.length > 0 && (
+                  <View style={s.progressRow}>
+                    <View style={[s.progressTrack, { backgroundColor: t.border }]}>
+                      <View style={[s.progressFill, { backgroundColor: accent, width: `${Math.min((g.completedActions.length / (g.completedActions.length + 1)) * 100, 85)}%` }]} />
+                    </View>
+                    <Text style={[s.progressText, { color: t.subtext }]}>{g.completedActions.length} done</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })
@@ -229,6 +241,18 @@ const s = StyleSheet.create({
   menuBtn: { padding: 6 },
   goalText: { flex: 1, fontSize: 17, fontWeight: '700', lineHeight: 26 },
   nextActionText: { fontSize: 14, lineHeight: 22 },
+
+  actionBox: {
+    borderLeftWidth: 3, borderWidth: 1,
+    borderRadius: 10, padding: 12,
+    marginTop: 4,
+  },
+  actionText: { fontSize: 14, lineHeight: 21 },
+
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  progressTrack: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: 4, borderRadius: 2 },
+  progressText: { fontSize: 11, fontWeight: '600' },
 
   menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   menuSheet: {

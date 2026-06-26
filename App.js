@@ -78,9 +78,14 @@ class ErrorBoundary extends React.Component {
 function TabIcon({ iconName, label, focused }) {
   const { colors } = useTheme();
   return (
-    <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Feather name={iconName} size={19} color={focused ? C.moss : colors.subtext} />
-      <Text style={{ fontSize: 9, marginTop: 2, fontWeight: focused ? '700' : '500', color: focused ? C.moss : colors.subtext }}>
+    <View style={{ alignItems: 'center', paddingTop: 2 }}>
+      <View style={[
+        { borderRadius: 12, paddingHorizontal: 13, paddingVertical: 4, marginBottom: 1 },
+        focused && { backgroundColor: C.sagePale },
+      ]}>
+        <Feather name={iconName} size={18} color={focused ? C.moss : colors.subtext} />
+      </View>
+      <Text style={{ fontSize: 9, fontWeight: focused ? '700' : '500', color: focused ? C.moss : colors.subtext }}>
         {label}
       </Text>
     </View>

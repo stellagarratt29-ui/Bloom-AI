@@ -9,20 +9,26 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
 const SECTIONS = [
-  { key: 'high',   label: 'School & Health', labelColor: C.clay,    cbColor: C.pillPinkText, ptsColor: C.pillPinkText },
-  { key: 'medium', label: 'Tasks',           labelColor: C.lavDark,  cbColor: C.lavDark,      ptsColor: C.lavDark     },
-  { key: 'low',    label: 'Fun & Leisure',   labelColor: C.skyDark,  cbColor: C.skyDark,      ptsColor: C.skyDark     },
+  { key: 'high',   label: 'School & Health',
+    pillBg: C.pillPinkBg, pillText: C.pillPinkText, cbColor: C.pillPinkText },
+  { key: 'medium', label: 'Tasks',
+    pillBg: C.pillLavBg,  pillText: C.pillLavText,  cbColor: C.pillLavText  },
+  { key: 'low',    label: 'Fun & Leisure',
+    pillBg: C.pillSkyBg,  pillText: C.pillSkyText,  cbColor: C.pillSkyText  },
 ];
 
 export default function TasksScreen({ navigation }) {
-  const { tasks, totalPoints, toggleTask, deleteTask, updateTask } = useApp();
+  const { tasks, totalPoints, toggleTask, deleteTask, updateTask, addTask } = useApp();
   const { colors: t } = useTheme();
 
-  const [editTarget, setEditTarget] = useState(null);
-  const [editText,   setEditText]   = useState('');
-  const [editPrio,   setEditPrio]   = useState('medium');
+  const [editTarget,    setEditTarget]    = useState(null);
+  const [editText,      setEditText]      = useState('');
+  const [editPrio,      setEditPrio]      = useState('medium');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [menuTarget, setMenuTarget] = useState(null);
+  const [menuTarget,    setMenuTarget]    = useState(null);
+  const [showAddTask,   setShowAddTask]   = useState(false);
+  const [newTaskText,   setNewTaskText]   = useState('');
+  const [newTaskPrio,   setNewTaskPrio]   = useState('medium');
 
   const openEdit = (task) => {
     setEditTarget(task);
@@ -36,14 +42,56 @@ export default function TasksScreen({ navigation }) {
     setEditTarget(null);
   };
 
-  const confirmDelete = (task) => setDeleteConfirm(task);
-  const doDelete = () => { deleteTask(deleteConfirm.id); setDeleteConfirm(null); };
+  const doAddTask = () => {
+    if (!newTaskText.trim()) return;
+    addTask(newTaskText.trim(), newTaskPrio);
+    setNewTaskText('');
+    setNewTaskPrio('medium');
+    setShowAddTask(false);
+  };
+
+  const activeTasks = tasks.filter(tk => !tk.done);
+  const doneTasks   = tasks.filter(tk => tk.done);
+
+  const TaskCard = ({ task, sec, isDone }) => (
+    <View style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border }, isDone && ss.taskCardDone]}>
+      <TouchableOpacity
+        style={[ss.checkbox, { borderColor: isDone ? t.subtext : (sec?.cbColor ?? t.subtext) }]}
+        onPress={() => toggleTask(task.id)}
+        activeOpacity={0.7}
+      >
+        {task.done && <View style={[ss.checkFill, { backgroundColor: t.subtext }]} />}
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={ss.taskBody}
+        onPress={() => !task.done && navigation.navigate('TaskGuide', { task })}
+        activeOpacity={0.72}
+      >
+        <Text
+          style={[ss.taskText, { color: isDone ? t.subtext : t.text }, isDone && ss.taskTextDone]}
+          numberOfLines={2}
+        >
+          {task.text}
+        </Text>
+        {!isDone && <Text style={[ss.ptsLabel, { color: sec?.cbColor ?? C.moss }]}>+5</Text>}
+      </TouchableOpacity>
+      <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
+        <Feather name="more-vertical" size={18} color={t.subtext} />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={[ss.safe, { backgroundColor: t.bg }]}>
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
         <Text style={[ss.title, { color: C.lavDark }]}>Tasks</Text>
-        <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
+        <View style={ss.headerRight}>
+          <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
+          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.lavDark }]} onPress={() => setShowAddTask(true)}>
+            <Feather name="plus" size={14} color={C.white} />
+            <Text style={ss.addTaskBtnText}>Add</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
@@ -56,45 +104,33 @@ export default function TasksScreen({ navigation }) {
             </Text>
           </View>
         ) : (
-          SECTIONS.map(sec => {
-            const items = tasks.filter(tk => tk.priority === sec.key);
-            if (!items.length) return null;
-            return (
-              <View key={sec.key} style={ss.group}>
-                <Text style={[ss.sectionLabel, { color: sec.labelColor }]}>{sec.label.toUpperCase()}</Text>
-                {items.map(task => (
-                  <View
-                    key={task.id}
-                    style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border }, task.done && ss.taskCardDone]}
-                  >
-                    <TouchableOpacity
-                      style={[ss.checkbox, { borderColor: task.done ? t.subtext : sec.cbColor }]}
-                      onPress={() => toggleTask(task.id)}
-                      activeOpacity={0.7}
-                    >
-                      {task.done && <View style={[ss.checkFill, { backgroundColor: t.subtext }]} />}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={ss.taskBody}
-                      onPress={() => !task.done && navigation.navigate('TaskGuide', { task })}
-                      activeOpacity={0.72}
-                    >
-                      <Text
-                        style={[ss.taskText, { color: task.done ? t.subtext : t.text }, task.done && ss.taskTextDone]}
-                        numberOfLines={2}
-                      >
-                        {task.text}
-                      </Text>
-                      {!task.done && <Text style={[ss.ptsLabel, { color: sec.ptsColor }]}>+5</Text>}
-                    </TouchableOpacity>
-                    <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
-                      <Feather name="more-vertical" size={18} color={t.subtext} />
-                    </TouchableOpacity>
+          <>
+            {SECTIONS.map(sec => {
+              const items = activeTasks.filter(tk => tk.priority === sec.key);
+              if (!items.length) return null;
+              return (
+                <View key={sec.key} style={ss.group}>
+                  <View style={[ss.sectionPill, { backgroundColor: sec.pillBg }]}>
+                    <Text style={[ss.sectionLabel, { color: sec.pillText }]}>{sec.label.toUpperCase()}</Text>
                   </View>
+                  {items.map(task => (
+                    <TaskCard key={task.id} task={task} sec={sec} isDone={false} />
+                  ))}
+                </View>
+              );
+            })}
+
+            {doneTasks.length > 0 && (
+              <View style={ss.group}>
+                <View style={[ss.sectionPill, { backgroundColor: t.border }]}>
+                  <Text style={[ss.sectionLabel, { color: t.subtext }]}>DONE</Text>
+                </View>
+                {doneTasks.map(task => (
+                  <TaskCard key={task.id} task={task} sec={null} isDone={true} />
                 ))}
               </View>
-            );
-          })
+            )}
+          </>
         )}
 
         <View style={{ height: 48 }} />
@@ -121,6 +157,55 @@ export default function TasksScreen({ navigation }) {
         </TouchableOpacity>
       </Modal>
 
+      {/* Add Task modal */}
+      <Modal visible={showAddTask} transparent animationType="slide" onRequestClose={() => setShowAddTask(false)}>
+        <View style={ss.modalOverlay}>
+          <View style={[ss.modalCard, { backgroundColor: t.card }]}>
+            <Text style={[ss.modalTitle, { color: t.text }]}>Add task</Text>
+            <TextInput
+              style={[ss.modalInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+              value={newTaskText}
+              onChangeText={setNewTaskText}
+              autoFocus
+              placeholder="What do you need to do?"
+              placeholderTextColor={t.subtext}
+              multiline
+            />
+            <Text style={[ss.modalLabel, { color: t.subtext }]}>CATEGORY</Text>
+            <View style={ss.prioRow}>
+              {SECTIONS.map(sec => (
+                <TouchableOpacity
+                  key={sec.key}
+                  style={[ss.prioChip, {
+                    backgroundColor: newTaskPrio === sec.key ? sec.pillBg : t.bg,
+                    borderColor: newTaskPrio === sec.key ? sec.pillText : t.border,
+                    borderWidth: 2,
+                  }]}
+                  onPress={() => setNewTaskPrio(sec.key)}
+                >
+                  <Text style={[ss.prioChipText, { color: newTaskPrio === sec.key ? sec.pillText : t.subtext }]}>{sec.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={ss.modalActions}>
+              <TouchableOpacity
+                style={[ss.modalCancel, { borderColor: t.border }]}
+                onPress={() => { setShowAddTask(false); setNewTaskText(''); setNewTaskPrio('medium'); }}
+              >
+                <Text style={[ss.modalCancelText, { color: t.subtext }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[ss.modalSave, !newTaskText.trim() && { opacity: 0.4 }]}
+                onPress={doAddTask}
+                disabled={!newTaskText.trim()}
+              >
+                <Text style={ss.modalSaveText}>Add task</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Edit modal */}
       <Modal visible={!!editTarget} transparent animationType="slide" onRequestClose={() => setEditTarget(null)}>
         <View style={ss.modalOverlay}>
@@ -140,10 +225,14 @@ export default function TasksScreen({ navigation }) {
               {SECTIONS.map(sec => (
                 <TouchableOpacity
                   key={sec.key}
-                  style={[ss.prioChip, { backgroundColor: t.bg, borderColor: editPrio === sec.key ? sec.labelColor : t.border, borderWidth: 2 }]}
+                  style={[ss.prioChip, {
+                    backgroundColor: editPrio === sec.key ? sec.pillBg : t.bg,
+                    borderColor: editPrio === sec.key ? sec.pillText : t.border,
+                    borderWidth: 2,
+                  }]}
                   onPress={() => setEditPrio(sec.key)}
                 >
-                  <Text style={[ss.prioChipText, { color: editPrio === sec.key ? sec.labelColor : t.subtext }]}>{sec.label}</Text>
+                  <Text style={[ss.prioChipText, { color: editPrio === sec.key ? sec.pillText : t.subtext }]}>{sec.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -169,7 +258,7 @@ export default function TasksScreen({ navigation }) {
               <TouchableOpacity style={[ss.modalCancel, { borderColor: t.border }]} onPress={() => setDeleteConfirm(null)}>
                 <Text style={[ss.modalCancelText, { color: t.subtext }]}>Keep</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[ss.modalSave, { backgroundColor: C.pillPinkText }]} onPress={doDelete}>
+              <TouchableOpacity style={[ss.modalSave, { backgroundColor: C.pinkDark }]} onPress={() => { deleteTask(deleteConfirm.id); setDeleteConfirm(null); }}>
                 <Text style={ss.modalSaveText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -192,19 +281,30 @@ const ss = StyleSheet.create({
     fontSize: 30, fontWeight: '800',
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   ptsTotal: { fontSize: 14, fontWeight: '700' },
+  addTaskBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+  },
+  addTaskBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
 
   scroll: { paddingHorizontal: 18, paddingTop: 18 },
 
   group: { marginBottom: 22 },
-  sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 10 },
+  sectionPill: {
+    alignSelf: 'flex-start',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+    marginBottom: 10,
+  },
+  sectionLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
 
   taskCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderRadius: 14, paddingVertical: 14, paddingHorizontal: 14,
     borderWidth: 1, marginBottom: 8,
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   taskCardDone: { opacity: 0.55 },
   checkbox: {
@@ -239,17 +339,17 @@ const ss = StyleSheet.create({
     padding: 24, paddingBottom: 40,
     shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 14 },
-  modalBody:  { fontSize: 14, lineHeight: 22, marginBottom: 20 },
-  modalLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 10 },
+  modalTitle:  { fontSize: 18, fontWeight: '700', marginBottom: 14 },
+  modalBody:   { fontSize: 14, lineHeight: 22, marginBottom: 20 },
+  modalLabel:  { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 10 },
   modalInput: {
     borderWidth: 1.5, borderRadius: 12,
     paddingVertical: 11, paddingHorizontal: 14,
     fontSize: 15, marginBottom: 18,
-    minHeight: 80, textAlignVertical: 'top',
+    minHeight: 64, textAlignVertical: 'top',
   },
-  prioRow: { flexDirection: 'row', gap: 8, marginBottom: 22, flexWrap: 'wrap' },
-  prioChip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 16 },
+  prioRow: { flexDirection: 'row', gap: 7, marginBottom: 22, flexWrap: 'wrap' },
+  prioChip: { paddingVertical: 7, paddingHorizontal: 11, borderRadius: 16 },
   prioChipText: { fontSize: 12, fontWeight: '700' },
   modalActions: { flexDirection: 'row', gap: 10 },
   modalCancel: {

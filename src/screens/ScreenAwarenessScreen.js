@@ -33,34 +33,38 @@ export default function ScreenAwarenessScreen() {
         <Text style={[s.sub, { color: t.subtext }]}>Awareness is the first step.</Text>
 
         <View style={s.statsRow}>
-          <View style={s.statBlock}>
+          <View style={[s.statBox, { backgroundColor: C.mintWash }]}>
             <Text style={[s.statValue, { color: C.mintDark }]}>{MOCK_SCREEN_TIME}</Text>
-            <Text style={[s.statLabel, { color: t.subtext }]}>SCREEN TIME</Text>
+            <Text style={[s.statLabel, { color: C.mintDark }]}>SCREEN TIME</Text>
           </View>
-          <View style={[s.statDivider, { backgroundColor: t.border }]} />
-          <View style={s.statBlock}>
+          <View style={[s.statBox, { backgroundColor: C.pinkWash }]}>
             <Text style={[s.statValue, { color: C.pinkDark }]}>{MOCK_UNLOCKS}</Text>
-            <Text style={[s.statLabel, { color: t.subtext }]}>UNLOCKS</Text>
+            <Text style={[s.statLabel, { color: C.pinkDark }]}>UNLOCKS</Text>
           </View>
         </View>
+        <Text style={[s.mockNote, { color: t.subtext }]}>↑ SAMPLE DATA — real screen time not yet connected</Text>
 
-        <View style={[s.insightCard, { borderLeftColor: C.sky }]}>
-          <Text style={[s.insightLabel, { color: C.sky }]}>BLOOM NOTICED</Text>
+        <View style={[s.insightCard, { borderLeftColor: C.skyDark, backgroundColor: t.card, borderColor: t.border }]}>
+          <Text style={[s.insightLabel, { color: C.skyDark }]}>BLOOM NOTICED</Text>
           {loadingInsight
-            ? <ActivityIndicator size="small" color={C.sky} style={{ marginVertical: 8 }} />
+            ? <ActivityIndicator size="small" color={C.skyDark} style={{ marginVertical: 8 }} />
             : <Text style={[s.insightText, { color: t.text }]}>{insight}</Text>}
         </View>
 
-        {redirectHobbies.length > 0 && redirectHobbies.map((h, idx) => (
+        {redirectHobbies.length > 0 ? redirectHobbies.map((h, idx) => (
           <TouchableOpacity
             key={h.id}
-            style={[s.redirectBtn, { borderColor: C.clay }]}
+            style={[s.redirectBtn, { borderColor: C.clay, backgroundColor: t.card }]}
             activeOpacity={0.7}
           >
             <Text style={s.redirectEmoji}>{HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length]}</Text>
             <Text style={[s.redirectText, { color: C.clay }]}>{h.name} instead?</Text>
           </TouchableOpacity>
-        ))}
+        )) : (
+          <View style={[s.noHobbiesHint, { borderColor: t.border, backgroundColor: t.card }]}>
+            <Text style={[s.noHobbiesText, { color: t.subtext }]}>Add hobbies in the Grow tab to see redirect suggestions here.</Text>
+          </View>
+        )}
 
         <View style={{ height: 48 }} />
       </ScrollView>
@@ -79,17 +83,25 @@ const s = StyleSheet.create({
   sub: { fontSize: 14, lineHeight: 22, marginBottom: 28 },
 
   statsRow: {
-    flexDirection: 'row', alignItems: 'center',
-    marginBottom: 28,
+    flexDirection: 'row', gap: 12, marginBottom: 8,
   },
-  statBlock: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, height: 40, marginHorizontal: 8 },
+  statBox: {
+    flex: 1, alignItems: 'center', paddingVertical: 20, paddingHorizontal: 12,
+    borderRadius: 18,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  },
   statValue: { fontSize: 32, fontWeight: '800', marginBottom: 4 },
   statLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2 },
 
+  mockNote: { fontSize: 11, textAlign: 'center', marginBottom: 24, letterSpacing: 0.5 },
+
   insightCard: {
-    paddingLeft: 16, paddingVertical: 10,
-    borderLeftWidth: 3, marginBottom: 24,
+    paddingLeft: 16, paddingRight: 14, paddingVertical: 14,
+    borderLeftWidth: 3, borderWidth: 1, borderRadius: 14,
+    marginBottom: 24,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   insightLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.3, marginBottom: 8 },
   insightText:  { fontSize: 14, lineHeight: 22 },
@@ -99,7 +111,14 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderRadius: 20,
     paddingVertical: 14, paddingHorizontal: 20,
     marginBottom: 12,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   redirectEmoji: { fontSize: 20 },
   redirectText: { fontSize: 15, fontWeight: '600' },
+
+  noHobbiesHint: {
+    borderWidth: 1, borderRadius: 14, padding: 16, alignItems: 'center',
+  },
+  noHobbiesText: { fontSize: 13, lineHeight: 20, textAlign: 'center' },
 });

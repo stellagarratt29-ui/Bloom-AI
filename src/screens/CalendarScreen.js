@@ -47,6 +47,7 @@ export default function CalendarScreen() {
   const [connected, setConnected]             = useState(false);
   const [clientId, setClientId]               = useState('');
   const [showConnectForm, setShowConnectForm] = useState(false);
+  const [connectError, setConnectError]       = useState('');
   const [events, setEvents]                   = useState([]);
   const [loadingEvents, setLoadingEvents]     = useState(false);
   const [messages, setMessages]               = useState([]);
@@ -81,12 +82,14 @@ export default function CalendarScreen() {
   };
 
   const handleConnect = async () => {
-    if (!clientId.trim()) return;
-    await saveCalendarClientId(clientId.trim());
+    const id = clientId.trim();
+    if (!id) { setConnectError('Paste your Google OAuth Client ID to continue.'); return; }
+    setConnectError('');
+    await saveCalendarClientId(id);
     try {
       await startCalendarOAuth();
     } catch (e) {
-      setMessages(prev => [...prev, { id: Date.now(), from: 'bloom', text: e.message }]);
+      setConnectError(e.message);
     }
   };
 
@@ -134,7 +137,7 @@ export default function CalendarScreen() {
           )}
         </View>
         <View style={s.headerActions}>
-          {connected ? (
+          {connected && (
             <>
               <TouchableOpacity style={s.refreshBtn} onPress={loadEvents} disabled={loadingEvents}>
                 {loadingEvents
@@ -145,14 +148,6 @@ export default function CalendarScreen() {
                 <Text style={[s.disconnectText, { color: t.subtext }]}>Disconnect</Text>
               </TouchableOpacity>
             </>
-          ) : (
-            <TouchableOpacity
-              style={[s.connectSmallBtn, { borderColor: C.skyDark }]}
-              onPress={() => setShowConnectForm(v => !v)}
-            >
-              <Feather name="calendar" size={13} color={C.skyDark} />
-              <Text style={[s.connectSmallText, { color: C.skyDark }]}>Connect</Text>
-            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -164,36 +159,54 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Connect form (shown when user taps Connect) */}
-        {!connected && showConnectForm && (
-          <View style={[s.connectCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={[s.connectCardTitle, { color: t.text }]}>Connect Google Calendar</Text>
-            <Text style={[s.connectCardSub, { color: t.subtext }]}>
-              Create an OAuth Client ID at{' '}
-              <Text style={s.setupLink} onPress={() => Linking.openURL('https://console.cloud.google.com')}>
-                console.cloud.google.com
-              </Text>
-              {' '}→ APIs & Services → Credentials. Add{' '}
-              <Text style={s.setupCode}>https://stellagarratt29-ui.github.io</Text>
-              {' '}as the authorised JavaScript origin.
-            </Text>
-            <TextInput
-              style={[s.clientInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
-              placeholder="Paste Client ID…"
-              placeholderTextColor={t.subtext}
-              value={clientId}
-              onChangeText={setClientId}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+        {/* Connect flow when not connected */}
+        {!connected && (
+          <View style={s.connectCenter}>
+            <Feather name="calendar" size={48} color={C.skyDark} style={{ marginBottom: 20 }} />
+            <Text style={[s.connectTitle, { color: t.text }]}>Connect Google Calendar</Text>
+            <Text style={[s.connectSub, { color: t.subtext }]}>See your events and let Bloom help you plan your day.</Text>
+
+            {/* Client ID field — only shown after first tap if no ID saved yet */}
+            {showConnectForm && (
+              <View style={{ width: '100%', marginBottom: 12 }}>
+                <Text style={[s.connectCardSub, { color: t.subtext, marginBottom: 8 }]}>
+                  Paste your Google OAuth Client ID (create one at{' '}
+                  <Text style={s.setupLink} onPress={() => Linking.openURL('https://console.cloud.google.com')}>
+                    console.cloud.google.com
+                  </Text>
+                  {' '}→ APIs & Services → Credentials — add{' '}
+                  <Text style={s.setupCode}>https://stellagarratt29-ui.github.io</Text>
+                  {' '}as the authorised JavaScript origin):
+                </Text>
+                <TextInput
+                  style={[s.clientInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+                  placeholder="Client ID…"
+                  placeholderTextColor={t.subtext}
+                  value={clientId}
+                  onChangeText={setClientId}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoFocus
+                />
+              </View>
+            )}
+
+            {connectError ? <Text style={s.connectError}>{connectError}</Text> : null}
+
             <TouchableOpacity
-              style={[s.connectBtn, { borderColor: t.border }, !clientId.trim() && s.connectBtnOff]}
-              onPress={handleConnect}
-              disabled={!clientId.trim()}
+              style={[s.connectBigBtn, Platform.OS === 'web'
+                ? { background: `linear-gradient(135deg, ${C.skyDark}, ${C.moss})` }
+                : { backgroundColor: C.skyDark }]}
+              onPress={() => {
+                if (clientId.trim()) { handleConnect(); }
+                else { setShowConnectForm(true); }
+              }}
             >
-              <Text style={[s.connectBtnText, { color: clientId.trim() ? t.text : t.subtext }]}>Connect →</Text>
+              <Feather name="calendar" size={16} color={C.white} style={{ marginRight: 8 }} />
+              <Text style={s.connectBigBtnText}>Connect Google Calendar</Text>
             </TouchableOpacity>
-            <View style={[s.privacyRow, { borderLeftColor: C.clay }]}>
+
+            <View style={[s.privacyRow, { borderLeftColor: C.clay, marginTop: 24 }]}>
               <Text style={[s.privacyLabel, { color: C.clay }]}>PRIVACY</Text>
               <Text style={[s.privacyText, { color: t.subtext }]}>Bloom reads events to answer questions, writes only when you ask.</Text>
             </View>
@@ -231,12 +244,6 @@ export default function CalendarScreen() {
               </View>
             ))
           )
-        ) : !showConnectForm ? (
-          <View style={s.emptyEvents}>
-            <Feather name="calendar" size={36} color={C.sageLight} style={{ marginBottom: 12 }} />
-            <Text style={[s.emptyEventsText, { color: t.text }]}>No calendar connected</Text>
-            <Text style={[s.emptyEventsSub, { color: t.subtext }]}>Tap Connect above to link Google Calendar, or just chat with Bloom about your schedule below.</Text>
-          </View>
         ) : null}
 
         {/* Chat */}
@@ -334,12 +341,21 @@ const s = StyleSheet.create({
 
   scrollContent: { paddingHorizontal: 18, paddingVertical: 16 },
 
-  connectCard: {
-    borderRadius: 18, borderWidth: 1,
-    padding: 20, marginBottom: 16,
+  connectCenter: {
+    alignItems: 'center', paddingVertical: 40, paddingHorizontal: 24,
   },
-  connectCardTitle: { fontSize: 15, fontWeight: '700', marginBottom: 8 },
-  connectCardSub: { fontSize: 13, lineHeight: 20, marginBottom: 14 },
+  connectTitle: { fontSize: 20, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
+  connectSub:   { fontSize: 14, lineHeight: 22, textAlign: 'center', marginBottom: 28, maxWidth: 280 },
+  connectBigBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 16, paddingHorizontal: 24, borderRadius: 20,
+    shadowColor: C.skyDark, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4,
+    width: '100%',
+  },
+  connectBigBtnText: { fontSize: 16, fontWeight: '700', color: C.white },
+  connectError: { fontSize: 13, color: C.pinkDark, marginBottom: 12, textAlign: 'center' },
+
+  connectCardSub: { fontSize: 12, lineHeight: 18, marginBottom: 14 },
   setupLink: { color: C.moss, textDecorationLine: 'underline' },
   setupCode: {
     fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
