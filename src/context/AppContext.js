@@ -42,6 +42,14 @@ function migrateHobby(h) {
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+const DEFAULT_ND_TOGGLES = {
+  autoBreakTasks:   false,
+  ideaCapture:      false,
+  timeBuffers:      false,
+  reducedClutter:   false,
+  gentlerLanguage:  false,
+};
+
 export function AppProvider({ children }) {
   const [loaded, setLoaded]             = useState(false);
   const [hasOnboarded, setHasOnboarded] = useState(false);
@@ -55,6 +63,17 @@ export function AppProvider({ children }) {
   const [lastDumpDate, setLastDumpDate] = useState('');
   const [calendarConnected, setCalendarConnected] = useState(false);
 
+  // Neurodivergent support
+  const [ndSupport, setNdSupport]   = useState(null); // null | 'yes' | 'no' | 'skip'
+  const [ndToggles, setNdToggles]   = useState(DEFAULT_ND_TOGGLES);
+
+  // Tutorial
+  const [tutorialSeen, setTutorialSeen]           = useState(false);
+  const [showTutorialReplay, setShowTutorialReplay] = useState(false);
+
+  const openTutorial  = useCallback(() => setShowTutorialReplay(true),  []);
+  const closeTutorial = useCallback(() => setShowTutorialReplay(false), []);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const tokenData = extractTokenFromHash();
@@ -62,6 +81,9 @@ export function AppProvider({ children }) {
         saveCalendarToken(tokenData.token, tokenData.expiry)
           .then(() => setCalendarConnected(true))
           .catch(() => {});
+        if (window.sessionStorage) {
+          window.sessionStorage.setItem('bloomOAuthReturn', 'CalendarTab');
+        }
       }
     }
 
@@ -79,6 +101,10 @@ export function AppProvider({ children }) {
             if (s.userAge)         setUserAge(s.userAge);
             if (s.userOccupation)  setUserOccupation(s.userOccupation);
             if (s.lastDumpDate)    setLastDumpDate(s.lastDumpDate);
+            if (s.ndSupport)       setNdSupport(s.ndSupport);
+            if (s.ndToggles)       setNdToggles({ ...DEFAULT_ND_TOGGLES, ...s.ndToggles });
+            // Existing users who were already onboarded skip the tutorial
+            setTutorialSeen(s.tutorialSeen ?? !!s.hasOnboarded);
           } catch (_) {}
         }
       })
@@ -94,9 +120,12 @@ export function AppProvider({ children }) {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
         hasOnboarded, tasks, hobbies, goals, totalPoints,
         userName, userAge, userOccupation, lastDumpDate,
+        ndSupport, ndToggles, tutorialSeen,
       })).catch(() => {});
     }, 600);
-  }, [loaded, hasOnboarded, tasks, hobbies, goals, totalPoints, userName, userAge, userOccupation, lastDumpDate]);
+  }, [loaded, hasOnboarded, tasks, hobbies, goals, totalPoints,
+      userName, userAge, userOccupation, lastDumpDate,
+      ndSupport, ndToggles, tutorialSeen]);
 
   const addPoints = useCallback((pts) => setTotalPoints(p => p + pts), []);
 
@@ -198,11 +227,13 @@ export function AppProvider({ children }) {
     setGoals(prev => prev.map(g => g.id === id ? { ...g, ...changes } : g));
   }, []);
 
-  const finishOnboarding = useCallback((name, age, occupation, goalText, firstGoalAction, initialHobbies) => {
+  const finishOnboarding = useCallback((name, age, occupation, goalText, firstGoalAction, initialHobbies, ndSupportChoice, ndToggleChoices) => {
     if (name)       setUserName(name);
     if (age)        setUserAge(age);
     if (occupation) setUserOccupation(occupation);
     if (goalText)   setGoals([makeGoal(goalText, firstGoalAction ?? '')]);
+    if (ndSupportChoice) setNdSupport(ndSupportChoice);
+    if (ndToggleChoices) setNdToggles({ ...DEFAULT_ND_TOGGLES, ...ndToggleChoices });
     setTasks([]);
     setHobbies([]);
     setHasOnboarded(true);
@@ -213,6 +244,13 @@ export function AppProvider({ children }) {
     setUserName('');
     setUserAge('');
     setUserOccupation('');
+    setTutorialSeen(false);
+    setNdSupport(null);
+    setNdToggles(DEFAULT_ND_TOGGLES);
+  }, []);
+
+  const updateNdToggles = useCallback((changes) => {
+    setNdToggles(prev => ({ ...prev, ...changes }));
   }, []);
 
   return (
@@ -229,6 +267,10 @@ export function AppProvider({ children }) {
       userOccupation, setUserOccupation,
       lastDumpDate,
       calendarConnected, setCalendarConnected,
+      ndSupport, setNdSupport,
+      ndToggles, setNdToggles, updateNdToggles,
+      tutorialSeen, setTutorialSeen,
+      showTutorialReplay, openTutorial, closeTutorial,
     }}>
       {children}
     </AppContext.Provider>

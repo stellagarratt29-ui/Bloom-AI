@@ -87,7 +87,7 @@ function getFallback(msg, { userName, goals, tasks }) {
 }
 
 export default function BloomChatScreen() {
-  const { userName, goals, tasks, totalPoints, addTask, processBrainDump } = useApp();
+  const { userName, goals, tasks, totalPoints, addTask, processBrainDump, ndToggles } = useApp();
   const { colors: t } = useTheme();
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
@@ -128,7 +128,7 @@ export default function BloomChatScreen() {
 
       // Brain dump path
       if (looksLikeTaskDump(trimmed)) {
-        const { items, response } = await parseBrainDump(trimmed, userName);
+        const { items, response } = await parseBrainDump(trimmed, userName, ndToggles);
         if (items.length > 0) {
           const goalItems = items.filter(i => i.category === 'goal');
           const goalActionsMap = {};
@@ -168,7 +168,7 @@ export default function BloomChatScreen() {
 
       // AI chat
       if (hasKey) {
-        const system = buildBloomSystem({ userName, goals, tasks, totalPoints });
+        const system = buildBloomSystem({ userName, goals, tasks, totalPoints, ndToggles });
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
         setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];

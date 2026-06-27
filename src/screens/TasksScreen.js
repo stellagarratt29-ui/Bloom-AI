@@ -18,8 +18,10 @@ const SECTIONS = [
 ];
 
 export default function TasksScreen({ navigation }) {
-  const { tasks, totalPoints, toggleTask, deleteTask, updateTask, addTask } = useApp();
+  const { tasks, totalPoints, toggleTask, deleteTask, updateTask, addTask, ndToggles } = useApp();
   const { colors: t } = useTheme();
+  const reducedClutter = !!ndToggles?.reducedClutter;
+  const ideaCapture    = !!ndToggles?.ideaCapture;
 
   const [editTarget,    setEditTarget]    = useState(null);
   const [editText,      setEditText]      = useState('');
@@ -54,7 +56,12 @@ export default function TasksScreen({ navigation }) {
   const doneTasks   = tasks.filter(tk => tk.done);
 
   const TaskCard = ({ task, sec, isDone }) => (
-    <View style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border }, isDone && ss.taskCardDone]}>
+    <View style={[
+      ss.taskCard,
+      { backgroundColor: t.card, borderColor: t.border },
+      isDone && ss.taskCardDone,
+      reducedClutter && ss.taskCardSlim,
+    ]}>
       <TouchableOpacity
         style={[ss.checkbox, { borderColor: isDone ? t.subtext : (sec?.cbColor ?? t.subtext) }]}
         onPress={() => toggleTask(task.id)}
@@ -68,12 +75,13 @@ export default function TasksScreen({ navigation }) {
         activeOpacity={0.72}
       >
         <Text
-          style={[ss.taskText, { color: isDone ? t.subtext : t.text }, isDone && ss.taskTextDone]}
-          numberOfLines={2}
+          style={[ss.taskText, { color: isDone ? t.subtext : t.text }, isDone && ss.taskTextDone,
+            reducedClutter && { fontSize: 14 }]}
+          numberOfLines={reducedClutter ? 1 : 2}
         >
           {task.text}
         </Text>
-        {!isDone && <Text style={[ss.ptsLabel, { color: sec?.cbColor ?? C.moss }]}>+5</Text>}
+        {!isDone && !reducedClutter && <Text style={[ss.ptsLabel, { color: sec?.cbColor ?? C.moss }]}>+5</Text>}
       </TouchableOpacity>
       <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
         <Icon name="more-vertical" size={18} color={t.subtext} />
@@ -135,6 +143,17 @@ export default function TasksScreen({ navigation }) {
 
         <View style={{ height: 48 }} />
       </ScrollView>
+
+      {/* Idea capture FAB (shown when ideaCapture toggle is on) */}
+      {ideaCapture && (
+        <TouchableOpacity
+          style={[ss.ideaFab, { backgroundColor: C.clay }]}
+          onPress={() => setShowAddTask(true)}
+          activeOpacity={0.85}
+        >
+          <Text style={ss.ideaFabText}>💡 Quick capture</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Three-dot action menu */}
       <Modal visible={!!menuTarget} transparent animationType="slide" onRequestClose={() => setMenuTarget(null)}>
@@ -307,6 +326,15 @@ const ss = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   taskCardDone: { opacity: 0.55 },
+  taskCardSlim: { paddingVertical: 10, marginBottom: 10 },
+  ideaFab: {
+    position: 'absolute', bottom: 20, right: 18,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 11, paddingHorizontal: 16, borderRadius: 22,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 }, elevation: 4,
+  },
+  ideaFabText: { fontSize: 13, fontWeight: '700', color: C.white },
   checkbox: {
     width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,

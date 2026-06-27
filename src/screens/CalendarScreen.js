@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet, Platform, ActivityIndicator,
@@ -6,18 +6,86 @@ import {
 import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
-import { processCalendarRequest } from '../services/calendar';
+import {
+  processCalendarRequest,
+  startCalendarOAuth,
+  isCalendarConnected,
+  getUpcomingEvents,
+  clearCalendarToken,
+  getCalendarClientId,
+} from '../services/calendar';
 
 export default function CalendarScreen() {
   const { colors: t } = useTheme();
-  const [messages, setMessages] = useState([]);
-  const [input, setInput]       = useState('');
-  const [thinking, setThinking] = useState(false);
+
+  const [connected,     setConnected]     = useState(false);
+  const [savedId,       setSavedId]       = useState(null);
+  const [clientIdInput, setClientIdInput] = useState('');
+  const [showIdSetup,   setShowIdSetup]   = useState(false);
+  const [events,        setEvents]        = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [connectErr,    setConnectErr]    = useState('');
+  const [messages,      setMessages]      = useState([]);
+  const [input,         setInput]         = useState('');
+  const [thinking,      setThinking]      = useState(false);
   const scrollRef = useRef(null);
 
-  const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+  const scrollToEnd = () =>
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
-  const send = async (text) => {
+  // Check connection + load saved Client ID on mount
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [conn, id] = await Promise.all([isCalendarConnected(), getCalendarClientId()]);
+      if (!alive) return;
+      setSavedId(id);
+      setClientIdInput(id ?? '');
+      setConnected(conn);
+      if (conn) loadEvents();
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const loadEvents = useCallback(async () => {
+    setLoadingEvents(true);
+    try {
+      const ev = await getUpcomingEvents(14);
+      setEvents(ev);
+    } catch (e) {
+      if (e.code === 'NO_CAL_AUTH') {
+        setConnected(false);
+        setEvents([]);
+      }
+    } finally {
+      setLoadingEvents(false);
+    }
+  }, []);
+
+  const handleConnect = async () => {
+    setConnectErr('');
+    const id = clientIdInput.trim() || savedId;
+    try {
+      await startCalendarOAuth(id || undefined);
+      // startCalendarOAuth redirects the page — nothing runs after this
+    } catch (e) {
+      if (e.message === 'NO_CLIENT_ID') {
+        setShowIdSetup(true);
+        setConnectErr('Paste your Google Client ID below, then tap Connect.');
+      } else {
+        setConnectErr(e.message);
+      }
+    }
+  };
+
+  const handleDisconnect = async () => {
+    await clearCalendarToken();
+    setConnected(false);
+    setEvents([]);
+    setMessages([]);
+  };
+
+  const sendChat = async (text) => {
     const trimmed = text.trim();
     if (!trimmed || thinking) return;
     setInput('');
@@ -26,22 +94,148 @@ export default function CalendarScreen() {
     scrollToEnd();
     try {
       const reply = await processCalendarRequest(trimmed);
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply ?? "I can help you plan your schedule — what are you working with?" }]);
-    } catch (e) {
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: "Something went wrong. Try again?" }]);
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1, from: 'bloom',
+        text: reply ?? "I can help you plan — what are you working with?",
+      }]);
+    } catch {
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1, from: 'bloom',
+        text: "Something went wrong. Try again?",
+      }]);
     } finally {
       setThinking(false);
       scrollToEnd();
     }
   };
 
+  // ─── NOT CONNECTED ────────────────────────────────────────────────────────
+  if (!connected) {
+    const hasId = !!(clientIdInput.trim() || savedId);
+    return (
+      <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
+        <ScrollView
+          contentContainerStyle={s.setupScroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={[s.title, { color: t.chatBubble ?? C.clay }]}>Calendar</Text>
+
+          {/* Hero connect card */}
+          <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
+            <View style={[s.calIconRound, { backgroundColor: t.border }]}>
+              <Icon name="calendar" size={30} color={t.chatBubble ?? C.clay} />
+            </View>
+            <Text style={[s.cardTitle, { color: t.text }]}>Connect Google Calendar</Text>
+            <Text style={[s.cardSub, { color: t.subtext }]}>
+              See your real events, ask Bloom to plan your week, and add or adjust meetings with a message.
+            </Text>
+
+            {['View upcoming events at a glance',
+              'Ask Bloom to schedule your day',
+              'Add or update events by messaging',
+            ].map(f => (
+              <View key={f} style={s.featureRow}>
+                <Icon name="check" size={13} color={t.chatBubble ?? C.clay} />
+                <Text style={[s.featureText, { color: t.subtext }]}>{f}</Text>
+              </View>
+            ))}
+
+            {/* Client ID setup */}
+            {(showIdSetup || !hasId) && (
+              <View style={[s.idBlock, { borderTopColor: t.border }]}>
+                <Text style={[s.idLabel, { color: t.subtext }]}>GOOGLE CLIENT ID</Text>
+                <TextInput
+                  style={[s.idInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+                  placeholder="12345678-abc.apps.googleusercontent.com"
+                  placeholderTextColor={t.subtext}
+                  value={clientIdInput}
+                  onChangeText={setClientIdInput}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="off"
+                />
+              </View>
+            )}
+
+            {savedId && !showIdSetup && (
+              <View style={[s.savedRow, { borderTopColor: t.border }]}>
+                <Icon name="check-circle" size={13} color={t.chatBubble ?? C.clay} />
+                <Text style={[s.savedText, { color: t.subtext }]} numberOfLines={1}>
+                  Client ID saved
+                </Text>
+                <TouchableOpacity onPress={() => setShowIdSetup(true)}>
+                  <Text style={[s.changeLink, { color: t.chatBubble ?? C.clay }]}>Change</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[
+                s.connectBtn,
+                { backgroundColor: t.chatBubble ?? C.clay },
+                (!hasId && !clientIdInput.trim()) && s.connectBtnDisabled,
+              ]}
+              onPress={handleConnect}
+              activeOpacity={0.8}
+            >
+              <Icon name="calendar" size={15} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={s.connectBtnText}>Connect Google Calendar</Text>
+            </TouchableOpacity>
+
+            {!!connectErr && (
+              <Text style={s.errText}>{connectErr}</Text>
+            )}
+          </View>
+
+          {/* Setup guide */}
+          <View style={[s.guideCard, { backgroundColor: t.card, borderColor: t.border }]}>
+            <Text style={[s.guideTitle, { color: t.text }]}>How to get your Client ID</Text>
+            {[
+              'Go to console.cloud.google.com',
+              'Create a project (or select one)',
+              'APIs & Services → Enable APIs → enable "Google Calendar API"',
+              'APIs & Services → Credentials → Create OAuth 2.0 Client ID',
+              'Application type: Web application',
+              `Authorized JS origin: ${typeof window !== 'undefined' ? window.location.origin : 'your app origin'}`,
+              `Authorized redirect URI: ${typeof window !== 'undefined' ? (window.location.origin + window.location.pathname.replace(/\/?$/, '/')) : 'your app URL'}`,
+              'Copy the Client ID and paste it above',
+              'Also complete the OAuth consent screen (add your email as a test user)',
+            ].map((step, i) => (
+              <View key={i} style={s.guideRow}>
+                <Text style={[s.guideNum, { color: t.chatBubble ?? C.clay }]}>{i + 1}</Text>
+                <Text style={[s.guideStep, { color: t.subtext }]}>{step}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={{ height: 48 }} />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ─── CONNECTED ────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
 
       <View style={[s.header, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
-        <Text style={[s.title, { color: t.chatBubble ?? C.skyDark }]}>Calendar</Text>
-        <View style={[s.badge, { backgroundColor: t.border }]}>
-          <Text style={[s.badgeText, { color: t.subtext }]}>AI Planning</Text>
+        <Text style={[s.title, { color: t.chatBubble ?? C.clay }]}>Calendar</Text>
+        <View style={s.headerActions}>
+          <TouchableOpacity
+            onPress={loadEvents}
+            style={[s.headerIconBtn, { backgroundColor: t.border }]}
+            activeOpacity={0.7}
+          >
+            <Icon name="refresh-cw" size={14} color={t.subtext} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDisconnect}
+            style={[s.disconnectBtn, { borderColor: t.border }]}
+            activeOpacity={0.7}
+          >
+            <Text style={[s.disconnectText, { color: t.subtext }]}>Disconnect</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -52,42 +246,49 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {messages.length === 0 && (
-          <View style={s.emptyState}>
-            <View style={[s.calIconWrap, { backgroundColor: t.border }]}>
-              <Icon name="calendar" size={32} color={t.chatBubble ?? C.skyDark} />
-            </View>
-            <Text style={[s.emptyTitle, { color: t.text }]}>Plan your schedule with Bloom</Text>
-            <Text style={[s.emptySub, { color: t.subtext }]}>
-              Ask anything about your day or week — Bloom will help you think through timing, priorities, and what to tackle first.
+        {/* Events section */}
+        <Text style={[s.sectionLabel, { color: t.subtext }]}>NEXT 14 DAYS</Text>
+
+        {loadingEvents ? (
+          <ActivityIndicator color={t.chatBubble ?? C.clay} style={{ marginVertical: 24 }} />
+        ) : events.length === 0 ? (
+          <View style={[s.noEventsCard, { backgroundColor: t.card, borderColor: t.border }]}>
+            <Text style={[s.noEventsText, { color: t.subtext }]}>
+              No events in the next 14 days.
             </Text>
+          </View>
+        ) : (
+          events.map(ev => <EventCard key={ev.id} event={ev} t={t} />)
+        )}
 
-            <View style={s.promptsWrap}>
-              {[
-                'What should I focus on today?',
-                'Help me plan my week',
-                'I have 2 hours free — what should I do?',
-              ].map(p => (
-                <TouchableOpacity
-                  key={p}
-                  style={[s.promptChip, { borderColor: t.border, backgroundColor: t.card }]}
-                  onPress={() => send(p)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[s.promptText, { color: t.text }]}>{p}</Text>
-                  <Icon name="chevron-right" size={14} color={t.subtext} />
-                </TouchableOpacity>
-              ))}
-            </View>
+        {/* Chat divider */}
+        <View style={[s.dividerWrap, { borderTopColor: t.border }]}>
+          <Text style={[s.dividerText, { color: t.subtext }]}>Ask Bloom about your schedule</Text>
+        </View>
 
-            <View style={[s.syncNotice, { borderColor: t.border, backgroundColor: t.card }]}>
-              <Icon name="calendar" size={14} color={t.subtext} style={{ marginRight: 6 }} />
-              <Text style={[s.syncText, { color: t.subtext }]}>Google Calendar sync coming soon</Text>
-            </View>
+        {/* Quick prompts */}
+        {messages.length === 0 && (
+          <View style={s.promptsWrap}>
+            {[
+              'What do I have this week?',
+              'Add a meeting tomorrow at 2pm',
+              'When am I free today?',
+            ].map(p => (
+              <TouchableOpacity
+                key={p}
+                style={[s.promptChip, { borderColor: t.border, backgroundColor: t.card }]}
+                onPress={() => sendChat(p)}
+                activeOpacity={0.7}
+              >
+                <Text style={[s.promptText, { color: t.text }]}>{p}</Text>
+                <Icon name="chevron-right" size={14} color={t.subtext} />
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
-        {messages.map(m => (
+        {/* Chat messages */}
+        {messages.map(m =>
           m.from === 'user' ? (
             <View key={m.id} style={s.userRow}>
               <View style={[s.userBubble, { backgroundColor: t.chatBubble ?? C.moss }]}>
@@ -99,7 +300,7 @@ export default function CalendarScreen() {
               <Text style={[s.bloomText, { color: t.text }]}>{m.text}</Text>
             </View>
           )
-        ))}
+        )}
 
         {thinking && (
           <View style={[s.bloomBubble, { paddingVertical: 18, backgroundColor: t.card, borderColor: t.border }]}>
@@ -117,74 +318,188 @@ export default function CalendarScreen() {
           placeholderTextColor={t.subtext}
           value={input}
           onChangeText={setInput}
-          onSubmitEditing={() => send(input)}
+          onSubmitEditing={() => sendChat(input)}
           returnKeyType="send"
           editable={!thinking}
         />
         <TouchableOpacity
           style={[s.sendBtn, { backgroundColor: t.chatBubble ?? C.moss }, (!input.trim() || thinking) && s.sendBtnOff]}
-          onPress={() => send(input)}
+          onPress={() => sendChat(input)}
           disabled={!input.trim() || thinking}
         >
-          <Icon name="send" size={16} color={C.white} />
+          <Icon name="send" size={16} color="#fff" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
+// ─── Event card ─────────────────────────────────────────────────────────────
+
+function fmtDate(event) {
+  const raw = event.start.dateTime ?? event.start.date;
+  const d   = event.start.dateTime ? new Date(raw) : new Date(raw + 'T12:00:00');
+  return d.toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function fmtTime(event) {
+  if (!event.start.dateTime) return 'All day';
+  const start = new Date(event.start.dateTime);
+  const end   = event.end?.dateTime ? new Date(event.end.dateTime) : null;
+  const fmt   = d => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return end ? `${fmt(start)} – ${fmt(end)}` : fmt(start);
+}
+
+function EventCard({ event, t }) {
+  return (
+    <View style={[s.eventCard, { backgroundColor: t.card, borderColor: t.border }]}>
+      <View style={[s.eventDot, { backgroundColor: t.chatBubble ?? C.clay }]} />
+      <View style={s.eventInfo}>
+        <Text style={[s.eventTitle, { color: t.text }]}>{event.summary ?? 'Untitled event'}</Text>
+        <Text style={[s.eventMeta, { color: t.subtext }]}>
+          {fmtDate(event)} · {fmtTime(event)}
+        </Text>
+        {!!event.location && (
+          <Text style={[s.eventLocation, { color: t.subtext }]} numberOfLines={1}>
+            {event.location}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const s = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { flex: 1 },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 18, paddingBottom: 14,
-    borderBottomWidth: 1,
-  },
+  setupScroll: { paddingHorizontal: 20, paddingTop: 22 },
+
   title: {
-    fontSize: 26, fontWeight: '800',
+    fontSize: 28, fontWeight: '800', marginBottom: 20,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  badge: {
-    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4,
+
+  // Hero connect card
+  card: {
+    borderRadius: 20, borderWidth: 1, padding: 22, marginBottom: 18,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  badgeText: { fontSize: 11, fontWeight: '600' },
-
-  scrollContent: { paddingHorizontal: 18, paddingTop: 20 },
-
-  emptyState: { alignItems: 'center', paddingBottom: 20 },
-  calIconWrap: {
-    width: 64, height: 64, borderRadius: 20,
+  calIconRound: {
+    width: 60, height: 60, borderRadius: 18,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
-  emptySub: {
-    fontSize: 14, lineHeight: 22, textAlign: 'center',
-    maxWidth: 300, marginBottom: 24,
+  cardTitle: { fontSize: 19, fontWeight: '700', marginBottom: 8 },
+  cardSub:   { fontSize: 14, lineHeight: 22, marginBottom: 16 },
+
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  featureText: { fontSize: 13, lineHeight: 20 },
+
+  // Client ID setup
+  idBlock: { marginTop: 18, paddingTop: 18, borderTopWidth: 1 },
+  idLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.3, marginBottom: 8 },
+  idInput: {
+    borderWidth: 1.5, borderRadius: 12,
+    paddingVertical: 11, paddingHorizontal: 14,
+    fontSize: 13, fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+    marginBottom: 4,
   },
 
-  promptsWrap: { width: '100%', gap: 8, marginBottom: 20 },
+  savedRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: 18, paddingTop: 14, borderTopWidth: 1,
+  },
+  savedText:  { flex: 1, fontSize: 12 },
+  changeLink: { fontSize: 12, fontWeight: '600' },
+
+  connectBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    marginTop: 20, paddingVertical: 15, borderRadius: 14,
+  },
+  connectBtnDisabled: { opacity: 0.45 },
+  connectBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  errText: { fontSize: 12, color: '#C94B6B', marginTop: 10, textAlign: 'center' },
+
+  // Setup guide
+  guideCard: {
+    borderRadius: 18, borderWidth: 1, padding: 20, marginBottom: 18,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
+  },
+  guideTitle: { fontSize: 14, fontWeight: '700', marginBottom: 14 },
+  guideRow:   { flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'flex-start' },
+  guideNum:   { fontSize: 12, fontWeight: '700', minWidth: 16 },
+  guideStep:  { fontSize: 12, lineHeight: 18, flex: 1 },
+
+  // Connected header
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14,
+    borderBottomWidth: 1,
+  },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerIconBtn: {
+    width: 32, height: 32, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  disconnectBtn: {
+    borderWidth: 1, borderRadius: 10,
+    paddingVertical: 6, paddingHorizontal: 12,
+  },
+  disconnectText: { fontSize: 12, fontWeight: '600' },
+
+  scrollContent: { paddingHorizontal: 18, paddingTop: 16 },
+
+  sectionLabel: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 1.3,
+    marginBottom: 10,
+  },
+
+  // Events
+  eventCard: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    borderRadius: 14, borderWidth: 1,
+    padding: 14, marginBottom: 8, gap: 12,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 }, elevation: 1,
+  },
+  eventDot:  { width: 8, height: 8, borderRadius: 4, marginTop: 6, flexShrink: 0 },
+  eventInfo: { flex: 1 },
+  eventTitle:    { fontSize: 14, fontWeight: '600', marginBottom: 3 },
+  eventMeta:     { fontSize: 12, lineHeight: 18 },
+  eventLocation: { fontSize: 11, marginTop: 2 },
+
+  noEventsCard: {
+    borderWidth: 1, borderRadius: 14, padding: 18, alignItems: 'center', marginBottom: 16,
+  },
+  noEventsText: { fontSize: 13, lineHeight: 20, textAlign: 'center' },
+
+  // Chat divider
+  dividerWrap: {
+    marginTop: 20, marginBottom: 16, paddingTop: 18, borderTopWidth: 1,
+    alignItems: 'center',
+  },
+  dividerText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
+
+  promptsWrap: { gap: 8, marginBottom: 12 },
   promptChip: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderWidth: 1, borderRadius: 14,
     paddingVertical: 13, paddingHorizontal: 16,
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 }, elevation: 1,
   },
   promptText: { fontSize: 14, fontWeight: '500', flex: 1 },
-
-  syncNotice: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderRadius: 10,
-    paddingVertical: 8, paddingHorizontal: 12,
-  },
-  syncText: { fontSize: 12 },
 
   bloomBubble: {
     borderRadius: 18, borderBottomLeftRadius: 5,
     padding: 16, borderWidth: 1, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
   bloomText: { fontSize: 15, lineHeight: 26 },
 

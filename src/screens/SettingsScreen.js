@@ -19,32 +19,63 @@ const BG_SWATCHES = [
   { key: 'pink',     label: 'Blush',  color: '#ECA8BE' },
 ];
 
+const ND_TOGGLES_DEF = [
+  {
+    key: 'autoBreakTasks',
+    label: 'Break tasks into smaller steps',
+    sub: 'Simple tasks auto-split into 2–3 tiny steps.',
+  },
+  {
+    key: 'ideaCapture',
+    label: 'Prominent idea capture',
+    sub: 'Quick-capture button stays visible so mid-task ideas never get lost.',
+  },
+  {
+    key: 'timeBuffers',
+    label: 'Extra time buffers',
+    sub: 'Time estimates padded more generously by default.',
+  },
+  {
+    key: 'reducedClutter',
+    label: 'Reduced visual clutter',
+    sub: 'Simpler view for Tasks and Goals with more whitespace.',
+  },
+  {
+    key: 'gentlerLanguage',
+    label: 'Gentler language for missed tasks',
+    sub: 'Extra-soft copy when something doesn\'t get done.',
+  },
+];
+
 const APP_VERSION = '1.0.0';
 
 function SectionTitle({ children, t }) {
-  return (
-    <Text style={[s.sectionTitle, { color: t.text }]}>{children}</Text>
-  );
+  return <Text style={[s.sectionTitle, { color: t.text }]}>{children}</Text>;
 }
 
-function Row({ label, value, onPress, t, last }) {
+function Row({ label, value, onPress, t, last, danger }) {
   return (
     <TouchableOpacity
       style={[s.row, { borderBottomColor: t.border }, last && { borderBottomWidth: 0 }]}
       onPress={onPress}
       activeOpacity={0.6}
     >
-      <Text style={[s.rowLabel, { color: t.text }]}>{label}</Text>
+      <Text style={[s.rowLabel, { color: danger ? '#B83A55' : t.text }]}>{label}</Text>
       <View style={s.rowRight}>
         {value ? <Text style={[s.rowValue, { color: t.subtext }]}>{value}</Text> : null}
-        <Icon name="chevron-right" size={16} color={t.subtext} />
+        {onPress && !danger && <Icon name="chevron-right" size={16} color={t.subtext} />}
       </View>
     </TouchableOpacity>
   );
 }
 
 export default function SettingsScreen() {
-  const { userName, setUserName, userAge, setUserAge, userOccupation, setUserOccupation, resetOnboarding } = useApp();
+  const {
+    userName, setUserName, userAge, setUserAge,
+    userOccupation, setUserOccupation, resetOnboarding,
+    ndSupport, ndToggles, updateNdToggles,
+    openTutorial,
+  } = useApp();
   const { bgTheme, setBgTheme, isDark, setDarkMode, colors: t } = useTheme();
 
   const [editProfile, setEditProfile] = useState(false);
@@ -66,13 +97,13 @@ export default function SettingsScreen() {
 
         <Text style={[s.title, { color: C.ink }]}>Settings</Text>
 
-        {/* 2a Profile */}
+        {/* Profile */}
         <SectionTitle t={t}>Profile</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           {!editProfile ? (
             <>
-              <Row label="Name"       value={userName || 'Not set'}     onPress={() => { setDraftName(userName); setDraftAge(userAge); setDraftOcc(userOccupation); setEditProfile(true); }} t={t} />
-              <Row label="Age range"  value={userAge || 'Not set'}      onPress={() => { setDraftName(userName); setDraftAge(userAge); setDraftOcc(userOccupation); setEditProfile(true); }} t={t} />
+              <Row label="Name"       value={userName || 'Not set'}       onPress={() => { setDraftName(userName); setDraftAge(userAge); setDraftOcc(userOccupation); setEditProfile(true); }} t={t} />
+              <Row label="Age range"  value={userAge || 'Not set'}        onPress={() => { setDraftName(userName); setDraftAge(userAge); setDraftOcc(userOccupation); setEditProfile(true); }} t={t} />
               <Row label="Occupation" value={userOccupation || 'Not set'} onPress={() => { setDraftName(userName); setDraftAge(userAge); setDraftOcc(userOccupation); setEditProfile(true); }} t={t} last />
             </>
           ) : (
@@ -125,7 +156,37 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        {/* 2b Background */}
+        {/* Support preferences (show if nd was answered) */}
+        {ndSupport === 'yes' && (
+          <>
+            <SectionTitle t={t}>Support preferences</SectionTitle>
+            <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
+              {ND_TOGGLES_DEF.map(({ key, label, sub }, i) => (
+                <View
+                  key={key}
+                  style={[
+                    s.ndRow,
+                    { borderBottomColor: t.border },
+                    i === ND_TOGGLES_DEF.length - 1 && { borderBottomWidth: 0 },
+                  ]}
+                >
+                  <View style={s.ndRowText}>
+                    <Text style={[s.ndLabel, { color: t.text }]}>{label}</Text>
+                    <Text style={[s.ndSub, { color: t.subtext }]}>{sub}</Text>
+                  </View>
+                  <Switch
+                    value={!!ndToggles?.[key]}
+                    onValueChange={v => updateNdToggles({ [key]: v })}
+                    trackColor={{ false: C.border, true: C.moss }}
+                    thumbColor={C.white}
+                  />
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Background */}
         <SectionTitle t={t}>Background</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={s.swatchRow}>
@@ -135,9 +196,7 @@ export default function SettingsScreen() {
                 style={[s.swatch, { backgroundColor: sw.color }, bgTheme === sw.key && s.swatchActive]}
                 onPress={() => setBgTheme(sw.key)}
               >
-                {bgTheme === sw.key && (
-                  <Icon name="check" size={16} color="#fff" />
-                )}
+                {bgTheme === sw.key && <Icon name="check" size={16} color="#fff" />}
               </TouchableOpacity>
             ))}
           </View>
@@ -150,7 +209,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* 2c Display mode */}
+        {/* Display */}
         <SectionTitle t={t}>Display</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={s.switchRow}>
@@ -167,13 +226,23 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* 2d About / Reset */}
+        {/* About */}
         <SectionTitle t={t}>About</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={[s.row, { borderBottomColor: t.border }]}>
             <Text style={[s.rowLabel, { color: t.text }]}>Version</Text>
             <Text style={[s.rowValue, { color: t.subtext }]}>{APP_VERSION}</Text>
           </View>
+          <TouchableOpacity
+            style={[s.row, { borderBottomColor: t.border }]}
+            onPress={openTutorial}
+            activeOpacity={0.6}
+          >
+            <Text style={[s.rowLabel, { color: t.text }]}>How to Use</Text>
+            <View style={s.rowRight}>
+              <Icon name="chevron-right" size={16} color={t.subtext} />
+            </View>
+          </TouchableOpacity>
           {!showReset ? (
             <TouchableOpacity
               style={[s.row, { borderBottomWidth: 0 }]}
@@ -259,6 +328,16 @@ const s = StyleSheet.create({
   },
   saveBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
 
+  // ND toggles
+  ndRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 18, paddingVertical: 14,
+    borderBottomWidth: 1, gap: 12,
+  },
+  ndRowText: { flex: 1 },
+  ndLabel:   { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  ndSub:     { fontSize: 12, lineHeight: 17 },
+
   swatchRow: {
     flexDirection: 'row', justifyContent: 'space-around',
     paddingTop: 18, paddingHorizontal: 14,
@@ -266,11 +345,10 @@ const s = StyleSheet.create({
   swatch: {
     width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  swatchActive: {
-    borderWidth: 3, borderColor: C.mossDark,
-  },
+  swatchActive: { borderWidth: 3, borderColor: C.mossDark },
   swatchLabels: {
     flexDirection: 'row', justifyContent: 'space-around',
     paddingTop: 8, paddingBottom: 18, paddingHorizontal: 14,

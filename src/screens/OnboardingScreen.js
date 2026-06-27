@@ -2,16 +2,44 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   SafeAreaView, StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator, ScrollView,
+  ActivityIndicator, ScrollView, Switch,
 } from 'react-native';
 import { C } from '../constants/colors';
-import { generateGoalAction } from '../services/ai';
+import Icon from '../components/Icon';
 
 const OCCUPATIONS = ['Student', 'Working', 'Both', 'Other'];
 const AGE_RANGES  = ['Under 16', '16–18', '19–24', '25–34', '35–49', '50+'];
 const HOBBY_SUGGESTIONS = [
   'Guitar', 'Watercolour', 'Running', 'Reading', 'Cooking', 'Photography',
   'Yoga', 'Drawing', 'Gaming', 'Writing', 'Piano', 'Swimming',
+];
+
+const ND_TOGGLES_DEF = [
+  {
+    key: 'autoBreakTasks',
+    label: 'Break tasks into smaller steps automatically',
+    sub: 'Even simple-sounding tasks get split into 2–3 tiny steps so nothing feels overwhelming.',
+  },
+  {
+    key: 'ideaCapture',
+    label: 'Capture ideas without losing focus',
+    sub: 'A quick-capture button stays visible so you can note mid-task ideas instantly without switching context.',
+  },
+  {
+    key: 'timeBuffers',
+    label: 'Extra time buffers',
+    sub: 'Bloom pads time estimates more generously by default so you always have room to breathe.',
+  },
+  {
+    key: 'reducedClutter',
+    label: 'Reduce visual clutter',
+    sub: 'A simpler, quieter view for Tasks and Goals with more whitespace and less text per item.',
+  },
+  {
+    key: 'gentlerLanguage',
+    label: 'Gentler language for missed tasks',
+    sub: 'Extra-soft copy when something doesn\'t get done — never "you didn\'t finish," always "that\'s okay, here\'s what\'s next."',
+  },
 ];
 
 function Dots({ current, total }) {
@@ -30,7 +58,12 @@ export default function OnboardingScreen({ onFinish }) {
   const [ageRange,    setAgeRange]   = useState('');
   const [occupation,  setOccupation] = useState('');
   const [selHobbies,  setSelHobbies] = useState([]);
-  const [saving,      setSaving]     = useState(false);
+  const [ndChoice,    setNdChoice]   = useState(null); // 'yes' | 'no' | 'skip'
+  const [ndToggles,   setNdToggles]  = useState({
+    autoBreakTasks: false, ideaCapture: false,
+    timeBuffers: false, reducedClutter: false, gentlerLanguage: false,
+  });
+  const [saving, setSaving] = useState(false);
 
   const next = () => setStep(s => s + 1);
 
@@ -39,16 +72,23 @@ export default function OnboardingScreen({ onFinish }) {
       prev.includes(h) ? prev.filter(x => x !== h) : prev.length < 3 ? [...prev, h] : prev
     );
 
+  const toggleNd = (key) =>
+    setNdToggles(prev => ({ ...prev, [key]: !prev[key] }));
+
   const finish = async () => {
     setSaving(true);
     try {
-      onFinish(name.trim(), ageRange, occupation, null, null, selHobbies);
+      onFinish(
+        name.trim(), ageRange, occupation,
+        null, null, selHobbies,
+        ndChoice, ndChoice === 'yes' ? ndToggles : null,
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  // Step 0: Welcome + Name
+  // ── Step 0: Welcome + Name ────────────────────────────────────────────────
   if (step === 0) {
     return (
       <SafeAreaView style={s.safe}>
@@ -80,12 +120,12 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // Step 1: Age range + Occupation
+  // ── Step 1: Age + Occupation ──────────────────────────────────────────────
   if (step === 1) {
     return (
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
-          <Dots current={0} total={3} />
+          <Dots current={0} total={4} />
           <Text style={s.stepTitle}>A bit about you</Text>
           <Text style={s.stepSub}>Helps Bloom keep suggestions relevant. Optional.</Text>
 
@@ -123,12 +163,12 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // Step 2: Optional hobbies
+  // ── Step 2: Optional hobbies ──────────────────────────────────────────────
   if (step === 2) {
     return (
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
-          <Dots current={1} total={3} />
+          <Dots current={1} total={4} />
           <Text style={s.stepTitle}>Any hobbies to start with?</Text>
           <Text style={s.stepSub}>Pick up to 3 — or skip. You can always add more in Grow.</Text>
 
@@ -152,11 +192,100 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // Step 3: Ready
+  // ── Step 3: Neurodivergent support question ───────────────────────────────
+  if (step === 3) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
+          <Dots current={2} total={4} />
+          <View style={s.ndIconWrap}>
+            <Text style={s.ndIcon}>🌿</Text>
+          </View>
+          <Text style={s.stepTitle}>One more thing</Text>
+          <Text style={s.ndQuestion}>
+            Does your brain work in a way that sometimes needs a little extra support? (ADHD, autism, anxiety, or anything else — totally optional, just helps me help you better.)
+          </Text>
+
+          {[
+            { id: 'yes',  label: 'Yes, a little extra support would help' },
+            { id: 'no',   label: 'No, the default works well for me' },
+            { id: 'skip', label: 'Prefer not to say' },
+          ].map(opt => (
+            <TouchableOpacity
+              key={opt.id}
+              style={[s.ndOption, ndChoice === opt.id && s.ndOptionActive]}
+              onPress={() => setNdChoice(opt.id)}
+              activeOpacity={0.7}
+            >
+              <View style={[s.ndRadio, ndChoice === opt.id && s.ndRadioActive]}>
+                {ndChoice === opt.id && <View style={s.ndRadioFill} />}
+              </View>
+              <Text style={[s.ndOptionText, ndChoice === opt.id && s.ndOptionTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            style={[s.primaryBtn, { marginTop: 28 }, !ndChoice && { opacity: 0.4 }]}
+            onPress={() => {
+              if (!ndChoice) return;
+              if (ndChoice === 'yes') { next(); }
+              else { setStep(5); } // skip toggle screen
+            }}
+            disabled={!ndChoice}
+          >
+            <Text style={s.primaryBtnText}>Continue →</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Step 4: ND toggle selection (only if "yes") ───────────────────────────
+  if (step === 4) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <ScrollView contentContainerStyle={[s.scrollCenter, { paddingTop: 32 }]} showsVerticalScrollIndicator={false}>
+          <Dots current={3} total={4} />
+          <Text style={s.stepTitle}>Choose what helps</Text>
+          <Text style={s.stepSub}>
+            All off by default — turn on whatever feels useful. You can change these anytime in Settings.
+          </Text>
+
+          {ND_TOGGLES_DEF.map(({ key, label, sub }) => (
+            <TouchableOpacity
+              key={key}
+              style={[s.toggleCard, ndToggles[key] && s.toggleCardActive]}
+              onPress={() => toggleNd(key)}
+              activeOpacity={0.8}
+            >
+              <View style={s.toggleCardLeft}>
+                <Text style={[s.toggleLabel, ndToggles[key] && s.toggleLabelActive]}>{label}</Text>
+                <Text style={s.toggleSub}>{sub}</Text>
+              </View>
+              <Switch
+                value={ndToggles[key]}
+                onValueChange={() => toggleNd(key)}
+                trackColor={{ false: C.border, true: C.moss }}
+                thumbColor={C.white}
+              />
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity style={[s.primaryBtn, { marginTop: 24 }]} onPress={next}>
+            <Text style={s.primaryBtnText}>Continue →</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Step 5: Ready ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.center}>
-        <Dots current={2} total={3} />
+        <Dots current={3} total={4} />
         <Text style={s.readyTitle}>
           {name.trim() ? `You're all set, ${name.trim()}.` : "You're all set."}
         </Text>
@@ -232,6 +361,43 @@ const s = StyleSheet.create({
   hobbyChipActive: { borderColor: C.clay, backgroundColor: C.clayPale },
   hobbyChipText: { fontSize: 14, fontWeight: '600', color: C.muted },
   hobbyChipTextActive: { color: C.clay },
+
+  // ND question
+  ndIconWrap: { marginBottom: 16, alignItems: 'center' },
+  ndIcon: { fontSize: 40 },
+  ndQuestion: {
+    fontSize: 15, color: C.ink, textAlign: 'center', lineHeight: 24,
+    marginBottom: 28, paddingHorizontal: 4,
+  },
+  ndOption: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    width: '100%', borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16,
+    marginBottom: 10, backgroundColor: C.white,
+  },
+  ndOptionActive: { borderColor: C.moss, backgroundColor: C.sagePale },
+  ndRadio: {
+    width: 20, height: 20, borderRadius: 10,
+    borderWidth: 2, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  ndRadioActive: { borderColor: C.moss },
+  ndRadioFill: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.moss },
+  ndOptionText: { fontSize: 14, fontWeight: '500', color: C.muted, flex: 1 },
+  ndOptionTextActive: { color: C.ink, fontWeight: '600' },
+
+  // ND toggles
+  toggleCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    width: '100%', borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16,
+    marginBottom: 10, backgroundColor: C.white,
+  },
+  toggleCardActive: { borderColor: C.moss, backgroundColor: C.sagePale },
+  toggleCardLeft: { flex: 1 },
+  toggleLabel: { fontSize: 14, fontWeight: '600', color: C.muted, marginBottom: 3 },
+  toggleLabelActive: { color: C.ink },
+  toggleSub:   { fontSize: 12, color: C.muted, lineHeight: 18 },
 
   primaryBtn: {
     backgroundColor: C.moss, borderRadius: 14,

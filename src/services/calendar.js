@@ -2,15 +2,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { callClaude, getApiKey } from './ai';
 
+// ── GOOGLE CREDENTIALS ───────────────────────────────────────────────────────
+// Set BUNDLED_CLIENT_ID to your real Google OAuth Client ID to skip the
+// in-app setup step. Otherwise, the user enters it once in the Calendar tab.
+// Get one from: console.cloud.google.com → APIs & Services → Credentials
+//   Application type: Web application
+//   Authorized JS origin:   https://stellagarratt29-ui.github.io
+//   Authorized redirect URI: https://stellagarratt29-ui.github.io/Bloom-AI/
+const BUNDLED_CLIENT_ID = null; // e.g. '123456789012-abc.apps.googleusercontent.com'
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CLIENT_ID_KEY    = '@bloom_gcal_client_id';
 const TOKEN_KEY        = '@bloom_gcal_token';
 const TOKEN_EXPIRY_KEY = '@bloom_gcal_expiry';
 const CALENDAR_API     = 'https://www.googleapis.com/calendar/v3';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events';
 
-// --- Storage helpers ---
+// --- Client ID storage ---
 
 export async function getCalendarClientId() {
+  if (BUNDLED_CLIENT_ID) return BUNDLED_CLIENT_ID;
   try { return await AsyncStorage.getItem(CLIENT_ID_KEY); }
   catch { return null; }
 }
@@ -21,6 +32,8 @@ export async function saveCalendarClientId(id) {
     else await AsyncStorage.removeItem(CLIENT_ID_KEY);
   } catch {}
 }
+
+// --- Token storage ---
 
 export async function getCalendarToken() {
   try {
@@ -57,23 +70,35 @@ function getRedirectUri() {
   return origin + pathname.replace(/\/?$/, '/');
 }
 
-export async function startCalendarOAuth() {
+export async function startCalendarOAuth(clientIdOverride) {
   if (Platform.OS !== 'web') throw new Error('Calendar requires the web version of Bloom.');
-  const clientId = await getCalendarClientId();
-  if (!clientId) throw new Error('No Client ID saved — enter your Google Client ID first.');
+
+  const clientId = clientIdOverride?.trim() || BUNDLED_CLIENT_ID || await getCalendarClientId();
+  if (!clientId) throw new Error('NO_CLIENT_ID');
+
+  // Save if this is a user-supplied override
+  if (clientIdOverride?.trim() && clientIdOverride.trim() !== BUNDLED_CLIENT_ID) {
+    await saveCalendarClientId(clientIdOverride.trim());
+  }
+
+  // Remember to return to Calendar tab after the redirect completes
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    window.sessionStorage.setItem('bloomOAuthReturn', 'CalendarTab');
+  }
+
   const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: getRedirectUri(),
-    response_type: 'token',
-    scope: SCOPES,
+    client_id:              clientId,
+    redirect_uri:           getRedirectUri(),
+    response_type:          'token',
+    scope:                  SCOPES,
     include_granted_scopes: 'true',
-    prompt: 'select_account',
+    prompt:                 'select_account',
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
-// Call once on app startup — extracts token from URL hash if this is an OAuth redirect.
-// Returns the token data if found, null otherwise.
+// Call once at app startup — extracts access token from the URL hash if
+// this is an OAuth redirect back from Google. Returns token data or null.
 export function extractTokenFromHash() {
   if (typeof window === 'undefined') return null;
   const hash = window.location.hash;
@@ -82,6 +107,7 @@ export function extractTokenFromHash() {
   const token     = params.get('access_token');
   const expiresIn = parseInt(params.get('expires_in') ?? '3600');
   if (!token) return null;
+  // Clean the hash from the address bar immediately
   window.history.replaceState(null, '', window.location.pathname);
   return { token, expiry: Date.now() + expiresIn * 1000 };
 }
@@ -95,14 +121,20 @@ async function calFetch(path, options = {}) {
     ...options,
     headers: {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      'Content-Type':  'application/json',
       ...(options.headers ?? {}),
     },
   });
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401) throw Object.assign(new Error('Google Calendar session expired — reconnect in the Calendar tab.'), { code: 'NO_CAL_AUTH' });
+    if (res.status === 401) {
+      await clearCalendarToken();
+      throw Object.assign(
+        new Error('Google Calendar session expired — reconnect in the Calendar tab.'),
+        { code: 'NO_CAL_AUTH' }
+      );
+    }
     throw new Error(data.error?.message ?? `HTTP ${res.status}`);
   }
   return data;
@@ -112,8 +144,11 @@ export async function getUpcomingEvents(daysAhead = 14) {
   const now    = new Date();
   const future = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
   const params = new URLSearchParams({
-    timeMin: now.toISOString(), timeMax: future.toISOString(),
-    singleEvents: 'true', orderBy: 'startTime', maxResults: '50',
+    timeMin:       now.toISOString(),
+    timeMax:       future.toISOString(),
+    singleEvents:  'true',
+    orderBy:       'startTime',
+    maxResults:    '50',
   });
   const data = await calFetch(`/calendars/primary/events?${params}`);
   return data?.items ?? [];
@@ -121,8 +156,11 @@ export async function getUpcomingEvents(daysAhead = 14) {
 
 export async function getEventsForPeriod(start, end) {
   const params = new URLSearchParams({
-    timeMin: start.toISOString(), timeMax: end.toISOString(),
-    singleEvents: 'true', orderBy: 'startTime', maxResults: '100',
+    timeMin:      start.toISOString(),
+    timeMax:      end.toISOString(),
+    singleEvents: 'true',
+    orderBy:      'startTime',
+    maxResults:   '100',
   });
   const data = await calFetch(`/calendars/primary/events?${params}`);
   return data?.items ?? [];
@@ -140,13 +178,13 @@ export async function createCalendarEvent({ summary, startDateTime, endDateTime,
   });
 }
 
-export async function updateCalendarEvent({ eventId, summary, startDateTime, endDateTime, description }) {
+export async function updateCalendarEvent({ eventId, summary, startDT, endDT, description }) {
   const tz   = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const body = {};
   if (summary     !== undefined) body.summary     = summary;
   if (description !== undefined) body.description = description;
-  if (startDateTime) body.start = { dateTime: startDateTime, timeZone: tz };
-  if (endDateTime)   body.end   = { dateTime: endDateTime,   timeZone: tz };
+  if (startDT) body.start = { dateTime: startDT, timeZone: tz };
+  if (endDT)   body.end   = { dateTime: endDT,   timeZone: tz };
   return calFetch(`/calendars/primary/events/${eventId}`, {
     method: 'PATCH', body: JSON.stringify(body),
   });
@@ -158,7 +196,7 @@ export async function deleteCalendarEvent(eventId) {
 
 // --- High-level request handler (called from chat) ---
 
-function formatEventTime(event) {
+function fmtEventTime(event) {
   if (event.start.dateTime) {
     const dt = new Date(event.start.dateTime);
     return dt.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -220,7 +258,7 @@ Rules:
 - "this week" = Monday to Sunday of current week
 - "tomorrow" = today + 1 day
 - "this afternoon" = 12:00–17:00, "this morning" = 08:00–12:00, "this evening" = 17:00–21:00
-- If date/time is genuinely ambiguous (two possible Tuesdays, no time given for a meeting), set needsClarification
+- If date/time is genuinely ambiguous, set needsClarification
 - Duration defaults to 60 minutes unless specified`,
         messages: [{ role: 'user', content: text }],
         maxTokens: 300,
@@ -231,19 +269,17 @@ Rules:
   } catch { intent = { action: 'none' }; }
 
   if (intent.action === 'none') return null;
-
   if (intent.needsClarification) return intent.needsClarification;
 
   try {
-    // --- CREATE ---
     if (intent.action === 'create') {
       if (!intent.dateISO) return "I need a date for that event — when should I add it?";
-      const startDT = buildStartDateTime(intent.dateISO, intent.timeISO);
-      const endDT   = buildEndTime(startDT, intent.durationMinutes ?? 60);
-      const created = await createCalendarEvent({
+      const startDT  = buildStartDateTime(intent.dateISO, intent.timeISO);
+      const endDT    = buildEndTime(startDT, intent.durationMinutes ?? 60);
+      const created  = await createCalendarEvent({
         summary: intent.summary ?? 'New event',
         startDateTime: startDT,
-        endDateTime: endDT,
+        endDateTime:   endDT,
       });
       const dateStr = new Date(startDT).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
       const timeStr = intent.timeISO
@@ -260,32 +296,33 @@ Rules:
       return `Done! Added "${created.summary}" to your calendar for ${dateStr} at ${timeStr}.`;
     }
 
-    // --- LIST / QUERY ---
     if (intent.action === 'list' || intent.action === 'query') {
       const start  = intent.queryStart ? new Date(intent.queryStart) : new Date();
       const end    = intent.queryEnd   ? new Date(intent.queryEnd)   : new Date(Date.now() + 7 * 86400000);
       const events = await getEventsForPeriod(start, end);
       const summary = events.length === 0
         ? 'No events found.'
-        : events.map(e => `${formatEventTime(e)}: ${e.summary}`).join('\n');
+        : events.map(e => `${fmtEventTime(e)}: ${e.summary}`).join('\n');
       const aiKey = await getApiKey();
       if (aiKey) {
         return await callClaude({
-          system: 'You are Bloom. Answer the user\'s calendar question using their actual events. Be specific. 2–3 sentences.',
+          system: "You are Bloom. Answer the user's calendar question using their actual events. Be specific. 2–3 sentences.",
           messages: [{ role: 'user', content: `Question: "${text}"\nCalendar events:\n${summary}` }],
           maxTokens: 200,
-        }).catch(() => events.length === 0 ? 'Nothing scheduled for that period.' : `You have ${events.length} event${events.length > 1 ? 's' : ''}: ${events.map(e => e.summary).join(', ')}.`);
+        }).catch(() =>
+          events.length === 0
+            ? 'Nothing scheduled for that period.'
+            : `You have ${events.length} event${events.length > 1 ? 's' : ''}: ${events.map(e => e.summary).join(', ')}.`
+        );
       }
       return events.length === 0 ? 'Nothing scheduled for that period.' : summary;
     }
 
-    // --- UPDATE ---
     if (intent.action === 'update') {
       const events = await getUpcomingEvents(30);
       const query  = (intent.searchQuery ?? intent.summary ?? '').toLowerCase();
       const match  = events.find(e => e.summary?.toLowerCase().includes(query));
       if (!match) return `I couldn't find "${intent.searchQuery ?? intent.summary}" in your upcoming events. Can you be more specific?`;
-
       const origDate = (match.start.dateTime ?? match.start.date ?? '').substring(0, 10);
       let startDT, endDT;
       if (intent.timeISO && origDate) {
@@ -304,7 +341,6 @@ Rules:
         : `Done — "${updated?.summary ?? match.summary}" has been updated.`;
     }
 
-    // --- DELETE ---
     if (intent.action === 'delete') {
       const events = await getUpcomingEvents(30);
       const query  = (intent.searchQuery ?? intent.summary ?? '').toLowerCase();

@@ -43,10 +43,17 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
   return data.content[0]?.text ?? '';
 }
 
-export function buildBloomSystem({ userName, goals, tasks, totalPoints }) {
+export function buildBloomSystem({ userName, goals, tasks, totalPoints, ndToggles }) {
   const name = userName || 'there';
   const goalList = goals?.length ? goals.map(g => g.text).join('; ') : 'none yet';
   const taskList = tasks?.filter(t => !t.done).slice(0, 6).map(t => `• ${t.text} [${t.priority}]`).join('\n') || 'none';
+  let extra = '';
+  if (ndToggles?.gentlerLanguage) {
+    extra += '\nAlways use the gentlest possible language — never imply failure, never say "you didn\'t finish". When something isn\'t done, frame it as "that\'s okay, here\'s what\'s next."';
+  }
+  if (ndToggles?.timeBuffers) {
+    extra += '\nWhen estimating time for tasks, always suggest 50–100% more time than the absolute minimum — err generously.';
+  }
   return `You are Bloom, a calm and direct productivity assistant.
 User: ${name}
 Goals: ${goalList}
@@ -54,12 +61,13 @@ Pending tasks:\n${taskList}
 Points: ${totalPoints ?? 0}
 
 Be direct, warm, practical. 2–4 sentences unless asked for more.
-Reference actual tasks and goals by name. Never use filler phrases. Never mention streaks.`;
+Reference actual tasks and goals by name. Never use filler phrases. Never mention streaks.${extra}`;
 }
 
 // Parse brain dump → items + AI-generated personalised response
-export async function parseBrainDump(rawText, userName = '') {
+export async function parseBrainDump(rawText, userName = '', ndToggles = {}) {
   const name = userName || 'the user';
+  const autoBreak = ndToggles?.autoBreakTasks;
   try {
     const key = await getApiKey();
     if (!key) throw new Error('no key');
@@ -81,7 +89,7 @@ Item rules:
 - Goals: always priority "medium"
 - Extract EVERY distinct item — never merge, never drop anything
 - Rewrite each item's "text" as a short, clean imperative action label — strip filler words, first-person phrasing, and casual language. Title-case imperative style (e.g. "Take out the garbage" not "I really need to take out the garbage can"; "Write English essay outline" not "ugh i still haven't done my english essay outline")
-
+${autoBreak ? '- For each task (not goals or hobbies), if it can logically be broken into 2–3 smaller concrete steps, return each step as its own separate item with the same priority. Prefer more items over fewer.' : ''}
 Response rules (critical):
 - Name 2–3 specific items from the dump using the user's own words
 - If goals found, mention they've been added to Goals tab with a real plan

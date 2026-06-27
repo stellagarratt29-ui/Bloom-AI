@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -19,6 +19,7 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { C } from './src/constants/colors';
 
 import OnboardingScreen      from './src/screens/OnboardingScreen';
+import TutorialScreen        from './src/screens/TutorialScreen';
 import BloomChatScreen       from './src/screens/BloomChatScreen';
 import TaskGuideScreen       from './src/screens/TaskGuideScreen';
 import TasksScreen           from './src/screens/TasksScreen';
@@ -225,10 +226,24 @@ function SplashScreen() {
 
 function RootNavigator() {
   const { loaded, hasOnboarded, finishOnboarding } = useApp();
+  const navRef = useRef(null);
+
+  // Once the navigator is mounted, check if we're returning from a Google OAuth redirect
+  // (sessionStorage flag was set by startCalendarOAuth before the redirect)
+  const handleNavReady = useCallback(() => {
+    if (Platform.OS !== 'web') return;
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
+    const tab = window.sessionStorage.getItem('bloomOAuthReturn');
+    if (tab) {
+      window.sessionStorage.removeItem('bloomOAuthReturn');
+      navRef.current?.navigate('Main', { screen: tab });
+    }
+  }, []);
+
   if (!loaded) return <SplashScreen />;
   if (!hasOnboarded) return <OnboardingScreen onFinish={finishOnboarding} />;
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef} onReady={handleNavReady}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         <RootStack.Screen name="Main" component={MainTabs} />
       </RootStack.Navigator>
@@ -251,6 +266,25 @@ function ThemedShell({ children }) {
   );
 }
 
+function TutorialOverlay() {
+  const { hasOnboarded, tutorialSeen, setTutorialSeen, showTutorialReplay, closeTutorial } = useApp();
+  const { colors } = useTheme();
+
+  const visible = (hasOnboarded && !tutorialSeen) || showTutorialReplay;
+  if (!visible) return null;
+
+  const handleDone = () => {
+    setTutorialSeen(true);
+    closeTutorial();
+  };
+
+  return (
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: colors.bg }}>
+      <TutorialScreen onDone={handleDone} />
+    </View>
+  );
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -259,6 +293,7 @@ export default function App() {
           <ThemeProvider>
             <ThemedShell>
               <RootNavigator />
+              <TutorialOverlay />
             </ThemedShell>
           </ThemeProvider>
         </AppProvider>
