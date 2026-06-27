@@ -29,13 +29,13 @@ export default function ScreenAwarenessScreen() {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={[s.title, { color: C.mintDark }]}>Screen{'\n'}Awareness</Text>
+        <Text style={[s.title, { color: C.lavDark }]}>Screen{'\n'}Awareness</Text>
         <Text style={[s.sub, { color: t.subtext }]}>Awareness is the first step.</Text>
 
         <View style={s.statsRow}>
-          <View style={[s.statBox, { backgroundColor: C.mintWash }]}>
-            <Text style={[s.statValue, { color: C.mintDark }]}>{MOCK_SCREEN_TIME}</Text>
-            <Text style={[s.statLabel, { color: C.mintDark }]}>SCREEN TIME</Text>
+          <View style={[s.statBox, { backgroundColor: C.lavWash }]}>
+            <Text style={[s.statValue, { color: C.lavDark }]}>{MOCK_SCREEN_TIME}</Text>
+            <Text style={[s.statLabel, { color: C.lavDark }]}>SCREEN TIME</Text>
           </View>
           <View style={[s.statBox, { backgroundColor: C.pinkWash }]}>
             <Text style={[s.statValue, { color: C.pinkDark }]}>{MOCK_UNLOCKS}</Text>

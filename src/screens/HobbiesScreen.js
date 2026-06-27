@@ -81,7 +81,7 @@ export default function HobbiesScreen({ navigation }) {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={[s.title, { color: C.mintDark }]}>Grow</Text>
+        <Text style={[s.title, { color: C.moss }]}>Grow</Text>
         <Text style={[s.sub, { color: t.subtext }]}>Hobbies you're building, one milestone at a time.</Text>
 
         {hobbies.length === 0 && !showAdd && (
@@ -122,7 +122,7 @@ export default function HobbiesScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
               <View style={[s.progressTrack, { backgroundColor: t.border }]}>
-                <View style={[s.progressFill, { backgroundColor: C.mintDark, width: `${pct}%` }]} />
+                <View style={[s.progressFill, { backgroundColor: C.moss, width: `${pct}%` }]} />
               </View>
               <Text style={[s.milestoneLabel, { color: t.subtext }]}>MILESTONE {done + 1} OF {total}</Text>
               <Text style={[s.hobbyMilestone, { color: t.text }]} numberOfLines={3}>{h.currentMilestone}</Text>
