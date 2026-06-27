@@ -84,10 +84,10 @@ export default function TasksScreen({ navigation }) {
   return (
     <SafeAreaView style={[ss.safe, { backgroundColor: t.bg }]}>
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-        <Text style={[ss.title, { color: C.lavDark }]}>Tasks</Text>
+        <Text style={[ss.title, { color: C.clay }]}>Tasks</Text>
         <View style={ss.headerRight}>
           <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
-          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.lavDark }]} onPress={() => setShowAddTask(true)}>
+          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.clay }]} onPress={() => setShowAddTask(true)}>
             <Icon name="plus" size={14} color={C.white} />
             <Text style={ss.addTaskBtnText}>Add</Text>
           </TouchableOpacity>

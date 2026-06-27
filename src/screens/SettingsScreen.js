@@ -12,11 +12,11 @@ const OCCUPATIONS = ['Student', 'Working', 'Both', 'Other'];
 const AGE_RANGES  = ['Under 16', '16–18', '19–24', '25–34', '35–49', '50+'];
 
 const BG_SWATCHES = [
-  { key: 'cream',    label: 'Cream',    color: '#FBF7EF' },
-  { key: 'lavender', label: 'Lavender', color: '#C9B8E8' },
-  { key: 'mint',     label: 'Mint',     color: '#AEDCC4' },
-  { key: 'sky',      label: 'Sky',      color: '#A8D4E8' },
-  { key: 'pink',     label: 'Pink',     color: '#F2B9C4' },
+  { key: 'cream',    label: 'Petal',  color: '#ECC4D4' },
+  { key: 'lavender', label: 'Lilac',  color: '#C0A8E0' },
+  { key: 'mint',     label: 'Sage',   color: '#A4C4B0' },
+  { key: 'sky',      label: 'Sky',    color: '#A8BCDC' },
+  { key: 'pink',     label: 'Blush',  color: '#ECA8BE' },
 ];
 
 const APP_VERSION = '1.0.0';
@@ -136,7 +136,7 @@ export default function SettingsScreen() {
                 onPress={() => setBgTheme(sw.key)}
               >
                 {bgTheme === sw.key && (
-                  <Icon name="check" size={16} color={sw.key === 'cream' ? C.ink : '#fff'} />
+                  <Icon name="check" size={16} color="#fff" />
                 )}
               </TouchableOpacity>
             ))}
@@ -269,7 +269,7 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   swatchActive: {
-    borderWidth: 2.5, borderColor: C.ink,
+    borderWidth: 3, borderColor: C.mossDark,
   },
   swatchLabels: {
     flexDirection: 'row', justifyContent: 'space-around',
