@@ -18,7 +18,7 @@ const SECTIONS = [
 ];
 
 export default function TasksScreen({ navigation }) {
-  const { tasks, totalPoints, toggleTask, deleteTask, updateTask, addTask, ndToggles } = useApp();
+  const { tasks, toggleTask, deleteTask, updateTask, addTask, ndToggles } = useApp();
   const { colors: t } = useTheme();
   const reducedClutter = !!ndToggles?.reducedClutter;
   const ideaCapture    = !!ndToggles?.ideaCapture;
@@ -81,7 +81,6 @@ export default function TasksScreen({ navigation }) {
         >
           {task.text}
         </Text>
-        {!isDone && !reducedClutter && <Text style={[ss.ptsLabel, { color: sec?.cbColor ?? C.moss }]}>+5</Text>}
       </TouchableOpacity>
       <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
         <Icon name="more-vertical" size={18} color={t.subtext} />
@@ -94,7 +93,6 @@ export default function TasksScreen({ navigation }) {
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
         <Text style={[ss.title, { color: C.clay }]}>Tasks</Text>
         <View style={ss.headerRight}>
-          <Text style={[ss.ptsTotal, { color: C.moss }]}>{totalPoints} pts</Text>
           <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.clay }]} onPress={() => setShowAddTask(true)}>
             <Icon name="plus" size={14} color={C.white} />
             <Text style={ss.addTaskBtnText}>Add</Text>
@@ -301,7 +299,6 @@ const ss = StyleSheet.create({
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  ptsTotal: { fontSize: 14, fontWeight: '700' },
   addTaskBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
@@ -343,7 +340,6 @@ const ss = StyleSheet.create({
   taskBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
   taskTextDone: { textDecorationLine: 'line-through' },
-  ptsLabel: { fontSize: 12, fontWeight: '700' },
   menuBtn: { padding: 6 },
 
   menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },

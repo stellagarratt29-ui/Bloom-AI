@@ -128,7 +128,7 @@ Rules:
           >
             <Icon name="check" size={15} color={taskDone ? C.sage : C.white} />
             <Text style={[s.doneBtnText, taskDone && s.doneBtnTextDone]}>
-              {taskDone ? 'Done ✓' : 'Mark done — +5 pts'}
+              {taskDone ? 'Done ✓' : 'Mark done'}
             </Text>
           </TouchableOpacity>
         </View>

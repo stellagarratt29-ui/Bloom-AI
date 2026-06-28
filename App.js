@@ -29,6 +29,7 @@ import GoalsScreen           from './src/screens/GoalsScreen';
 import GoalDetailScreen      from './src/screens/GoalDetailScreen';
 import CalendarScreen        from './src/screens/CalendarScreen';
 import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
+import YearReviewScreen      from './src/screens/YearReviewScreen';
 import SettingsScreen        from './src/screens/SettingsScreen';
 
 const RootStack      = createNativeStackNavigator();
@@ -181,6 +182,7 @@ function GrowStack() {
     <GrowStackNav.Navigator screenOptions={{ headerShown: false }}>
       <GrowStackNav.Screen name="Hobbies"     component={HobbiesScreen} />
       <GrowStackNav.Screen name="HobbyDetail" component={HobbyDetailScreen} />
+      <GrowStackNav.Screen name="YearReview"  component={YearReviewScreen} />
     </GrowStackNav.Navigator>
   );
 }

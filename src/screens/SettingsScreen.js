@@ -226,6 +226,26 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Screen Time */}
+        <SectionTitle t={t}>Screen Time</SectionTitle>
+        <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
+          <View style={{ paddingHorizontal: 18, paddingVertical: 16, gap: 10 }}>
+            <Text style={[s.rowLabel, { color: t.text }]}>Apple Screen Time</Text>
+            <Text style={[s.ndSub, { color: t.subtext }]}>
+              Real screen time data uses Apple's DeviceActivity framework — a native iOS feature. The web version of Bloom can't access this data.
+            </Text>
+            <Text style={[s.ndSub, { color: t.subtext }]}>
+              When Bloom is built as a native iOS app and approved for Apple's Family Controls entitlement, this section will show your real usage automatically.
+            </Text>
+            <View style={[{ borderRadius: 10, padding: 12, marginTop: 4 }, { backgroundColor: t.bg }]}>
+              <Text style={[s.sectionTitle, { color: t.subtext, marginBottom: 6, marginTop: 0 }]}>FOR THE DEVELOPER (STELLA)</Text>
+              <Text style={[s.ndSub, { color: t.subtext }]}>
+                In Xcode: Signing & Capabilities → add "Family Controls". Then submit for Apple entitlement review with a written justification. This is a one-time step before App Store submission.
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* About */}
         <SectionTitle t={t}>About</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>

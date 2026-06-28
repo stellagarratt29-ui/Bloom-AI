@@ -81,7 +81,12 @@ export default function HobbiesScreen({ navigation }) {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={[s.title, { color: C.moss }]}>Grow</Text>
+        <View style={s.titleRow}>
+          <Text style={[s.title, { color: C.moss }]}>Grow</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('YearReview')} style={s.yearBtn}>
+            <Text style={[s.yearBtnText, { color: C.clay }]}>Year in review ✦</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={[s.sub, { color: t.subtext }]}>Hobbies you're building, one milestone at a time.</Text>
 
         {hobbies.length === 0 && !showAdd && (
@@ -268,10 +273,13 @@ const s = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
+  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 4 },
   title: {
-    fontSize: 30, fontWeight: '800', marginBottom: 4,
+    fontSize: 30, fontWeight: '800',
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
+  yearBtn: { paddingBottom: 4 },
+  yearBtnText: { fontSize: 13, fontWeight: '700' },
   sub: { fontSize: 14, lineHeight: 20, marginBottom: 24 },
 
   empty: { alignItems: 'center', paddingTop: 40, paddingBottom: 32 },

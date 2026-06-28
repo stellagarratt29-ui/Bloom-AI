@@ -190,23 +190,29 @@ export default function CalendarScreen() {
 
           {/* Setup guide */}
           <View style={[s.guideCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={[s.guideTitle, { color: t.text }]}>How to get your Client ID</Text>
+            <Text style={[s.guideTitle, { color: t.text }]}>One-time setup (done once by the developer)</Text>
+            <Text style={[s.guideSub, { color: t.subtext }]}>
+              Every app that connects to Google Calendar needs a Google Cloud OAuth Client ID. This is set up once by whoever builds the app — not by each person who uses it. Once done, users only ever see the simple "Connect" button above.
+            </Text>
             {[
               'Go to console.cloud.google.com',
               'Create a project (or select one)',
               'APIs & Services → Enable APIs → enable "Google Calendar API"',
               'APIs & Services → Credentials → Create OAuth 2.0 Client ID',
               'Application type: Web application',
-              `Authorized JS origin: ${typeof window !== 'undefined' ? window.location.origin : 'your app origin'}`,
+              `Authorized JS origins: ${typeof window !== 'undefined' ? window.location.origin : 'your app origin'}`,
               `Authorized redirect URI: ${typeof window !== 'undefined' ? (window.location.origin + window.location.pathname.replace(/\/?$/, '/')) : 'your app URL'}`,
-              'Copy the Client ID and paste it above',
-              'Also complete the OAuth consent screen (add your email as a test user)',
+              'Complete the OAuth consent screen — add your email as a test user',
+              'Copy the Client ID, open calendar.js in the source code, paste it as BUNDLED_CLIENT_ID',
             ].map((step, i) => (
               <View key={i} style={s.guideRow}>
                 <Text style={[s.guideNum, { color: t.chatBubble ?? C.clay }]}>{i + 1}</Text>
                 <Text style={[s.guideStep, { color: t.subtext }]}>{step}</Text>
               </View>
             ))}
+            <Text style={[s.guideSub, { color: t.subtext, marginTop: 12, fontStyle: 'italic' }]}>
+              This takes about 10–15 minutes and is the same process every app using Google Calendar goes through. After that, deploy, and the Client ID field disappears for everyone.
+            </Text>
           </View>
 
           <View style={{ height: 48 }} />
@@ -430,7 +436,8 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  guideTitle: { fontSize: 14, fontWeight: '700', marginBottom: 14 },
+  guideTitle: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
+  guideSub:   { fontSize: 12, lineHeight: 18, marginBottom: 14 },
   guideRow:   { flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'flex-start' },
   guideNum:   { fontSize: 12, fontWeight: '700', minWidth: 16 },
   guideStep:  { fontSize: 12, lineHeight: 18, flex: 1 },

@@ -43,7 +43,7 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
   return data.content[0]?.text ?? '';
 }
 
-export function buildBloomSystem({ userName, goals, tasks, totalPoints, ndToggles }) {
+export function buildBloomSystem({ userName, goals, tasks, ndToggles }) {
   const name = userName || 'there';
   const goalList = goals?.length ? goals.map(g => g.text).join('; ') : 'none yet';
   const taskList = tasks?.filter(t => !t.done).slice(0, 6).map(t => `• ${t.text} [${t.priority}]`).join('\n') || 'none';
@@ -58,7 +58,6 @@ export function buildBloomSystem({ userName, goals, tasks, totalPoints, ndToggle
 User: ${name}
 Goals: ${goalList}
 Pending tasks:\n${taskList}
-Points: ${totalPoints ?? 0}
 
 Be direct, warm, practical. 2–4 sentences unless asked for more.
 Reference actual tasks and goals by name. Never use filler phrases. Never mention streaks.${extra}`;
@@ -366,6 +365,29 @@ function _curriculumFallback(hobbyName) {
     `Try a harder variation of the main technique — done when you complete it, even imperfectly.`,
     `Create one piece of work in ${hobbyName} you're proud enough to share — done when it's finished and you've shown it to at least one person.`,
   ];
+}
+
+// Generate a warm yearly review reflection
+export async function generateYearReview({ year, taskCount, hobbies = [], goals = [] }) {
+  const hobbyList = hobbies.map(h => `${h.name} (milestone ${(h.milestoneIndex ?? 0) + 1} of ${h.milestones?.length || 1})`).join(', ') || 'none';
+  const goalList  = goals.map(g => `${g.text} (${g.completedActions?.length || 0} actions done)`).join(', ') || 'none';
+  try {
+    const key = await getApiKey();
+    if (!key) throw new Error('no key');
+    return (await callClaude({
+      system: 'Write one warm, specific, encouraging sentence (max 35 words) about this person\'s year. Reference real numbers and names. Never use generic filler like "great job" or "you should be proud". Be direct and specific.',
+      messages: [{ role: 'user', content: `Year: ${year}\nTasks completed: ${taskCount}\nHobbies: ${hobbyList}\nGoals: ${goalList}` }],
+      maxTokens: 90,
+    })).trim();
+  } catch {
+    if (hobbies.length > 0 && taskCount > 0)
+      return `${taskCount} task${taskCount !== 1 ? 's' : ''} done and ${hobbies.length} skill${hobbies.length !== 1 ? 's' : ''} in progress — ${hobbies[0].name} shows real, steady commitment.`;
+    if (taskCount > 0)
+      return `${taskCount} task${taskCount !== 1 ? 's' : ''} ticked off — real, consistent effort across the year.`;
+    if (hobbies.length > 0)
+      return `${hobbies[0].name} is a skill that takes patience — getting started is its own achievement.`;
+    return `Getting started and making a plan — that's what ${year} looks like from here.`;
+  }
 }
 
 // Generate a screen awareness insight from usage data

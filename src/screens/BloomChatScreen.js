@@ -87,7 +87,7 @@ function getFallback(msg, { userName, goals, tasks }) {
 }
 
 export default function BloomChatScreen() {
-  const { userName, goals, tasks, totalPoints, addTask, processBrainDump, ndToggles } = useApp();
+  const { userName, goals, tasks, addTask, processBrainDump, ndToggles } = useApp();
   const { colors: t } = useTheme();
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
@@ -168,7 +168,7 @@ export default function BloomChatScreen() {
 
       // AI chat
       if (hasKey) {
-        const system = buildBloomSystem({ userName, goals, tasks, totalPoints, ndToggles });
+        const system = buildBloomSystem({ userName, goals, tasks, ndToggles });
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
         setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
@@ -192,9 +192,6 @@ export default function BloomChatScreen() {
 
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
           <Text style={s.headerTitle}>Bloom</Text>
-          <View style={[s.ptsWrap, { backgroundColor: t.sagePale }]}>
-            <Text style={[s.ptsText, { color: C.moss }]}>{totalPoints} pts</Text>
-          </View>
         </View>
 
         <ScrollView
@@ -279,9 +276,6 @@ const s = StyleSheet.create({
     fontSize: 30, fontWeight: '700', color: C.clay, letterSpacing: -0.5,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  ptsWrap: { backgroundColor: C.sagePale, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  ptsText: { fontSize: 13, fontWeight: '700', color: C.moss },
-
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 18, paddingVertical: 16, gap: 14 },
 
