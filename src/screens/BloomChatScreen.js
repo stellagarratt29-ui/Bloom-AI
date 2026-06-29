@@ -18,6 +18,36 @@ function getGreeting(userName) {
   return `Good ${time}${name}. How are you feeling today, and what's on your mind? Just tell me everything — tasks, worries, plans — and I'll sort it out.`;
 }
 
+// Returns true when the message is clearly a direct question or conversation —
+// NOT a description of tasks/worries the user wants sorted. When true, skip
+// brain-dump extraction entirely and respond as a real assistant.
+function isConversationalOrQuestion(text) {
+  const t = text.trim();
+  const lower = t.toLowerCase();
+
+  // Any question mark → definitely a question
+  if (t.includes('?')) return true;
+
+  // WH- question starters
+  if (/^(what|how|why|when|where|who|which|whose|whom)\b/i.test(t)) return true;
+
+  // "What's / how's" contractions
+  if (/^(what'?s|who'?s|how'?s|where'?s|when'?s)\b/i.test(t)) return true;
+
+  // Auxiliary verb questions directed at Bloom or general
+  if (/^(can you|could you|will you|would you|do you|does bloom|are you|is bloom|have you|should i|may i)\b/i.test(lower)) return true;
+
+  // Imperative requests directed at Bloom (not task-listing imperatives)
+  if (/^(show me|tell me|explain|help me|give me|find me|describe|summarise|summarize|list my|remind me of|walk me through)\b/i.test(lower)) return true;
+
+  // Casual chat / greetings / acknowledgments
+  if (/^(hey|hi|hello|sup|yo|hiya|howdy|good morning|good afternoon|good evening)\b/i.test(lower)) return true;
+  if (/^(thanks|thank you|cheers|ok|okay|got it|sounds good|perfect|great|nice|awesome|cool|sure|yep|yeah|nope)[\s!?.]*$/i.test(lower)) return true;
+  if (/^(bye|goodbye|see ya|later|talk soon)[\s!?.]*$/i.test(lower)) return true;
+
+  return false;
+}
+
 function looksLikeTaskDump(text) {
   const t = text.toLowerCase();
   if (/here'?s? (what i|my) (need|have|want|tasks|list|to.?do)/i.test(text)) return true;
@@ -81,9 +111,14 @@ function getFallback(msg, { userName, goals, tasks }) {
     return g ? `Your goal: "${g}". Check the Goals tab for your next step.` : `Head to Goals to set a big goal — I'll build you a real plan.`;
   }
   const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|paint|draw|gym|run|cook|clean)\b/)?.[0];
-  return keyWord
-    ? `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`
-    : `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
+  if (keyWord) return `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`;
+
+  // Question or conversational message without an AI key — be upfront
+  if (isConversationalOrQuestion(msg)) {
+    return `To answer that properly I need an AI connection — add a Claude API key in Settings and I'll give you a real response. Until then I can help you capture and sort tasks.`;
+  }
+
+  return `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
 
 export default function BloomChatScreen() {
@@ -126,8 +161,8 @@ export default function BloomChatScreen() {
         }
       }
 
-      // Brain dump path
-      if (looksLikeTaskDump(trimmed)) {
+      // Brain dump path — only if the message is clearly task/worry listing, not a question
+      if (!isConversationalOrQuestion(trimmed) && looksLikeTaskDump(trimmed)) {
         const { items, response } = await parseBrainDump(trimmed, userName, ndToggles);
         if (items.length > 0) {
           const goalItems = items.filter(i => i.category === 'goal');
@@ -154,8 +189,8 @@ export default function BloomChatScreen() {
         }
       }
 
-      // Single task add
-      const taskText = detectTaskAdd(trimmed);
+      // Single task add — skip if it's a question/conversation
+      const taskText = !isConversationalOrQuestion(trimmed) ? detectTaskAdd(trimmed) : null;
       if (taskText && !hasKey) {
         addTask(taskText, 'medium');
         const reply = `Added "${taskText}" to your Tasks tab.`;
