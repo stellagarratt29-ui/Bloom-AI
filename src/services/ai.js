@@ -122,10 +122,11 @@ function _parseTasksFallback(rawText) {
   }
 
   const leadingVerb = /^(i need to|i want to|i gotta|i have to|i wanna|i must|need to|want to|have to|gotta)\s+/i;
+  const leadingConjunction = /^(and|but|also|plus|or)\s+/i;
   const items = [];
 
   for (let part of parts) {
-    part = part.replace(/^[-•·*\d]+[.)]\s*/, '').replace(leadingVerb, '').trim();
+    part = part.replace(/^[-•·*\d]+[.)]\s*/, '').replace(leadingVerb, '').replace(leadingConjunction, '').trim();
     if (part.length < 4) continue;
     part = part.charAt(0).toUpperCase() + part.slice(1);
     const t = part.toLowerCase();

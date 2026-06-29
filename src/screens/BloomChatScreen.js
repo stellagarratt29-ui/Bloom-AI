@@ -45,6 +45,9 @@ function isConversationalOrQuestion(text) {
   if (/^(thanks|thank you|cheers|ok|okay|got it|sounds good|perfect|great|nice|awesome|cool|sure|yep|yeah|nope)[\s!?.]*$/i.test(lower)) return true;
   if (/^(bye|goodbye|see ya|later|talk soon)[\s!?.]*$/i.test(lower)) return true;
 
+  // "Done" / completion signals — follow-ups after a brain dump ("That's it", "That's all", etc.)
+  if (/^(that'?s?\s*(it|all|everything|them|all of them|the lot)|nothing else|done for now|just those|those are all|all of (it|them)|yes[,]?\s*that'?s?\s*(it|all)|that'?s?\s*(all i (have|got|need)|my (whole\s+)?list))[\s!?.]*$/i.test(lower)) return true;
+
   return false;
 }
 
@@ -69,7 +72,7 @@ function detectTaskAdd(msg) {
   return null;
 }
 
-function getFallback(msg, { userName, goals, tasks }) {
+function getFallback(msg, { userName, goals, tasks, history }) {
   const m = msg.toLowerCase().trim();
   const name = userName ? ` ${userName}` : '';
 
@@ -100,6 +103,17 @@ function getFallback(msg, { userName, goals, tasks }) {
   }
   if (/can'?t start|procrastinat|stuck|don'?t know where to start/.test(m))
     return `Set a 10-minute timer and just begin — it doesn't have to be good, it just has to start. Which task?`;
+
+  // "That's it" / "That's all" — follow-up after a brain dump
+  if (/^(that'?s?\s*(it|all|everything|them|all of them|the lot)|nothing else|done for now|just those|those are all|all of (it|them)|yes[,]?\s*that'?s?\s*(it|all)|that'?s?\s*(all i (have|got|need)|my (whole\s+)?list))[\s!?.]*$/i.test(m)) {
+    const pending = (tasks || []).filter(t => !t.done);
+    if (pending.length > 0) {
+      const top = pending.find(t => t.priority === 'high') || pending[0];
+      return `All sorted — ${pending.length} task${pending.length !== 1 ? 's' : ''} in your Tasks tab. "${top.text}" is the most pressing one. Tap any task to get step-by-step help.`;
+    }
+    return `You're all set${name}. Head to your Tasks tab to see your list.`;
+  }
+
   if (/done|finished|completed|just did|just finished/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     return pending.length > 0
@@ -208,12 +222,12 @@ export default function BloomChatScreen() {
         setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
       } else {
-        const reply = getFallback(trimmed, { userName, goals, tasks });
+        const reply = getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
         setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
       }
     } catch (e) {
-      const err = e.code === 'AUTH' ? 'API key looks invalid.' : getFallback(trimmed, { userName, goals, tasks });
+      const err = e.code === 'AUTH' ? 'API key looks invalid.' : getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: err }]);
     } finally {
       setThinking(false);
