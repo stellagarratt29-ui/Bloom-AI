@@ -284,6 +284,17 @@ export default function BloomChatScreen() {
             </View>
           )}
 
+          {hasKey === false && (
+            <View style={[s.keyBanner, { backgroundColor: C.sagePale, borderColor: C.sageLight }]}>
+              <Icon name="zap" size={14} color={C.moss} style={{ flexShrink: 0 }} />
+              <Text style={[s.keyBannerText, { color: C.ink }]}>
+                Add a Claude API key in{' '}
+                <Text style={{ fontWeight: '700' }}>Settings</Text>
+                {' '}to unlock real AI — full task sorting, step-by-step guidance, and proper chat.
+              </Text>
+            </View>
+          )}
+
           {messages.length <= 1 && !thinking && (
             <View style={s.hint}>
               <Text style={s.hintText}>
@@ -349,6 +360,12 @@ const s = StyleSheet.create({
     paddingVertical: 11, paddingHorizontal: 15, maxWidth: '80%',
   },
   userText: { fontSize: 15, color: C.white, lineHeight: 22 },
+
+  keyBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 6,
+  },
+  keyBannerText: { flex: 1, fontSize: 13, lineHeight: 19 },
 
   hint: {
     backgroundColor: C.sagePale, borderRadius: 14, padding: 16,
