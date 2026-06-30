@@ -114,26 +114,53 @@ Response rules (critical):
 
 function _parseTasksFallback(rawText) {
   const text = rawText.trim();
-  let parts;
-  if ((text.match(/,/g) || []).length >= 2) {
-    parts = text.split(',').map(s => s.trim()).filter(s => s.length > 3);
-  } else {
-    parts = text.split(/[.!?\n;]+/).map(s => s.trim()).filter(s => s.length > 3);
-  }
 
-  const leadingVerb = /^(i need to|i want to|i gotta|i have to|i wanna|i must|need to|want to|have to|gotta)\s+/i;
-  const leadingConjunction = /^(and|but|also|plus|or)\s+/i;
+  // Never a task — filler words/phrases matched exactly
+  const FILLER = /^(okay|ok|sure|fine|right|alright|yeah|yep|nope|hmm|ugh|oh|well|anyway|so|actually|basically|literally|honestly|seriously|lol|fresh chaos|here we go|not sure|maybe|probably|got it|sounds good|perfect|great|nice|cool|thanks|thank you|bye|hi|hey|hello|i see|i know|no worries|no problem)\.?!?\s*$/i;
+
+  // Sentence endings that signal an incomplete fragment — never a task
+  const DANGLING_END = /\b(which|that|but|and|or|though|although|because|since|if|when|where|who|whom|whose|—)\s*\.?\s*$/i;
+
+  // Clear action verbs — required for narrative sentences to qualify as tasks
+  const HAS_ACTION = /\b(call|email|text|ring|contact|message|reach out|find|look for|locate|get|buy|purchase|pick up|order|grab|fetch|drop off|take|bring|deliver|return|exchange|check|fix|repair|replace|sort|handle|deal with|go|visit|meet|attend|pay|book|schedule|cancel|confirm|reschedule|send|write|finish|complete|clean|tidy|wash|cook|make|prepare|print|scan|upload|download|install|update|review|read|listen|practice|study|research|look up|renew|apply|register|enroll|follow up|respond|reply|RSVP|remind|organise|organize|arrange|plan|set up|speak to|talk to|collect|measure|run|submit|fill|sign|clear|pack|unpack|feed|water|walk|take out|empty|figure out|work on|start|begin|wrap up|open|turn off|turn on|charge|cut|trim|mow|track|confirm|sort out|pick up|drop|bring|grab)\b/i;
+
+  // Extract real tasks embedded in narrative sentences
+  const NARRATIVE_EXTRACTIONS = [
+    // "I've got a dentist thing for somebody today"
+    { re: /\bi'?ve?\s+got\s+(?:a\s+|an\s+)?(.{4,60}?)(?:\s+(?:for|with)\s+\S+(?:\s+\S+)?)?(?:\s+(?:today|tomorrow|this\s+\w+))?\s*(?:[.!?,]|$)/i, fn: m => m[1].trim() },
+    // "gotta find my keys" / "need to email the tutor" / "have to RSVP"
+    { re: /\b(?:i\s+)?(?:gotta|need\s+to|have\s+to|must|should)\s+(.{4,70}?)(?:\s*[.!?,]|\s+(?:today|soon|now|tonight|this\s+week|this\s+month)\b|\s*$)/i, fn: m => m[1].trim() },
+    // "dryer's making that smell" / "washer is making a noise"
+    { re: /\b(dryer|washer|dishwasher|oven|fridge|refrigerator|boiler|heating|a\/c|heater|cooker)\b.{0,50}(?:smell|noise|sound|making|broken?|not\s+working|acting\s+up|weird)/i, fn: m => `Check ${m[1]}`, priority: 'medium' },
+    // "deadline's today" / "deadline is this week"
+    { re: /\bdeadline\b.{0,50}(?:today|tonight|tomorrow|soon|this\s+week|this\s+morning|due)/i, fn: () => 'Check deadline — something is due today', priority: 'high' },
+  ];
+
+  const commaCount = (text.match(/,/g) || []).length;
+  const commaParts = text.split(',').map(s => s.trim()).filter(s => s.length > 2);
+  // Structured list: commas present AND every part is short (real items, not embedded sentences)
+  const isStructuredList = commaCount >= 2 && commaParts.every(p => p.split(/\s+/).length <= 10);
+
   const items = [];
+  const seen = new Set();
+  const LEAD_STRIP = /^(?:[-•·*\d]+[.)]\s*|(?:i need to|i want to|i gotta|i have to|i wanna|i must|need to|want to|have to|gotta|also|and|but|plus|or|first off|oh and)\s+)+/gi;
 
-  for (let part of parts) {
-    part = part.replace(/^[-•·*\d]+[.)]\s*/, '').replace(leadingVerb, '').replace(leadingConjunction, '').trim();
-    if (part.length < 4) continue;
-    part = part.charAt(0).toUpperCase() + part.slice(1);
-    const t = part.toLowerCase();
+  const addItem = (rawText, overridePriority) => {
+    let clean = rawText.replace(LEAD_STRIP, '').trim();
+    if (clean.length < 4) return;
+    clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+    const key = clean.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
 
+    const t = clean.toLowerCase();
     let category = 'task';
-    let priority = 'medium';
+    let priority = overridePriority || 'medium';
 
+    if (!overridePriority) {
+      if (/\b(homework|essay|exam|test|quiz|doctor|dentist|appointment|deadline|urgent|overdue|pay|bill|prescription|medication)\b/i.test(t)) priority = 'high';
+      else if (/\b(watch|game|chill|relax|movie|show|youtube|scroll)\b/i.test(t)) priority = 'low';
+    }
     if (/\b(become a|start a|launch|build a)\b/.test(t) ||
         /\b(make|earn|save)\b.{0,25}\b(\d+k|\d{4,}|thousand|million)\b/.test(t) ||
         /\b(write a book|get a degree|run a marathon|buy a house|buy a flat|move to)\b/.test(t)) {
@@ -141,26 +168,54 @@ function _parseTasksFallback(rawText) {
     } else if (!/^(buy|purchase|get some|order|pick up)\b/.test(t) &&
                /\b(guitar|piano|violin|painting|drawing|watercolour|watercolor|yoga|meditation|running|jogging|cooking|photography|crochet|knitting|sewing)\b/.test(t)) {
       category = 'hobby'; priority = 'low';
-    } else if (/\b(homework|essay|exam|test|quiz|doctor|dentist|appointment|urgent|deadline|overdue|pay|bill|prescription|medication)\b/.test(t)) {
-      priority = 'high';
-    } else if (/\b(watch|game|chill|relax|movie|show|youtube|scroll)\b/.test(t)) {
-      priority = 'low';
+    }
+    items.push({ text: clean, category, priority });
+  };
+
+  if (isStructuredList) {
+    // Comma-separated list: split and filter, keep almost everything
+    for (let part of commaParts) {
+      part = part.replace(LEAD_STRIP, '').trim();
+      if (part.length < 4 || FILLER.test(part)) continue;
+      addItem(part);
+    }
+  } else {
+    // Narrative text: two-pass approach
+
+    // Pass 1 — pattern-based extraction (catches tasks embedded in sentences)
+    for (const { re, fn, priority } of NARRATIVE_EXTRACTIONS) {
+      const m = text.match(re);
+      if (m) {
+        const taskText = fn(m);
+        if (taskText && taskText.length > 3) addItem(taskText, priority);
+      }
     }
 
-    items.push({ text: part, category, priority });
+    // Pass 2 — sentence-by-sentence, require clear action verb
+    const sentences = text.split(/(?:[.!?]|\s—\s)\s+/).map(s => s.trim()).filter(s => s.length > 3);
+    for (let part of sentences) {
+      if (FILLER.test(part.toLowerCase())) continue;          // "Okay", "Sure", "Fine"
+      if (DANGLING_END.test(part)) continue;                  // "They were in the fruit bowl yesterday which"
+      if (!HAS_ACTION.test(part)) continue;                   // no verb → skip narrative context
+      // Skip if already captured by extraction patterns
+      const stripped = part.replace(LEAD_STRIP, '').trim().toLowerCase();
+      if (seen.has(stripped)) continue;
+      addItem(part);
+    }
   }
+
   return items;
 }
 
 function _fallbackResponse(items) {
-  if (items.length === 0) return "I didn't catch any tasks there — try listing them separated by commas.";
+  if (items.length === 0) return "I can see there's a lot going on — but I need an AI connection to untangle a message like this properly. Add a Claude API key in Settings and I'll sort it. Or try listing your tasks separated by commas.";
   const high = items.filter(i => i.priority === 'high' && i.category === 'task');
   const goals = items.filter(i => i.category === 'goal');
   const parts = [];
   if (high.length > 0) {
     parts.push(`Most important: ${high.slice(0, 2).map(t => `"${t.text}"`).join(' and ')}.`);
   } else {
-    parts.push(`Got ${items.length} things sorted into your list.`);
+    parts.push(`Got ${items.length} thing${items.length !== 1 ? 's' : ''} sorted into your list.`);
   }
   if (goals.length > 0) parts.push(`"${goals[0].text}" looks like a big goal — added to your Goals tab with a first action.`);
   parts.push('Tap any task for step-by-step help.');

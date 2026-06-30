@@ -200,6 +200,13 @@ export default function BloomChatScreen() {
           setThinking(false);
           scrollToEnd();
           return;
+        } else if (response) {
+          // Parsed nothing extractable — show the informative fallback message
+          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: response }]);
+          historyRef.current = [...historyRef.current, { role: 'assistant', content: response }];
+          setThinking(false);
+          scrollToEnd();
+          return;
         }
       }
 
