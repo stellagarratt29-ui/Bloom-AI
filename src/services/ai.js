@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const API_KEY_STORAGE = '@bloom_anthropic_key';
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-haiku-4-5-20251001';
+const API_KEY_STORAGE = '@bloom_ai_key';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export async function getApiKey() {
   try { return await AsyncStorage.getItem(API_KEY_STORAGE); }
@@ -22,25 +21,32 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
   const key = await getApiKey();
   if (!key) throw Object.assign(new Error('NO_KEY'), { code: 'NO_KEY' });
 
-  const res = await fetch(API_URL, {
+  // Convert from Anthropic message format to Gemini format
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+
+  const body = {
+    ...(system && { system_instruction: { parts: [{ text: system }] } }),
+    contents,
+    generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
+  };
+
+  const res = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(key)}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-allow-browser': 'true',
-    },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const code = res.status === 401 ? 'AUTH' : 'API';
+    const code = res.status === 400 || res.status === 403 ? 'AUTH' : 'API';
     throw Object.assign(new Error(err.error?.message ?? `HTTP ${res.status}`), { code });
   }
 
   const data = await res.json();
-  return data.content[0]?.text ?? '';
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 }
 
 export function buildBloomSystem({ userName, goals, tasks, ndToggles }) {

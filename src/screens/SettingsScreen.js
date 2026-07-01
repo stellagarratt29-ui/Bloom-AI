@@ -223,7 +223,7 @@ export default function SettingsScreen() {
                 )}
                 {!currentKey && (
                   <Text style={[s.apiHint, { color: t.subtext }]}>
-                    Get a free key at console.anthropic.com → API Keys. Paste it above and Bloom unlocks full AI chat, real task sorting, and step-by-step guidance.
+                    Get a free key at aistudio.google.com — sign in with Google, click "Get API key", copy and paste it here. No card needed.
                   </Text>
                 )}
               </>
@@ -236,7 +236,7 @@ export default function SettingsScreen() {
                   style={[s.apiInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
                   value={draftKey}
                   onChangeText={setDraftKey}
-                  placeholder="sk-ant-..."
+                  placeholder="AIzaSy..."
                   placeholderTextColor={t.subtext}
                   autoFocus
                   autoCapitalize="none"
