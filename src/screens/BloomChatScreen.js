@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, SafeAreaView, StyleSheet,
@@ -147,7 +148,7 @@ export default function BloomChatScreen() {
   const scrollRef  = useRef(null);
   const historyRef = useRef([]);
 
-  useEffect(() => { getApiKey().then(k => setHasKey(!!k)); }, []);
+  useFocusEffect(useCallback(() => { getApiKey().then(k => setHasKey(!!k)); }, []));
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
