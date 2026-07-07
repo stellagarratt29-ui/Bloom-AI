@@ -70,7 +70,7 @@ function ExteriorTab({ world, lot, updateExterior }) {
   );
 }
 
-function RoomDetailPanel({ world, lot, room, objectCount, onClose, onRecolorWall, onRecolorFloor, onReplaceAll, onRename, onOpenAI }) {
+function RoomDetailPanel({ world, lot, room, objectCount, onClose, onRecolorWall, onRecolorFloor, onReplaceAll, onRename, onOpenAI, onPlay3D }) {
   const [nameEdit, setNameEdit] = useState(room.name);
   useEffect(() => setNameEdit(room.name), [room.id, room.name]);
   const rt = ROOM_TYPES.find(r => r.id === room.typeId) || ROOM_TYPES[0];
@@ -95,6 +95,11 @@ function RoomDetailPanel({ world, lot, room, objectCount, onClose, onRecolorWall
       <TouchableOpacity style={s.aiRow} onPress={onOpenAI}>
         <Icon name="sparkles" size={14} color={C.accentDeep} />
         <Text style={s.aiRowText}>Furnish with AI Designer</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[s.aiRow, s.playRow]} onPress={onPlay3D}>
+        <Icon name="trending-up" size={14} color="#fff" />
+        <Text style={[s.aiRowText, { color: '#fff' }]}>Play in 3D</Text>
       </TouchableOpacity>
 
       <View style={s.panelRow}>
@@ -450,6 +455,7 @@ export default function BuildScreen({ navigation, route }) {
                   onReplaceAll={replaceAll}
                   onRename={(name) => renameRoom(worldId, lotId, selectedRoom.id, name || selectedRoom.name)}
                   onOpenAI={() => navigation.navigate('AIDesigner', { worldId, lotId, roomId: selectedRoom.id })}
+                  onPlay3D={() => navigation.navigate('Play3D', { worldId, lotId, roomId: selectedRoom.id })}
                 />
               : <View style={s.panel}><Text style={FONT.h3}>Lot Overview</Text><Text style={[FONT.bodyMuted, { marginTop: 6 }]}>Select a room in the floor plan to edit its furniture, wall color, and flooring.</Text></View>
           )}
@@ -502,6 +508,7 @@ const s = StyleSheet.create({
   panelTitleInput: { ...FONT.h3, flex: 1, paddingVertical: 2 },
   aiRow: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.accentSoft, borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start', marginTop: SPACING.sm },
   aiRowText: { ...FONT.caption, color: C.accentDeep, fontWeight: '700' },
+  playRow: { backgroundColor: C.text, marginLeft: 8 },
   panelRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: SPACING.md },
   swatchRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   swatch: { width: 26, height: 26, borderRadius: 8, borderWidth: 2 },

@@ -22,6 +22,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import NewWorldScreen from './src/screens/NewWorldScreen';
 import WorldScreen from './src/screens/WorldScreen';
 import BuildScreen from './src/screens/BuildScreen';
+import Play3DScreen from './src/screens/Play3DScreen';
 import AIDesignerScreen from './src/screens/AIDesignerScreen';
 import InspirationScreen from './src/screens/InspirationScreen';
 import InspirationBoardScreen from './src/screens/InspirationBoardScreen';
@@ -37,6 +38,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 const SHARED_SCREENS = (Nav) => (
   <>
@@ -115,6 +117,35 @@ const ROUTE_TO_NAV_KEY = {
   Messages: 'messages',
 };
 
+function MainTabs({ isDesktop, activeRouteName }) {
+  return (
+    <View style={{ flex: 1, flexDirection: 'row' }}>
+      {isDesktop && (
+        <Sidebar navigationRef={navigationRef} activeRouteName={ROUTE_TO_NAV_KEY[activeRouteName]} />
+      )}
+      <View style={{ flex: 1 }}>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarActiveTintColor: C.accent,
+            tabBarInactiveTintColor: C.textFaint,
+            tabBarStyle: isDesktop ? { display: 'none' } : { backgroundColor: C.surface, borderTopColor: C.border },
+            tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+            tabBarIcon: ({ focused }) => {
+              const item = TAB_ITEMS.find(t => t.name === route.name);
+              return <TabBarIcon name={item.icon} focused={focused} />;
+            },
+          })}
+        >
+          {TAB_ITEMS.map(t => (
+            <Tab.Screen key={t.name} name={t.name} component={t.component} options={{ title: t.label }} />
+          ))}
+        </Tab.Navigator>
+      </View>
+    </View>
+  );
+}
+
 export default function App() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= DESKTOP_BREAKPOINT;
@@ -130,30 +161,12 @@ export default function App() {
     <SafeAreaProvider>
       <GameProvider>
         <NavigationContainer ref={navigationRef} onReady={handleStateChange} onStateChange={handleStateChange}>
-          <View style={{ flex: 1, flexDirection: 'row' }}>
-            {isDesktop && (
-              <Sidebar navigationRef={navigationRef} activeRouteName={ROUTE_TO_NAV_KEY[activeRouteName]} />
-            )}
-            <View style={{ flex: 1 }}>
-              <Tab.Navigator
-                screenOptions={({ route }) => ({
-                  headerShown: false,
-                  tabBarActiveTintColor: C.accent,
-                  tabBarInactiveTintColor: C.textFaint,
-                  tabBarStyle: isDesktop ? { display: 'none' } : { backgroundColor: C.surface, borderTopColor: C.border },
-                  tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-                  tabBarIcon: ({ focused }) => {
-                    const item = TAB_ITEMS.find(t => t.name === route.name);
-                    return <TabBarIcon name={item.icon} focused={focused} />;
-                  },
-                })}
-              >
-                {TAB_ITEMS.map(t => (
-                  <Tab.Screen key={t.name} name={t.name} component={t.component} options={{ title: t.label }} />
-                ))}
-              </Tab.Navigator>
-            </View>
-          </View>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            <RootStack.Screen name="Main">
+              {() => <MainTabs isDesktop={isDesktop} activeRouteName={activeRouteName} />}
+            </RootStack.Screen>
+            <RootStack.Screen name="Play3D" component={Play3DScreen} options={{ animation: 'fade' }} />
+          </RootStack.Navigator>
         </NavigationContainer>
       </GameProvider>
     </SafeAreaProvider>
