@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const API_KEY_STORAGE = '@bloom_ai_key';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
 
 export async function getApiKey() {
   try { return await AsyncStorage.getItem(API_KEY_STORAGE); }
@@ -21,32 +22,30 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
   const key = await getApiKey();
   if (!key) throw Object.assign(new Error('NO_KEY'), { code: 'NO_KEY' });
 
-  // Convert from Anthropic message format to Gemini format
-  const contents = messages.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  const allMessages = [
+    ...(system ? [{ role: 'system', content: system }] : []),
+    ...messages,
+  ];
 
-  const body = {
-    ...(system && { system_instruction: { parts: [{ text: system }] } }),
-    contents,
-    generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
-  };
-
-  const res = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(key)}`, {
+  const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${key}`,
+      'HTTP-Referer': 'https://stellagarratt29-ui.github.io/Bloom-AI/',
+      'X-Title': 'Bloom',
+    },
+    body: JSON.stringify({ model: MODEL, messages: allMessages, max_tokens: maxTokens }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const code = res.status === 400 || res.status === 403 ? 'AUTH' : 'API';
+    const code = res.status === 401 || res.status === 403 ? 'AUTH' : 'API';
     throw Object.assign(new Error(err.error?.message ?? `HTTP ${res.status}`), { code });
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
 export function buildBloomSystem({ userName, goals, tasks, ndToggles }) {

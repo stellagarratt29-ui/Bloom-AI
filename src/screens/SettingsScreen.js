@@ -223,7 +223,7 @@ export default function SettingsScreen() {
                 )}
                 {!currentKey && (
                   <Text style={[s.apiHint, { color: t.subtext }]}>
-                    Get a free key at aistudio.google.com — sign in with Google, click "Get API key", copy and paste it here. No card needed.
+                    Get a free key at openrouter.ai — sign up with email, go to Keys, click "Create key", copy and paste it here. No card needed.
                   </Text>
                 )}
               </>
@@ -236,7 +236,7 @@ export default function SettingsScreen() {
                   style={[s.apiInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
                   value={draftKey}
                   onChangeText={setDraftKey}
-                  placeholder="AIzaSy..."
+                  placeholder="sk-or-..."
                   placeholderTextColor={t.subtext}
                   autoFocus
                   autoCapitalize="none"

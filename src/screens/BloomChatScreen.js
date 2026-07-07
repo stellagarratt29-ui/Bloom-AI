@@ -289,9 +289,9 @@ export default function BloomChatScreen() {
             <View style={[s.keyBanner, { backgroundColor: C.sagePale, borderColor: C.sageLight }]}>
               <Icon name="zap" size={14} color={C.moss} style={{ flexShrink: 0 }} />
               <Text style={[s.keyBannerText, { color: C.ink }]}>
-                Add a free Gemini key in{' '}
+                Add a free AI key in{' '}
                 <Text style={{ fontWeight: '700' }}>Settings</Text>
-                {' '}to unlock real AI — get one free at aistudio.google.com (Google account, no card).
+                {' '}to unlock real AI — get one free at openrouter.ai (email only, no card).
               </Text>
             </View>
           )}
