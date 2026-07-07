@@ -1,28 +1,125 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../components/Icon';
 import Play3DView from '../three/Play3DView';
 import { C, SPACING, FONT, RADIUS } from '../constants/theme';
 import { useGame } from '../context/AppContext';
-import { PIECES, FURNITURE_CATEGORIES, COLORS } from '../constants/catalog';
+import { PIECES, COLORS } from '../constants/catalog';
 import { FRIENDS } from '../constants/mockData';
 
-const TABS = [
-  { key: 'structure', label: 'Structure', enabled: false },
-  { key: 'walls', label: 'Walls', enabled: false },
-  { key: 'windows', label: 'Windows', enabled: false },
-  { key: 'doors', label: 'Doors', enabled: false },
-  { key: 'stairs', label: 'Stairs', enabled: false },
-  { key: 'roofs', label: 'Roofs', enabled: false },
-  { key: 'furniture', label: 'Furniture', enabled: true, categories: ['living', 'kitchen', 'dining', 'bedroom', 'bathroom', 'laundry', 'office', 'closet', 'outdoor', 'garage'] },
-  { key: 'flooring', label: 'Flooring', enabled: true, isFlooring: true },
-  { key: 'decor', label: 'Decor', enabled: true, categories: ['decor', 'wallart', 'storage'] },
-  { key: 'lighting', label: 'Lighting', enabled: true, categories: ['lighting'] },
-  { key: 'plants', label: 'Plants', enabled: true, categories: ['plants'] },
+const CATALOG_SECTIONS = [
+  { key: 'furniture', label: 'Furniture', categories: ['living', 'kitchen', 'dining', 'bedroom', 'bathroom', 'laundry', 'office', 'closet', 'outdoor', 'garage'] },
+  { key: 'decor', label: 'Decor', categories: ['decor', 'wallart', 'storage'] },
+  { key: 'lighting', label: 'Lighting', categories: ['lighting'] },
+  { key: 'plants', label: 'Plants', categories: ['plants'] },
 ];
 
 const LEVELS = [24, 21, 18, 16, 14];
+
+function CatalogSheet({ visible, onClose, recent, favorites, toggleFavorite, onPick, activePiece, room, onFloorColor, onWallColor }) {
+  const [query, setQuery] = useState('');
+  const [section, setSection] = useState('furniture');
+  const sectionPieces = useMemo(() => {
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      return PIECES.filter(p => p.name.toLowerCase().includes(q));
+    }
+    const cats = CATALOG_SECTIONS.find(s => s.key === section)?.categories || [];
+    return PIECES.filter(p => cats.includes(p.category));
+  }, [query, section]);
+
+  if (!visible) return null;
+
+  const recentPieces = recent.map(id => PIECES.find(p => p.id === id)).filter(Boolean);
+  const favoritePieces = PIECES.filter(p => favorites.includes(p.id));
+
+  return (
+    <View style={s.sheet}>
+      <View style={s.sheetHandle} />
+      <View style={s.sheetHeader}>
+        <Text style={FONT.h3}>Furniture Catalog</Text>
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Icon name="x" size={18} color={C.textFaint} />
+        </TouchableOpacity>
+      </View>
+      <View style={s.searchBox}>
+        <Icon name="search" size={13} color={C.textFaint} />
+        <TextInput value={query} onChangeText={setQuery} placeholder="Search furniture..." placeholderTextColor={C.textFaint} style={s.searchInput} />
+      </View>
+
+      <ScrollView style={{ maxHeight: 360 }} showsVerticalScrollIndicator={false}>
+        <Text style={s.sectionLabel}>FLOORING &amp; WALLS</Text>
+        <View style={s.swatchRow}>
+          <Text style={s.swatchGroupLabel}>Floor</Text>
+          {COLORS.slice(0, 6).map(c => (
+            <TouchableOpacity key={c.name} onPress={() => onFloorColor(c.name)} style={[s.swatch, { backgroundColor: c.hex, borderColor: room.floorColor === c.name ? C.accent : 'transparent' }]} />
+          ))}
+        </View>
+        <View style={s.swatchRow}>
+          <Text style={s.swatchGroupLabel}>Wall</Text>
+          {COLORS.slice(0, 6).map(c => (
+            <TouchableOpacity key={c.name} onPress={() => onWallColor(c.name)} style={[s.swatch, { backgroundColor: c.hex, borderColor: room.wallColor === c.name ? C.accent : 'transparent' }]} />
+          ))}
+        </View>
+
+        {!query.trim() && recentPieces.length > 0 && (
+          <>
+            <Text style={s.sectionLabel}>RECENTLY USED</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: SPACING.md }}>
+              {recentPieces.map(p => (
+                <CatalogCard key={'r' + p.id} piece={p} active={activePiece?.id === p.id} favorite={favorites.includes(p.id)} onPress={() => onPick(p)} onFavorite={() => toggleFavorite(p.id)} />
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {!query.trim() && favoritePieces.length > 0 && (
+          <>
+            <Text style={s.sectionLabel}>FAVORITES</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: SPACING.md }}>
+              {favoritePieces.map(p => (
+                <CatalogCard key={'f' + p.id} piece={p} active={activePiece?.id === p.id} favorite onPress={() => onPick(p)} onFavorite={() => toggleFavorite(p.id)} />
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {!query.trim() && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: SPACING.sm }}>
+            {CATALOG_SECTIONS.map(sec => (
+              <TouchableOpacity key={sec.key} onPress={() => setSection(sec.key)} style={[s.sectionChip, section === sec.key && s.sectionChipActive]}>
+                <Text style={[s.sectionChipLabel, section === sec.key && s.sectionChipLabelActive]}>{sec.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        <Text style={s.sectionLabel}>{query.trim() ? 'RESULTS' : CATALOG_SECTIONS.find(s2 => s2.key === section)?.label.toUpperCase()}</Text>
+        <View style={s.cardGrid}>
+          {sectionPieces.map(p => (
+            <CatalogCard key={p.id} piece={p} active={activePiece?.id === p.id} favorite={favorites.includes(p.id)} onPress={() => onPick(p)} onFavorite={() => toggleFavorite(p.id)} />
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function CatalogCard({ piece, active, favorite, onPress, onFavorite }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={[s.catalogCard, active && s.catalogCardActive]}>
+      <View style={s.catalogThumb}><Icon name={piece.icon} size={24} color={C.accent} /></View>
+      <Text style={s.catalogName} numberOfLines={1}>{piece.name}</Text>
+      <View style={s.catalogFooter}>
+        <Text style={s.catalogPrice}>${piece.price}</Text>
+        <TouchableOpacity onPress={onFavorite} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+          <Icon name={favorite ? 'star-fill' : 'star'} size={14} color={favorite ? C.gold : C.textFaint} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function Play3DScreen({ navigation, route }) {
   const { worldId, lotId, roomId } = route.params;
@@ -31,14 +128,16 @@ export default function Play3DScreen({ navigation, route }) {
   const lot = world?.lots.find(l => l.id === lotId);
   const room = lot?.rooms.find(r => r.id === roomId);
 
-  const [tab, setTab] = useState('furniture');
   const [activePiece, setActivePiece] = useState(null);
   const [activeColor, setActiveColor] = useState(COLORS[3].name);
   const [recent, setRecent] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [daytime, setDaytime] = useState(true);
   const [flying, setFlying] = useState(false);
   const [running, setRunning] = useState(false);
-  const [chatOpen, setChatOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [chatLog, setChatLog] = useState([
     { name: 'ChloeBuilds', text: 'love this kitchen!', color: '#7C9473' },
     { name: 'OceanView', text: 'tysm!!', color: '#5C87A6' },
@@ -46,11 +145,7 @@ export default function Play3DScreen({ navigation, route }) {
     { name: 'OceanView', text: 'custom height!', color: '#5C87A6' },
   ]);
   const [chatDraft, setChatDraft] = useState('');
-  const [inventoryOpen, setInventoryOpen] = useState(false);
   const [note, setNote] = useState('');
-
-  const activeTab = TABS.find(t => t.key === tab);
-  const tabPieces = useMemo(() => activeTab?.categories ? PIECES.filter(p => activeTab.categories.includes(p.category)) : [], [tab]);
 
   if (!world || !lot || !room) {
     return (
@@ -67,7 +162,10 @@ export default function Play3DScreen({ navigation, route }) {
     setActivePiece(prev => (prev?.id === p.id ? null : p));
     setActiveColor(p.colors[3] || p.colors[0]);
     setRecent(prev => [p.id, ...prev.filter(id => id !== p.id)].slice(0, 9));
+    setCatalogOpen(false);
   };
+
+  const toggleFavorite = (id) => setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handlePlace = (gx, gy) => {
     if (!activePiece) return;
@@ -103,240 +201,181 @@ export default function Play3DScreen({ navigation, route }) {
         onRemoveCell={handleRemove}
       />
 
-      {/* top-left: menu + chat */}
+      {/* top-left: single menu button */}
       <View style={s.topLeft}>
-        <View style={s.iconRow}>
-          <TouchableOpacity style={s.roundBtn} onPress={() => navigation.goBack()}><Icon name="chevron-left" size={18} color="#fff" /></TouchableOpacity>
-          <TouchableOpacity style={s.roundBtn} onPress={() => setChatOpen(v => !v)}><Icon name="message-circle" size={16} color="#fff" /></TouchableOpacity>
-          <TouchableOpacity style={s.roundBtn} onPress={() => setInventoryOpen(v => !v)}><Icon name="shopping-bag" size={16} color="#fff" /></TouchableOpacity>
-        </View>
-        {chatOpen && (
-          <View style={s.chatBox}>
-            {chatLog.slice(-4).map((m, i) => (
-              <Text key={i} style={s.chatLine}><Text style={{ color: m.color, fontWeight: '700' }}>{m.name}: </Text>{m.text}</Text>
-            ))}
-            <View style={s.chatInputRow}>
-              <TextInput
-                value={chatDraft}
-                onChangeText={setChatDraft}
-                onSubmitEditing={sendChat}
-                placeholder="Tap here to chat"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                style={s.chatInput}
-              />
-            </View>
+        <TouchableOpacity style={s.roundBtn} onPress={() => setMenuOpen(v => !v)}>
+          <Icon name="grid" size={17} color="#fff" />
+        </TouchableOpacity>
+        {menuOpen && (
+          <View style={s.menuPanel}>
+            <MenuRow icon="arrow-left" label="Exit to Worlds" onPress={() => navigation.goBack()} />
+            <MenuRow icon="map" label="Plot Info" onPress={() => flash(`${lot.name} · ${world.theme.name}`)} />
+            <MenuRow icon="settings" label="Settings" onPress={() => navigation.navigate('Settings')} />
+            <View style={s.menuDivider} />
+            <MenuRow icon="trending-up" label={flying ? 'Fly: On' : 'Fly: Off'} active={flying} onPress={() => setFlying(v => !v)} />
+            <MenuRow icon="zap" label={running ? 'Run: On' : 'Run: Off'} active={running} onPress={() => setRunning(v => !v)} />
+            <MenuRow icon={daytime ? 'sun' : 'cloud'} label={daytime ? 'Day' : 'Night'} onPress={() => setDaytime(v => !v)} />
           </View>
         )}
       </View>
 
-      {/* top-center: currency */}
+      {/* top-center: world info */}
       <View style={s.topCenter}>
+        <Icon name="map" size={13} color="#fff" />
+        <Text style={s.worldInfoText} numberOfLines={1}>
+          {lot.name} · {world.theme.name} · {daytime ? 'Day' : 'Night'} · {world.settings?.season || 'Summer'} · {world.settings?.weather || 'Clear'}
+        </Text>
+      </View>
+
+      {/* top-right: currency + social */}
+      <View style={s.topRight}>
         <View style={s.currencyPill}>
           <Icon name="star" size={13} color="#F2C94C" />
           <Text style={s.currencyText}>{profile.currency.toLocaleString()}</Text>
         </View>
-        <TouchableOpacity style={s.addBtn} onPress={() => flash('Marketplace — coming soon')}><Icon name="plus" size={14} color="#fff" /></TouchableOpacity>
-        <View style={s.weatherPill}>
-          <Icon name={daytime ? 'sun' : 'cloud'} size={14} color="#F2C94C" />
-          <Text style={s.weatherText}>{world.settings?.weather || 'Clear'} · {world.settings?.season || 'Summer'}</Text>
-        </View>
+        <TouchableOpacity style={s.roundBtn} onPress={() => setSocialOpen(v => !v)}>
+          <Icon name="message-circle" size={16} color="#fff" />
+        </TouchableOpacity>
       </View>
 
-      {/* top-right: mode buttons */}
-      <View style={s.topRight}>
-        {[
-          { icon: 'sliders', label: 'Decorate', onPress: () => setTab('decor') },
-          { icon: 'layers', label: 'Inventory', onPress: () => setInventoryOpen(v => !v) },
-        ].map(b => (
-          <TouchableOpacity key={b.label} style={s.pillBtn} onPress={b.onPress}>
-            <Icon name={b.icon} size={15} color="#fff" />
-            <Text style={s.pillBtnLabel}>{b.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {inventoryOpen && (
-        <View style={s.inventoryPanel}>
-          <Text style={s.inventoryTitle}>Inventory</Text>
-          <Text style={s.inventorySub}>{objectCount} objects placed in {room.name}</Text>
-          <Text style={s.inventorySub}>Wall: {room.wallColor} · Floor: {room.floorColor}</Text>
+      {socialOpen && (
+        <View style={s.socialPanel}>
+          <Text style={s.socialTitle}>Neighborhood Chat</Text>
+          {chatLog.slice(-4).map((m, i) => (
+            <Text key={i} style={s.chatLine}><Text style={{ color: m.color, fontWeight: '700' }}>{m.name}: </Text>{m.text}</Text>
+          ))}
+          <View style={s.chatInputRow}>
+            <TextInput value={chatDraft} onChangeText={setChatDraft} onSubmitEditing={sendChat} placeholder="Say something..." placeholderTextColor="rgba(255,255,255,0.5)" style={s.chatInput} />
+          </View>
+          <View style={s.menuDivider} />
+          <Text style={s.socialTitle}>People Nearby</Text>
+          <View style={s.leaderRow}>
+            <Text style={s.leaderText}>{profile.name} (you)</Text>
+            <Text style={s.leaderLevel}>{profile.level}</Text>
+          </View>
+          {FRIENDS.map((f, i) => (
+            <View key={f.id} style={s.leaderRow}>
+              <Text style={s.leaderText}>{f.name}</Text>
+              <Text style={s.leaderLevel}>{LEVELS[i]}</Text>
+            </View>
+          ))}
         </View>
       )}
 
-      {/* right: leaderboard */}
-      <View style={s.leaderboard}>
-        <View style={s.leaderboardHeader}>
-          <Text style={s.leaderboardHeaderText}>People</Text>
-          <Text style={s.leaderboardHeaderText}>Level</Text>
-        </View>
-        <View style={s.leaderRow}>
-          <View style={s.leaderName}><Icon name="star" size={12} color="#F2C94C" /><Text style={s.leaderText}>{profile.name} (you)</Text></View>
-          <Text style={s.leaderLevel}>{profile.level}</Text>
-        </View>
-        {FRIENDS.map((f, i) => (
-          <View key={f.id} style={s.leaderRow}>
-            <View style={s.leaderName}>
-              <Icon name={i === 0 ? 'award' : 'user'} size={12} color={i === 0 ? '#F2C94C' : 'rgba(255,255,255,0.6)'} />
-              <Text style={s.leaderText}>{f.name}</Text>
-            </View>
-            <Text style={s.leaderLevel}>{LEVELS[i]}</Text>
-          </View>
-        ))}
-      </View>
-
       {!!note && <View style={s.noteBanner}><Text style={s.noteText}>{note}</Text></View>}
 
-      {/* bottom-left: menu stack + hint */}
-      <View style={s.bottomLeft}>
-        <View style={s.menuStack}>
-          <TouchableOpacity style={s.stackBtn} onPress={() => navigation.goBack()}>
-            <Icon name="grid" size={15} color="#fff" /><Text style={s.stackLabel}>MENU</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.stackBtn} onPress={() => flash(`${lot.name} · ${world.theme.name}`)}>
-            <Icon name="map" size={15} color="#fff" /><Text style={s.stackLabel}>PLOT INFO</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.stackBtn} onPress={() => navigation.navigate('Settings')}>
-            <Icon name="settings" size={15} color="#fff" /><Text style={s.stackLabel}>SETTINGS</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={s.hintBox}>
-          <Text style={s.hintText}>{activeTab.enabled ? `Placing: ${activeTab.label}` : `${activeTab.label} tools coming soon`}</Text>
-          <Text style={s.hintCount}>{objectCount} objects</Text>
-        </View>
-        <View style={s.keyHints}>
-          <Text style={s.keyHint}>WASD move · Space jump · Drag to look</Text>
-        </View>
-      </View>
-
-      {/* bottom-right: fly/run/day-night */}
-      <View style={s.bottomRight}>
-        <TouchableOpacity style={[s.circleBtn, flying && s.circleBtnActive]} onPress={() => setFlying(v => !v)}>
-          <Icon name="trending-up" size={16} color="#fff" />
-          <Text style={s.circleLabel}>FLY</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[s.circleBtn, running && s.circleBtnActive]} onPress={() => setRunning(v => !v)}>
-          <Icon name="zap" size={16} color="#fff" />
-          <Text style={s.circleLabel}>RUN</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.dayBtn} onPress={() => setDaytime(v => !v)}>
-          <Icon name={daytime ? 'sun' : 'cloud'} size={16} color="#F2C94C" />
-          <Text style={s.dayLabel}>{daytime ? 'Day' : 'Night'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* bottom-center: tabs + items + hotbar */}
-      <View style={s.bottomCenter}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabRow}>
-          {TABS.map(t => (
-            <TouchableOpacity key={t.key} onPress={() => setTab(t.key)} style={[s.tab, tab === t.key && s.tabActive]}>
-              <Text style={[s.tabLabel, tab === t.key && s.tabLabelActive, !t.enabled && s.tabLabelDisabled]}>{t.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {activeTab.isFlooring ? (
-          <View style={s.flooringRow}>
-            <Text style={s.flooringLabel}>Floor</Text>
-            {COLORS.slice(0, 8).map(c => (
-              <TouchableOpacity key={c.name} onPress={() => setRoomStyle(worldId, lotId, roomId, { floorColor: c.name })} style={[s.swatch, { backgroundColor: c.hex, borderColor: room.floorColor === c.name ? '#fff' : 'transparent' }]} />
-            ))}
-            <Text style={s.flooringLabel}>Wall</Text>
-            {COLORS.slice(0, 8).map(c => (
-              <TouchableOpacity key={c.name} onPress={() => setRoomStyle(worldId, lotId, roomId, { wallColor: c.name })} style={[s.swatch, { backgroundColor: c.hex, borderColor: room.wallColor === c.name ? '#fff' : 'transparent' }]} />
-            ))}
+      {/* bottom: hotbar + browse trigger (contextual catalog opens on demand) */}
+      <View style={s.bottomBar}>
+        {activePiece && (
+          <View style={s.placingPill}>
+            <Text style={s.placingText}>Placing: {activePiece.name}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 10 }}>
+              {activePiece.colors.map(cn => {
+                const hex = COLORS.find(c => c.name === cn)?.hex;
+                return <TouchableOpacity key={cn} onPress={() => setActiveColor(cn)} style={[s.colorDot, { backgroundColor: hex, borderColor: activeColor === cn ? '#fff' : 'transparent' }]} />;
+              })}
+            </ScrollView>
+            <Text style={s.objCount}>{objectCount} objects</Text>
           </View>
-        ) : activeTab.enabled ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.itemRow}>
-            {tabPieces.map(p => (
-              <TouchableOpacity key={p.id} onPress={() => pickPiece(p)} style={[s.itemCard, activePiece?.id === p.id && s.itemCardActive]}>
-                <Icon name={p.icon} size={22} color="#fff" />
-                <Text style={s.itemPrice}>${p.price}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        ) : (
-          <Text style={s.comingSoon}>Coming soon</Text>
         )}
-
-        <View style={s.hotbar}>
-          {Array.from({ length: 9 }).map((_, i) => {
-            const pieceId = recent[i];
-            const piece = pieceId ? PIECES.find(p => p.id === pieceId) : null;
-            return (
-              <TouchableOpacity key={i} style={[s.hotSlot, activePiece && piece?.id === activePiece.id && s.hotSlotActive]} onPress={() => piece && setActivePiece(piece)}>
-                <Text style={s.hotIndex}>{i + 1}</Text>
-                {piece && <Icon name={piece.icon} size={16} color="#fff" />}
-              </TouchableOpacity>
-            );
-          })}
+        <View style={s.hotbarRow}>
+          <TouchableOpacity style={s.browseBtn} onPress={() => setCatalogOpen(v => !v)}>
+            <Icon name={catalogOpen ? 'chevron-down' : 'grid'} size={16} color="#fff" />
+            <Text style={s.browseLabel}>Catalog</Text>
+          </TouchableOpacity>
+          <View style={s.hotbar}>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const pieceId = recent[i];
+              const piece = pieceId ? PIECES.find(p => p.id === pieceId) : null;
+              return (
+                <TouchableOpacity key={i} style={[s.hotSlot, activePiece && piece?.id === activePiece.id && s.hotSlotActive]} onPress={() => piece && pickPiece(piece)}>
+                  <Text style={s.hotIndex}>{i + 1}</Text>
+                  {piece && <Icon name={piece.icon} size={16} color="#fff" />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
+        <CatalogSheet
+          visible={catalogOpen}
+          onClose={() => setCatalogOpen(false)}
+          recent={recent}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+          onPick={pickPiece}
+          activePiece={activePiece}
+          room={room}
+          onFloorColor={(name) => setRoomStyle(worldId, lotId, roomId, { floorColor: name })}
+          onWallColor={(name) => setRoomStyle(worldId, lotId, roomId, { wallColor: name })}
+        />
       </View>
     </SafeAreaView>
   );
 }
 
+function MenuRow({ icon, label, onPress, active }) {
+  return (
+    <TouchableOpacity style={s.menuRow} onPress={onPress}>
+      <Icon name={icon} size={15} color={active ? C.accent : '#fff'} />
+      <Text style={[s.menuRowLabel, active && { color: C.accent }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
-  topLeft: { position: 'absolute', top: 14, left: 14, maxWidth: 260 },
-  iconRow: { flexDirection: 'row', gap: 8 },
-  roundBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
-  chatBox: { marginTop: 8, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: RADIUS.md, padding: 10 },
-  chatLine: { color: '#fff', fontSize: 12, marginBottom: 2 },
-  chatInputRow: { marginTop: 6, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)', paddingTop: 6 },
-  chatInput: { color: '#fff', fontSize: 12 },
-  topCenter: { position: 'absolute', top: 14, left: '50%', transform: [{ translateX: -160 }], flexDirection: 'row', alignItems: 'center', gap: 8, width: 320, justifyContent: 'center' },
-  currencyPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 12 },
+  topLeft: { position: 'absolute', top: 14, left: 14 },
+  roundBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(20,16,12,0.55)', alignItems: 'center', justifyContent: 'center' },
+  menuPanel: { marginTop: 8, backgroundColor: 'rgba(20,16,12,0.82)', borderRadius: RADIUS.md, padding: 8, width: 190 },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 8 },
+  menuRowLabel: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  menuDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: 4 },
+  topCenter: { position: 'absolute', top: 14, left: 60, right: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(20,16,12,0.55)', borderRadius: RADIUS.pill, paddingVertical: 8, paddingHorizontal: 14 },
+  worldInfoText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  topRight: { position: 'absolute', top: 14, right: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  currencyPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(20,16,12,0.55)', borderRadius: RADIUS.pill, paddingVertical: 8, paddingHorizontal: 12 },
   currencyText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  addBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: C.sage, alignItems: 'center', justifyContent: 'center' },
-  weatherPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 10 },
-  weatherText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  topRight: { position: 'absolute', top: 14, right: 14, flexDirection: 'row', gap: 6 },
-  pillBtn: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: RADIUS.md, paddingVertical: 6, paddingHorizontal: 10, gap: 2 },
-  pillBtnLabel: { color: '#fff', fontSize: 9, fontWeight: '700' },
-  inventoryPanel: { position: 'absolute', top: 60, right: 14, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: RADIUS.md, padding: 12, width: 200 },
-  inventoryTitle: { color: '#fff', fontWeight: '700', marginBottom: 4 },
-  inventorySub: { color: 'rgba(255,255,255,0.75)', fontSize: 11, marginTop: 2 },
-  leaderboard: { position: 'absolute', top: 60, right: 14, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: RADIUS.md, padding: 10, width: 190 },
-  leaderboardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  leaderboardHeaderText: { color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '700' },
-  leaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 },
-  leaderName: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  socialPanel: { position: 'absolute', top: 60, right: 14, backgroundColor: 'rgba(20,16,12,0.85)', borderRadius: RADIUS.md, padding: 12, width: 220 },
+  socialTitle: { color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '700', marginBottom: 6 },
+  chatLine: { color: '#fff', fontSize: 12, marginBottom: 2 },
+  chatInputRow: { marginTop: 6, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)', paddingTop: 6, marginBottom: 6 },
+  chatInput: { color: '#fff', fontSize: 12 },
+  leaderRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
   leaderText: { color: '#fff', fontSize: 12 },
   leaderLevel: { color: '#F2C94C', fontSize: 12, fontWeight: '700' },
-  noteBanner: { position: 'absolute', top: 100, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 14 },
+  noteBanner: { position: 'absolute', top: 68, alignSelf: 'center', backgroundColor: 'rgba(20,16,12,0.7)', borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 14 },
   noteText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  bottomLeft: { position: 'absolute', left: 14, bottom: 150 },
-  menuStack: { gap: 6, marginBottom: 10 },
-  stackBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: RADIUS.md, paddingVertical: 6, paddingHorizontal: 10 },
-  stackLabel: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  hintBox: { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: RADIUS.md, padding: 10, minWidth: 160 },
-  hintText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  hintCount: { color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 2 },
-  keyHints: { marginTop: 8 },
-  keyHint: { color: 'rgba(255,255,255,0.55)', fontSize: 10 },
-  bottomRight: { position: 'absolute', right: 14, bottom: 150, alignItems: 'center', gap: 10 },
-  circleBtn: { width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
-  circleBtnActive: { backgroundColor: C.accent },
-  circleLabel: { color: '#fff', fontSize: 9, fontWeight: '700', marginTop: 2 },
-  dayBtn: { width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
-  dayLabel: { color: '#fff', fontSize: 9, fontWeight: '700', marginTop: 2 },
-  bottomCenter: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,12,10,0.72)', paddingTop: 10, paddingBottom: 10 },
-  tabRow: { paddingHorizontal: 14 },
-  tab: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: RADIUS.pill, marginRight: 6 },
-  tabActive: { backgroundColor: C.accent },
-  tabLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '700' },
-  tabLabelActive: { color: '#fff' },
-  tabLabelDisabled: { color: 'rgba(255,255,255,0.35)' },
-  itemRow: { paddingHorizontal: 14, marginTop: 8 },
-  itemCard: { width: 60, height: 60, borderRadius: RADIUS.md, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  itemCardActive: { backgroundColor: C.accent },
-  itemPrice: { color: '#fff', fontSize: 10, marginTop: 4, fontWeight: '700' },
-  flooringRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, marginTop: 8, gap: 6, flexWrap: 'wrap' },
-  flooringLabel: { color: '#fff', fontSize: 11, fontWeight: '700', marginRight: 4 },
-  swatch: { width: 22, height: 22, borderRadius: 6, borderWidth: 2 },
-  comingSoon: { color: 'rgba(255,255,255,0.5)', fontSize: 12, paddingHorizontal: 14, marginTop: 8 },
-  hotbar: { flexDirection: 'row', paddingHorizontal: 14, marginTop: 10, gap: 6 },
-  hotSlot: { width: 40, height: 40, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
+  bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  placingPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(76,143,209,0.85)', marginHorizontal: 14, marginBottom: 8, borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 12 },
+  placingText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  objCount: { color: 'rgba(255,255,255,0.85)', fontSize: 11, marginLeft: 'auto' },
+  colorDot: { width: 18, height: 18, borderRadius: 5, marginRight: 6, borderWidth: 2 },
+  hotbarRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(20,16,12,0.72)', paddingVertical: 10, paddingHorizontal: 14, gap: 10 },
+  browseBtn: { alignItems: 'center', backgroundColor: C.accent, borderRadius: RADIUS.md, paddingVertical: 8, paddingHorizontal: 12, gap: 2 },
+  browseLabel: { color: '#fff', fontSize: 9, fontWeight: '700' },
+  hotbar: { flexDirection: 'row', gap: 6, flex: 1 },
+  hotSlot: { width: 42, height: 42, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
   hotSlotActive: { borderWidth: 2, borderColor: C.accent },
   hotIndex: { position: 'absolute', top: 2, left: 4, color: 'rgba(255,255,255,0.6)', fontSize: 9 },
+
+  sheet: { backgroundColor: C.surface, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, padding: SPACING.md, paddingTop: 6 },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginBottom: 8 },
+  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceAlt, borderRadius: RADIUS.pill, paddingHorizontal: 10, paddingVertical: 6, gap: 6, marginBottom: SPACING.sm },
+  searchInput: { flex: 1, fontSize: 13, color: C.text },
+  sectionLabel: { ...FONT.label, marginTop: SPACING.sm, marginBottom: 6 },
+  swatchRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
+  swatchGroupLabel: { ...FONT.caption, fontWeight: '700', marginRight: 4, width: 34 },
+  swatch: { width: 22, height: 22, borderRadius: 6, borderWidth: 2 },
+  sectionChip: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: RADIUS.pill, backgroundColor: C.surfaceAlt, marginRight: 6 },
+  sectionChipActive: { backgroundColor: C.accent },
+  sectionChipLabel: { ...FONT.caption, fontWeight: '700', color: C.textMuted },
+  sectionChipLabelActive: { color: C.textOnAccent },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: SPACING.lg },
+  catalogCard: { width: 96, backgroundColor: C.surfaceAlt, borderRadius: RADIUS.md, padding: 8 },
+  catalogCardActive: { borderWidth: 2, borderColor: C.accent },
+  catalogThumb: { width: '100%', height: 52, borderRadius: RADIUS.sm, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  catalogName: { fontSize: 11, fontWeight: '700', color: C.text },
+  catalogFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 3 },
+  catalogPrice: { fontSize: 11, color: C.textMuted },
 });
