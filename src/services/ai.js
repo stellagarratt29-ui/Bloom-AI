@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const API_KEY_STORAGE = '@bloom_ai_key';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
+const AI_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL = 'llama-3.1-8b-instant';
 
 export async function getApiKey() {
   try { return await AsyncStorage.getItem(API_KEY_STORAGE); }
@@ -27,21 +27,20 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
     ...messages,
   ];
 
-  const res = await fetch(OPENROUTER_URL, {
+  const res = await fetch(AI_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${key}`,
-      'HTTP-Referer': 'https://stellagarratt29-ui.github.io/Bloom-AI/',
-      'X-Title': 'Bloom',
     },
     body: JSON.stringify({ model: MODEL, messages: allMessages, max_tokens: maxTokens }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const code = res.status === 401 || res.status === 403 ? 'AUTH' : 'API';
-    throw Object.assign(new Error(err.error?.message ?? `HTTP ${res.status}`), { code });
+    const msg = err.error?.message ?? `HTTP ${res.status}`;
+    const code = (res.status === 401 || res.status === 403 || res.status === 402) ? 'AUTH' : 'API';
+    throw Object.assign(new Error(msg), { code, status: res.status });
   }
 
   const data = await res.json();

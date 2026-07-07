@@ -235,7 +235,9 @@ export default function BloomChatScreen() {
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
       }
     } catch (e) {
-      const err = e.code === 'AUTH' ? 'API key looks invalid.' : getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
+      const err = e.code === 'AUTH'
+        ? 'That API key didn\'t work — go to Settings and paste your Groq key (starts with gsk_). Get one free at groq.com.'
+        : getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: err }]);
     } finally {
       setThinking(false);
@@ -291,7 +293,7 @@ export default function BloomChatScreen() {
               <Text style={[s.keyBannerText, { color: C.ink }]}>
                 Add a free AI key in{' '}
                 <Text style={{ fontWeight: '700' }}>Settings</Text>
-                {' '}to unlock real AI — get one free at openrouter.ai (email only, no card).
+                {' '}to unlock real AI — get one free at groq.com (email only, no card).
               </Text>
             </View>
           )}

@@ -191,7 +191,7 @@ export default function SettingsScreen() {
             <View style={s.apiStatusRow}>
               <View style={[s.apiDot, { backgroundColor: currentKey ? C.moss : C.clay }]} />
               <Text style={[s.apiStatusText, { color: t.text }]}>
-                {currentKey ? 'Claude API connected' : 'No API key — using limited fallback'}
+                {currentKey ? 'AI connected' : 'No API key — using limited fallback'}
               </Text>
             </View>
 
@@ -223,20 +223,20 @@ export default function SettingsScreen() {
                 )}
                 {!currentKey && (
                   <Text style={[s.apiHint, { color: t.subtext }]}>
-                    Get a free key at openrouter.ai — sign up with email, go to Keys, click "Create key", copy and paste it here. No card needed.
+                    Get a free key at groq.com — sign up with email, go to API Keys, click "Create API Key", copy and paste it here. No card needed.
                   </Text>
                 )}
               </>
             ) : (
               <>
                 <Text style={[s.apiSub, { color: t.subtext }]}>
-                  Paste your Claude API key below. It's stored only on this device.
+                  Paste your Groq API key below. It's stored only on this device.
                 </Text>
                 <TextInput
                   style={[s.apiInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
                   value={draftKey}
                   onChangeText={setDraftKey}
-                  placeholder="sk-or-..."
+                  placeholder="gsk_..."
                   placeholderTextColor={t.subtext}
                   autoFocus
                   autoCapitalize="none"
