@@ -223,9 +223,9 @@ export async function processCalendarRequest(text) {
     if (aiKey) {
       const now = new Date();
       return await callClaude({
-        system: `You are Bloom, a personal productivity assistant. Today is ${now.toDateString()}. The user is asking about their schedule but Google Calendar isn't connected, so you don't have their actual events. Help them think through their scheduling question, suggest a plan, or offer time management advice based on what they said. Be warm and specific. 2-3 sentences.`,
+        system: `You are Bloom, a personal productivity assistant. Today is ${now.toDateString()}. The user is asking about their schedule. Help them think through it and suggest a plan. Plain text only — no asterisks, no markdown, no bullet points. 2-3 sentences.`,
         messages: [{ role: 'user', content: text }],
-        maxTokens: 200,
+        maxTokens: 150,
       }).catch(() => "I can help you think through your schedule — just tell me what you're working with and I'll help you plan it out.");
     }
     return "I can help you think through your schedule — just tell me what you're working with and I'll help you plan it out.";

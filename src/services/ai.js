@@ -44,7 +44,21 @@ export async function callClaude({ system, messages, maxTokens = 600 }) {
   }
 
   const data = await res.json();
-  return data.choices?.[0]?.message?.content?.trim() ?? '';
+  const raw = data.choices?.[0]?.message?.content?.trim() ?? '';
+  return stripMarkdown(raw);
+}
+
+// Strip markdown that React Native Text can't render
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')   // **bold**
+    .replace(/\*(.+?)\*/g, '$1')        // *italic*
+    .replace(/^[*•\-]\s+/gm, '')        // bullet points
+    .replace(/^\d+\.\s+/gm, '')         // numbered lists
+    .replace(/#{1,6}\s+/g, '')           // headings
+    .replace(/`(.+?)`/g, '$1')           // inline code
+    .replace(/\n{3,}/g, '\n\n')          // triple+ newlines
+    .trim();
 }
 
 export function buildBloomSystem({ userName, goals, tasks, ndToggles }) {

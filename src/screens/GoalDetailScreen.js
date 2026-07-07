@@ -33,14 +33,9 @@ export default function GoalDetailScreen({ route, navigation }) {
       const key = await getApiKey();
       if (!key) throw new Error('no key');
       const reply = await callClaude({
-        system: `You are Bloom, a direct and practical productivity coach. The user has a goal and a specific next action.
-Explain clearly:
-1. Why this action is the right next step for their specific goal
-2. Exactly how to do it — specific, not vague
-3. What "done" looks like so they know when to stop
-Keep it concise: 3–5 sentences. End with one practical tip.`,
-        messages: [{ role: 'user', content: `Goal: ${goal.text}\nNext action: ${goal.currentAction}\nCompleted so far: ${goal.completedActions?.length ?? 0} actions.\n\nWhy is this the right next step and how do I do it?` }],
-        maxTokens: 500,
+        system: `You are Bloom, a direct productivity coach. Answer in PLAIN TEXT ONLY — no asterisks, no bold, no bullet points, no markdown of any kind. 3 short sentences maximum. Tell them why this step matters for their specific goal, and exactly what to do. End there — no "let me know" or filler.`,
+        messages: [{ role: 'user', content: `Goal: ${goal.text}\nNext action: ${goal.currentAction}` }],
+        maxTokens: 150,
       });
       const msg = { id: 1, from: 'bloom', text: reply };
       setMessages([msg]);
@@ -71,9 +66,9 @@ Keep it concise: 3–5 sentences. End with one practical tip.`,
       const key = await getApiKey();
       if (!key) throw new Error('no key');
       const reply = await callClaude({
-        system: `You are Bloom, helping someone work toward their goal: "${goal?.text}". Their current action: "${goal?.currentAction}". Answer their question directly and specifically. 2–4 sentences.`,
+        system: `You are Bloom. Goal: "${goal?.text}". Current action: "${goal?.currentAction}". Answer in plain text only — no asterisks, no markdown, no bullet points. 2–3 sentences max. Be direct and specific.`,
         messages: historyRef.current,
-        maxTokens: 350,
+        maxTokens: 150,
       });
       setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
       historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];

@@ -109,140 +109,22 @@ export default function CalendarScreen() {
     }
   };
 
-  // ─── NOT CONNECTED ────────────────────────────────────────────────────────
-  if (!connected) {
-    const hasId = !!(clientIdInput.trim() || savedId);
-    return (
-      <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
-        <ScrollView
-          contentContainerStyle={s.setupScroll}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={[s.title, { color: t.chatBubble ?? C.clay }]}>Calendar</Text>
-
-          {/* Hero connect card */}
-          <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
-            <View style={[s.calIconRound, { backgroundColor: t.border }]}>
-              <Icon name="calendar" size={30} color={t.chatBubble ?? C.clay} />
-            </View>
-            <Text style={[s.cardTitle, { color: t.text }]}>Connect Google Calendar</Text>
-            <Text style={[s.cardSub, { color: t.subtext }]}>
-              See your real events, ask Bloom to plan your week, and add or adjust meetings with a message.
-            </Text>
-
-            {['View upcoming events at a glance',
-              'Ask Bloom to schedule your day',
-              'Add or update events by messaging',
-            ].map(f => (
-              <View key={f} style={s.featureRow}>
-                <Icon name="check" size={13} color={t.chatBubble ?? C.clay} />
-                <Text style={[s.featureText, { color: t.subtext }]}>{f}</Text>
-              </View>
-            ))}
-
-            {/* Client ID setup */}
-            {(showIdSetup || !hasId) && (
-              <View style={[s.idBlock, { borderTopColor: t.border }]}>
-                <Text style={[s.idLabel, { color: t.subtext }]}>GOOGLE CLIENT ID</Text>
-                <TextInput
-                  style={[s.idInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
-                  placeholder="12345678-abc.apps.googleusercontent.com"
-                  placeholderTextColor={t.subtext}
-                  value={clientIdInput}
-                  onChangeText={setClientIdInput}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                />
-              </View>
-            )}
-
-            {savedId && !showIdSetup && (
-              <View style={[s.savedRow, { borderTopColor: t.border }]}>
-                <Icon name="check-circle" size={13} color={t.chatBubble ?? C.clay} />
-                <Text style={[s.savedText, { color: t.subtext }]} numberOfLines={1}>
-                  Client ID saved
-                </Text>
-                <TouchableOpacity onPress={() => setShowIdSetup(true)}>
-                  <Text style={[s.changeLink, { color: t.chatBubble ?? C.clay }]}>Change</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={[
-                s.connectBtn,
-                { backgroundColor: t.chatBubble ?? C.clay },
-                (!hasId && !clientIdInput.trim()) && s.connectBtnDisabled,
-              ]}
-              onPress={handleConnect}
-              activeOpacity={0.8}
-            >
-              <Icon name="calendar" size={15} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={s.connectBtnText}>Connect Google Calendar</Text>
-            </TouchableOpacity>
-
-            {!!connectErr && (
-              <Text style={s.errText}>{connectErr}</Text>
-            )}
-          </View>
-
-          {/* Setup guide */}
-          <View style={[s.guideCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={[s.guideTitle, { color: t.text }]}>One-time setup (done once by the developer)</Text>
-            <Text style={[s.guideSub, { color: t.subtext }]}>
-              Every app that connects to Google Calendar needs a Google Cloud OAuth Client ID. This is set up once by whoever builds the app — not by each person who uses it. Once done, users only ever see the simple "Connect" button above.
-            </Text>
-            {[
-              'Go to console.cloud.google.com',
-              'Create a project (or select one)',
-              'APIs & Services → Enable APIs → enable "Google Calendar API"',
-              'APIs & Services → Credentials → Create OAuth 2.0 Client ID',
-              'Application type: Web application',
-              `Authorized JS origins: ${typeof window !== 'undefined' ? window.location.origin : 'your app origin'}`,
-              `Authorized redirect URI: ${typeof window !== 'undefined' ? (window.location.origin + window.location.pathname.replace(/\/?$/, '/')) : 'your app URL'}`,
-              'Complete the OAuth consent screen — add your email as a test user',
-              'Copy the Client ID, open calendar.js in the source code, paste it as BUNDLED_CLIENT_ID',
-            ].map((step, i) => (
-              <View key={i} style={s.guideRow}>
-                <Text style={[s.guideNum, { color: t.chatBubble ?? C.clay }]}>{i + 1}</Text>
-                <Text style={[s.guideStep, { color: t.subtext }]}>{step}</Text>
-              </View>
-            ))}
-            <Text style={[s.guideSub, { color: t.subtext, marginTop: 12, fontStyle: 'italic' }]}>
-              This takes about 10–15 minutes and is the same process every app using Google Calendar goes through. After that, deploy, and the Client ID field disappears for everyone.
-            </Text>
-          </View>
-
-          <View style={{ height: 48 }} />
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
   // ─── CONNECTED ────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
 
       <View style={[s.header, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
         <Text style={[s.title, { color: t.chatBubble ?? C.clay }]}>Calendar</Text>
-        <View style={s.headerActions}>
-          <TouchableOpacity
-            onPress={loadEvents}
-            style={[s.headerIconBtn, { backgroundColor: t.border }]}
-            activeOpacity={0.7}
-          >
-            <Icon name="refresh-cw" size={14} color={t.subtext} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleDisconnect}
-            style={[s.disconnectBtn, { borderColor: t.border }]}
-            activeOpacity={0.7}
-          >
-            <Text style={[s.disconnectText, { color: t.subtext }]}>Disconnect</Text>
-          </TouchableOpacity>
-        </View>
+        {connected && (
+          <View style={s.headerActions}>
+            <TouchableOpacity onPress={loadEvents} style={[s.headerIconBtn, { backgroundColor: t.border }]} activeOpacity={0.7}>
+              <Icon name="refresh-cw" size={14} color={t.subtext} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDisconnect} style={[s.disconnectBtn, { borderColor: t.border }]} activeOpacity={0.7}>
+              <Text style={[s.disconnectText, { color: t.subtext }]}>Disconnect</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <ScrollView
@@ -252,33 +134,36 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Events section */}
-        <Text style={[s.sectionLabel, { color: t.subtext }]}>NEXT 14 DAYS</Text>
-
-        {loadingEvents ? (
-          <ActivityIndicator color={t.chatBubble ?? C.clay} style={{ marginVertical: 24 }} />
-        ) : events.length === 0 ? (
-          <View style={[s.noEventsCard, { backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={[s.noEventsText, { color: t.subtext }]}>
-              No events in the next 14 days.
-            </Text>
-          </View>
-        ) : (
-          events.map(ev => <EventCard key={ev.id} event={ev} t={t} />)
+        {/* Events — only when Google Calendar is connected */}
+        {connected && (
+          <>
+            <Text style={[s.sectionLabel, { color: t.subtext }]}>NEXT 14 DAYS</Text>
+            {loadingEvents ? (
+              <ActivityIndicator color={t.chatBubble ?? C.clay} style={{ marginVertical: 24 }} />
+            ) : events.length === 0 ? (
+              <View style={[s.noEventsCard, { backgroundColor: t.card, borderColor: t.border }]}>
+                <Text style={[s.noEventsText, { color: t.subtext }]}>No events in the next 14 days.</Text>
+              </View>
+            ) : (
+              events.map(ev => <EventCard key={ev.id} event={ev} t={t} />)
+            )}
+          </>
         )}
 
-        {/* Chat divider */}
-        <View style={[s.dividerWrap, { borderTopColor: t.border }]}>
-          <Text style={[s.dividerText, { color: t.subtext }]}>Ask Bloom about your schedule</Text>
+        {/* Planning chat — always visible */}
+        <View style={[s.dividerWrap, { borderTopColor: connected ? t.border : 'transparent' }]}>
+          <Text style={[s.dividerText, { color: t.subtext }]}>
+            {connected ? 'Ask Bloom about your schedule' : 'Plan your schedule with Bloom'}
+          </Text>
         </View>
 
         {/* Quick prompts */}
         {messages.length === 0 && (
           <View style={s.promptsWrap}>
             {[
-              'What do I have this week?',
-              'Add a meeting tomorrow at 2pm',
-              'When am I free today?',
+              'Help me plan my day',
+              'What should I focus on this week?',
+              'How do I fit everything in?',
             ].map(p => (
               <TouchableOpacity
                 key={p}
