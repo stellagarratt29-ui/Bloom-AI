@@ -29,6 +29,8 @@ function makeRoom(roomTypeId) {
     gridW: rt.gridW,
     gridH: rt.gridH,
     cells: {},
+    wallColor: 'Warm White',
+    floorColor: 'Sand',
   };
 }
 
@@ -41,13 +43,14 @@ function makeLot(name) {
   };
 }
 
-function makeWorld(prompt) {
-  const theme = matchTheme(prompt);
+function makeWorld(prompt, themeOverride, settings) {
+  const theme = themeOverride || matchTheme(prompt);
   return {
     id: uid('world'),
     name: theme.name,
     prompt: prompt || '',
     theme,
+    settings: settings || { timeOfDay: 'Golden Hour', season: 'Summer', weather: 'Clear' },
     createdAt: Date.now(),
     lots: [makeLot('Lot 1')],
   };
@@ -97,8 +100,8 @@ export function GameProvider({ children }) {
     });
   }, [update]);
 
-  const createWorld = useCallback((prompt) => {
-    const world = makeWorld(prompt);
+  const createWorld = useCallback((prompt, themeOverride, settings) => {
+    const world = makeWorld(prompt, themeOverride, settings);
     update(prev => ({ ...prev, worlds: [world, ...prev.worlds], activeWorldId: world.id }));
     awardXP(50);
     return world.id;
@@ -163,6 +166,32 @@ export function GameProvider({ children }) {
         lots: w.lots.map(l => l.id !== lotId ? l : {
           ...l,
           rooms: l.rooms.map(r => r.id !== roomId ? r : { ...r, cells }),
+        }),
+      }),
+    }));
+  }, [update]);
+
+  const setRoomStyle = useCallback((worldId, lotId, roomId, patch) => {
+    update(prev => ({
+      ...prev,
+      worlds: prev.worlds.map(w => w.id !== worldId ? w : {
+        ...w,
+        lots: w.lots.map(l => l.id !== lotId ? l : {
+          ...l,
+          rooms: l.rooms.map(r => r.id !== roomId ? r : { ...r, ...patch }),
+        }),
+      }),
+    }));
+  }, [update]);
+
+  const renameRoom = useCallback((worldId, lotId, roomId, name) => {
+    update(prev => ({
+      ...prev,
+      worlds: prev.worlds.map(w => w.id !== worldId ? w : {
+        ...w,
+        lots: w.lots.map(l => l.id !== lotId ? l : {
+          ...l,
+          rooms: l.rooms.map(r => r.id !== roomId ? r : { ...r, name }),
         }),
       }),
     }));
@@ -236,7 +265,7 @@ export function GameProvider({ children }) {
   const value = {
     loaded, ...state,
     createWorld, setActiveWorld, addLot, deleteLot, renameLot,
-    addRoom, deleteRoom, setRoomCells, updateExterior,
+    addRoom, deleteRoom, setRoomCells, setRoomStyle, renameRoom, updateExterior,
     toggleLike, toggleSave, toggleFollow,
     addBoard, addToBoard, removeFromBoard,
     purchasePack, awardXP,

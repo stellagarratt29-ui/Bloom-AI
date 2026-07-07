@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../components/Icon';
-import { ScreenHeader, Chip, Button } from '../components/UI';
+import PhotoCard from '../components/PhotoCard';
+import { ScreenHeader, Chip } from '../components/UI';
 import { C, SPACING, FONT, RADIUS } from '../constants/theme';
 import { useGame } from '../context/AppContext';
 import { INSPIRATION_ITEMS } from '../constants/mockData';
@@ -10,13 +11,15 @@ import { STYLE_PRESETS } from '../constants/catalog';
 
 export default function InspirationScreen({ navigation }) {
   const [category, setCategory] = useState(null);
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 860;
   const { addToBoard, boards, worlds, activeWorldId } = useGame();
   const items = useMemo(() => INSPIRATION_ITEMS.filter(i => !category || i.category === category), [category]);
   const activeWorld = worlds.find(w => w.id === activeWorldId) || worlds[0];
 
   const save = (item) => addToBoard(boards[0].id, { kind: 'layout', refId: item.id, title: item.title, accent: item.accent, category: item.category });
 
-  const importShell = (item) => {
+  const importShell = () => {
     if (activeWorld && activeWorld.lots.length) {
       navigation.navigate('Build', { worldId: activeWorld.id, lotId: activeWorld.lots[0].id });
     } else {
@@ -26,33 +29,36 @@ export default function InspirationScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>
-      <ScreenHeader title="Inspiration" onBack={() => navigation.canGoBack() && navigation.goBack()}
+      <ScreenHeader title="Layout Inspiration" onBack={() => navigation.canGoBack() && navigation.goBack()}
         right={<TouchableOpacity onPress={() => navigation.navigate('InspirationBoard')}><Icon name="bookmark" size={20} color={C.text} /></TouchableOpacity>} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[s.chipRow, isDesktop && s.chipRowDesktop]}>
         <Chip label="All Styles" active={!category} onPress={() => setCategory(null)} />
         {STYLE_PRESETS.map(st => (
           <Chip key={st.id} label={st.name} active={category === st.name} onPress={() => setCategory(st.name)} color={st.accent} />
         ))}
       </ScrollView>
-      <ScrollView contentContainerStyle={s.grid}>
+      <ScrollView contentContainerStyle={[s.grid, isDesktop && s.gridDesktop]}>
         {items.map(item => (
-          <View key={item.id} style={s.card}>
-            <View style={[s.thumb, { backgroundColor: item.accent + '22' }]}>
-              <Icon name="home" size={26} color={item.accent} />
-            </View>
-            <Text style={FONT.h3} numberOfLines={1}>{item.title}</Text>
-            <Text style={FONT.bodyMuted} numberOfLines={1}>{item.category}</Text>
+          <PhotoCard
+            key={item.id}
+            icon="home"
+            accent={item.accent}
+            height={180}
+            title={item.title}
+            subtitle={item.category}
+            style={isDesktop ? s.cardDesktop : s.cardMobile}
+          >
             <View style={s.actions}>
               <TouchableOpacity style={s.actionBtn} onPress={() => save(item)}>
-                <Icon name="bookmark" size={14} color={C.accent} />
+                <Icon name="bookmark" size={13} color="#fff" />
                 <Text style={s.actionText}>Save</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.actionBtn} onPress={() => importShell(item)}>
-                <Icon name="download" size={14} color={C.accent} />
+              <TouchableOpacity style={s.actionBtn} onPress={importShell}>
+                <Icon name="download" size={13} color="#fff" />
                 <Text style={s.actionText}>Import</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </PhotoCard>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -62,10 +68,12 @@ export default function InspirationScreen({ navigation }) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   chipRow: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
+  chipRowDesktop: { paddingHorizontal: SPACING.xxl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   grid: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl, flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
-  card: { width: '47%', backgroundColor: C.surface, borderRadius: RADIUS.lg, padding: SPACING.md },
-  thumb: { height: 90, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm },
-  actions: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.sm },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  actionText: { ...FONT.caption, color: C.accent, fontWeight: '700' },
+  gridDesktop: { paddingHorizontal: SPACING.xxl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
+  cardMobile: { width: '47%' },
+  cardDesktop: { width: '23%', minWidth: 220 },
+  actions: { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 6 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.32)', borderRadius: RADIUS.pill, paddingVertical: 4, paddingHorizontal: 8 },
+  actionText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 });

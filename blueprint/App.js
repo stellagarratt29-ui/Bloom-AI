@@ -1,8 +1,8 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useRef, useState, useCallback } from 'react';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, View } from 'react-native';
+import { Platform, View, useWindowDimensions } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 if (Platform.OS !== 'web') {
@@ -12,7 +12,11 @@ if (Platform.OS !== 'web') {
 
 import { GameProvider } from './src/context/AppContext';
 import Icon from './src/components/Icon';
+import Sidebar from './src/components/Sidebar';
 import { C } from './src/constants/theme';
+
+const DESKTOP_BREAKPOINT = 860;
+const navigationRef = createNavigationContainerRef();
 
 import HomeScreen from './src/screens/HomeScreen';
 import NewWorldScreen from './src/screens/NewWorldScreen';
@@ -101,28 +105,55 @@ function TabBarIcon({ name, focused }) {
   return <Icon name={name} size={22} color={focused ? C.accent : C.textFaint} />;
 }
 
+const ROUTE_TO_NAV_KEY = {
+  HomeMain: 'continue', World: 'continue', NewWorld: 'continue', Build: 'continue',
+  ExploreMain: 'explore',
+  Inspiration: 'inspiration', InspirationBoard: 'inspiration',
+  Challenges: 'challenges',
+  MarketplaceMain: 'marketplace',
+  Friends: 'friends',
+  Messages: 'messages',
+};
+
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= DESKTOP_BREAKPOINT;
+  const [activeRouteName, setActiveRouteName] = useState(null);
+
+  const handleStateChange = useCallback(() => {
+    if (navigationRef.isReady()) {
+      setActiveRouteName(navigationRef.getCurrentRoute()?.name ?? null);
+    }
+  }, []);
+
   return (
     <SafeAreaProvider>
       <GameProvider>
-        <NavigationContainer>
-          <Tab.Navigator
-            screenOptions={({ route }) => ({
-              headerShown: false,
-              tabBarActiveTintColor: C.accent,
-              tabBarInactiveTintColor: C.textFaint,
-              tabBarStyle: { backgroundColor: C.surface, borderTopColor: C.border },
-              tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-              tabBarIcon: ({ focused }) => {
-                const item = TAB_ITEMS.find(t => t.name === route.name);
-                return <TabBarIcon name={item.icon} focused={focused} />;
-              },
-            })}
-          >
-            {TAB_ITEMS.map(t => (
-              <Tab.Screen key={t.name} name={t.name} component={t.component} options={{ title: t.label }} />
-            ))}
-          </Tab.Navigator>
+        <NavigationContainer ref={navigationRef} onReady={handleStateChange} onStateChange={handleStateChange}>
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            {isDesktop && (
+              <Sidebar navigationRef={navigationRef} activeRouteName={ROUTE_TO_NAV_KEY[activeRouteName]} />
+            )}
+            <View style={{ flex: 1 }}>
+              <Tab.Navigator
+                screenOptions={({ route }) => ({
+                  headerShown: false,
+                  tabBarActiveTintColor: C.accent,
+                  tabBarInactiveTintColor: C.textFaint,
+                  tabBarStyle: isDesktop ? { display: 'none' } : { backgroundColor: C.surface, borderTopColor: C.border },
+                  tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+                  tabBarIcon: ({ focused }) => {
+                    const item = TAB_ITEMS.find(t => t.name === route.name);
+                    return <TabBarIcon name={item.icon} focused={focused} />;
+                  },
+                })}
+              >
+                {TAB_ITEMS.map(t => (
+                  <Tab.Screen key={t.name} name={t.name} component={t.component} options={{ title: t.label }} />
+                ))}
+              </Tab.Navigator>
+            </View>
+          </View>
         </NavigationContainer>
       </GameProvider>
     </SafeAreaProvider>

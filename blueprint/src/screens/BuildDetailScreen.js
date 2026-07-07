@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../components/Icon';
+import PhotoCard from '../components/PhotoCard';
 import { ScreenHeader, Button, Avatar, Card } from '../components/UI';
 import { C, SPACING, FONT, RADIUS } from '../constants/theme';
 import { useGame } from '../context/AppContext';
@@ -33,9 +34,7 @@ export default function BuildDetailScreen({ navigation, route }) {
     <SafeAreaView style={s.container} edges={['top']}>
       <ScreenHeader title="Build" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: SPACING.xxl }}>
-        <View style={[s.hero, { backgroundColor: build.accent + '22' }]}>
-          <Icon name="home" size={48} color={build.accent} />
-        </View>
+        <PhotoCard icon="home" accent={build.accent} height={220} overlay={false} style={{ borderRadius: 0 }} />
         <View style={s.body}>
           <Text style={FONT.h1}>{build.title}</Text>
           <View style={s.authorRow}>
@@ -85,7 +84,6 @@ export default function BuildDetailScreen({ navigation, route }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  hero: { height: 200, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg },
   authorRow: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.md },
   statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: SPACING.xl, backgroundColor: C.surface, borderRadius: RADIUS.lg, paddingVertical: SPACING.md },

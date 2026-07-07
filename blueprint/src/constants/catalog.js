@@ -46,6 +46,7 @@ export const COLORS = [
 let _pid = 0;
 const piece = (name, category, icon, footprint = '1x1') => ({
   id: `p${++_pid}`, name, category, icon, footprint,
+  price: 80 + ((_pid * 47) % 540),
   colors: COLORS.slice(0, 8).map(c => c.name),
   materials: MATERIALS.slice(0, 6),
 });
@@ -159,14 +160,21 @@ export const STYLE_PRESETS = [
 ];
 
 export const WORLD_THEMES = [
-  { id: 'coastal',    name: 'Coastal Neighborhood', keywords: ['coastal', 'beach', 'ocean', 'california', 'cliff', 'palm'], features: ['Ocean Cliffs', 'Palm-Lined Streets', 'Boutique Shopping', 'Beach Access'], palette: '#5C87A6' },
-  { id: 'mountain',   name: 'Mountain Town',        keywords: ['mountain', 'pine', 'lake', 'lodge', 'ski'], features: ['Pine Forests', 'Alpine Lake', 'Ski Lodge', 'Mountain Trails'], palette: '#6B4F3A' },
-  { id: 'european',   name: 'European Village',     keywords: ['european', 'village', 'stone', 'cobblestone', 'plaza'], features: ['Stone Streets', 'Town Square', 'Flower Cottages', 'Café Plaza'], palette: '#C1602E' },
-  { id: 'farmhouse',  name: 'Farmhouse Community',  keywords: ['farmhouse', 'vineyard', 'ranch', 'horse', 'rolling hills'], features: ['Vineyards', 'Horse Pastures', 'Rolling Hills', 'Farm Stands'], palette: '#7C9473' },
-  { id: 'city',       name: 'Modern City',          keywords: ['city', 'urban', 'downtown', 'skyline'], features: ['High-Rises', 'Transit Lines', 'Rooftop Parks', 'Waterfront Promenade'], palette: '#3A3733' },
-  { id: 'desert',     name: 'Desert Oasis',         keywords: ['desert', 'oasis', 'canyon', 'adobe'], features: ['Canyon Views', 'Adobe Architecture', 'Cactus Gardens', 'Palm Oasis'], palette: '#C79A3A' },
-  { id: 'lakeside',   name: 'Lakeside Retreat',     keywords: ['lake', 'lakeside', 'forest', 'cabin'], features: ['Lakefront Docks', 'Forest Trails', 'Cabins', 'Sunset Point'], palette: '#5C87A6' },
+  { id: 'coastal',    name: 'Coastal Neighborhood', icon: 'droplet', keywords: ['coastal', 'beach', 'ocean', 'california', 'cliff', 'palm'], features: ['Ocean Cliffs', 'Palm-Lined Streets', 'Boutique Shopping', 'Beach Access'], palette: '#5C87A6' },
+  { id: 'mountain',   name: 'Mountain Town',        icon: 'tree', keywords: ['mountain', 'pine', 'lodge', 'ski'], features: ['Pine Forests', 'Alpine Lake', 'Ski Lodge', 'Mountain Trails'], palette: '#6B4F3A' },
+  { id: 'european',   name: 'European Village',     icon: 'map', keywords: ['european', 'village', 'stone', 'cobblestone', 'plaza'], features: ['Stone Streets', 'Town Square', 'Flower Cottages', 'Café Plaza'], palette: '#C1602E' },
+  { id: 'farmhouse',  name: 'Countryside',          icon: 'sun', keywords: ['farmhouse', 'vineyard', 'ranch', 'horse', 'rolling hills', 'countryside'], features: ['Vineyards', 'Horse Pastures', 'Rolling Hills', 'Farm Stands'], palette: '#7C9473' },
+  { id: 'city',       name: 'Modern City',          icon: 'grid', keywords: ['city', 'urban', 'downtown', 'skyline'], features: ['High-Rises', 'Transit Lines', 'Rooftop Parks', 'Waterfront Promenade'], palette: '#3A3733' },
+  { id: 'desert',     name: 'Desert Oasis',         icon: 'sun', keywords: ['desert', 'oasis', 'canyon', 'adobe'], features: ['Canyon Views', 'Adobe Architecture', 'Cactus Gardens', 'Palm Oasis'], palette: '#C79A3A' },
+  { id: 'forest',     name: 'Forest Retreat',       icon: 'tree', keywords: ['forest', 'lake', 'lakeside', 'woods', 'cabin'], features: ['Lakefront Docks', 'Forest Trails', 'Cabins', 'Sunset Point'], palette: '#5C87A6' },
 ];
+
+export const ENVIRONMENT_TILES = ['coastal', 'mountain', 'farmhouse', 'city', 'desert', 'forest']
+  .map(id => WORLD_THEMES.find(t => t.id === id));
+
+export const TIME_OF_DAY = ['Sunrise', 'Golden Hour', 'Midday', 'Sunset', 'Night'];
+export const SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'];
+export const WEATHER = ['Clear', 'Cloudy', 'Rainy', 'Snowy'];
 
 export function matchTheme(prompt) {
   const p = (prompt || '').toLowerCase();

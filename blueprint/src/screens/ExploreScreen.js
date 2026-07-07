@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../components/Icon';
-import { Card, Chip, ScreenHeader } from '../components/UI';
+import PhotoCard from '../components/PhotoCard';
+import { Chip, ScreenHeader } from '../components/UI';
 import { C, SPACING, FONT, RADIUS } from '../constants/theme';
 import { useGame } from '../context/AppContext';
 import { COMMUNITY_BUILDS } from '../constants/mockData';
@@ -12,6 +13,8 @@ const SORTS = ['Popular', 'Newest', 'Most Saved'];
 
 export default function ExploreScreen({ navigation }) {
   const { communityLikes, communitySaves, toggleLike, toggleSave } = useGame();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 860;
   const [styleFilter, setStyleFilter] = useState(null);
   const [sort, setSort] = useState('Popular');
 
@@ -25,8 +28,8 @@ export default function ExploreScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>
-      <ScreenHeader title="Explore" />
-      <View style={{ paddingHorizontal: SPACING.lg }}>
+      <ScreenHeader title="Explore Community" onBack={!isDesktop ? () => navigation.canGoBack() && navigation.goBack() : undefined} />
+      <View style={[s.filters, isDesktop && s.filtersDesktop]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: SPACING.sm }}>
           {SORTS.map(so => <Chip key={so} label={so} active={sort === so} onPress={() => setSort(so)} />)}
         </ScrollView>
@@ -37,28 +40,32 @@ export default function ExploreScreen({ navigation }) {
           ))}
         </ScrollView>
       </View>
-      <ScrollView contentContainerStyle={s.grid}>
+      <ScrollView contentContainerStyle={[s.grid, isDesktop && s.gridDesktop]}>
         {builds.map(b => {
           const liked = !!communityLikes[b.id];
           const saved = !!communitySaves[b.id];
           return (
-            <TouchableOpacity key={b.id} style={s.card} activeOpacity={0.88} onPress={() => navigation.navigate('BuildDetail', { buildId: b.id })}>
-              <View style={[s.thumb, { backgroundColor: b.accent + '22' }]}>
-                <Icon name="home" size={26} color={b.accent} />
-                {b.isNew && <View style={s.newBadge}><Text style={s.newBadgeText}>NEW</Text></View>}
-              </View>
-              <Text style={FONT.h3} numberOfLines={1}>{b.title}</Text>
-              <Text style={FONT.bodyMuted} numberOfLines={1}>by {b.author}</Text>
+            <PhotoCard
+              key={b.id}
+              icon="home"
+              accent={b.accent}
+              height={190}
+              title={b.title}
+              subtitle={`by ${b.author}`}
+              badge={b.isNew ? 'NEW' : undefined}
+              style={isDesktop ? s.cardDesktop : s.cardMobile}
+              onPress={() => navigation.navigate('BuildDetail', { buildId: b.id })}
+            >
               <View style={s.actionsRow}>
                 <TouchableOpacity style={s.actionBtn} onPress={() => toggleLike(b.id)}>
-                  <Icon name={liked ? 'heart-fill' : 'heart'} size={15} color={liked ? C.accent : C.textFaint} />
+                  <Icon name={liked ? 'heart-fill' : 'heart'} size={14} color="#fff" />
                   <Text style={s.actionText}>{b.likes + (liked ? 1 : 0)}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.actionBtn} onPress={() => toggleSave(b.id)}>
-                  <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={15} color={saved ? C.accent : C.textFaint} />
+                  <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={14} color="#fff" />
                 </TouchableOpacity>
               </View>
-            </TouchableOpacity>
+            </PhotoCard>
           );
         })}
       </ScrollView>
@@ -68,12 +75,13 @@ export default function ExploreScreen({ navigation }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
+  filters: { paddingHorizontal: SPACING.lg },
+  filtersDesktop: { paddingHorizontal: SPACING.xxl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   grid: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl, flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
-  card: { width: '47%', backgroundColor: C.surface, borderRadius: RADIUS.lg, padding: SPACING.md },
-  thumb: { height: 90, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm },
-  newBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: C.accent, borderRadius: RADIUS.pill, paddingVertical: 2, paddingHorizontal: 8 },
-  newBadgeText: { color: C.textOnAccent, fontSize: 10, fontWeight: '700' },
-  actionsRow: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.sm, gap: SPACING.md },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  actionText: { ...FONT.caption },
+  gridDesktop: { paddingHorizontal: SPACING.xxl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
+  cardMobile: { width: '47%' },
+  cardDesktop: { width: '23%', minWidth: 220 },
+  actionsRow: { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 10 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(0,0,0,0.32)', borderRadius: RADIUS.pill, paddingVertical: 4, paddingHorizontal: 8 },
+  actionText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 });
