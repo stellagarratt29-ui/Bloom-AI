@@ -135,7 +135,7 @@ export default function Play3DScreen({ navigation, route }) {
           <Icon name="star" size={13} color="#F2C94C" />
           <Text style={s.currencyText}>{profile.currency.toLocaleString()}</Text>
         </View>
-        <TouchableOpacity style={s.addBtn} onPress={() => navigation.navigate('Marketplace')}><Icon name="plus" size={14} color="#fff" /></TouchableOpacity>
+        <TouchableOpacity style={s.addBtn} onPress={() => flash('Marketplace — coming soon')}><Icon name="plus" size={14} color="#fff" /></TouchableOpacity>
         <View style={s.weatherPill}>
           <Icon name={daytime ? 'sun' : 'cloud'} size={14} color="#F2C94C" />
           <Text style={s.weatherText}>{world.settings?.weather || 'Clear'} · {world.settings?.season || 'Summer'}</Text>
@@ -145,10 +145,8 @@ export default function Play3DScreen({ navigation, route }) {
       {/* top-right: mode buttons */}
       <View style={s.topRight}>
         {[
-          { icon: 'grid', label: 'Build', onPress: () => navigation.goBack() },
           { icon: 'sliders', label: 'Decorate', onPress: () => setTab('decor') },
           { icon: 'layers', label: 'Inventory', onPress: () => setInventoryOpen(v => !v) },
-          { icon: 'shopping-bag', label: 'Shop', onPress: () => navigation.navigate('Marketplace') },
         ].map(b => (
           <TouchableOpacity key={b.label} style={s.pillBtn} onPress={b.onPress}>
             <Icon name={b.icon} size={15} color="#fff" />

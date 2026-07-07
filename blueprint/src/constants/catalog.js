@@ -145,20 +145,6 @@ export const EXTERIOR_OPTIONS = {
   extras: ['Pool', 'Outdoor Kitchen', 'Fire Pit', 'Patio', 'Pergola', 'Walkway Lighting'],
 };
 
-export const STYLE_PRESETS = [
-  { id: 'modern-farmhouse', name: 'Modern Farmhouse', accent: '#6B7350', keywords: ['farmhouse', 'rustic', 'shiplap', 'barn'] },
-  { id: 'coastal',          name: 'Coastal',           accent: '#5C87A6', keywords: ['coastal', 'beach', 'ocean', 'california', 'nautical'] },
-  { id: 'scandinavian',     name: 'Scandinavian',      accent: '#A8A297', keywords: ['scandinavian', 'nordic', 'minimal', 'hygge'] },
-  { id: 'cottage',          name: 'Cottage',           accent: '#E4B7AB', keywords: ['cottage', 'cozy', 'floral', 'countryside'] },
-  { id: 'mediterranean',    name: 'Mediterranean',     accent: '#C1602E', keywords: ['mediterranean', 'terracotta', 'stucco', 'villa'] },
-  { id: 'minimalist',       name: 'Minimalist',        accent: '#3A3733', keywords: ['minimalist', 'modern', 'sleek', 'clean'] },
-  { id: 'mountain-lodge',   name: 'Mountain Lodge',    accent: '#6B4F3A', keywords: ['mountain', 'lodge', 'cabin', 'pine', 'lake'] },
-  { id: 'french-country',   name: 'French Country',    accent: '#B15544', keywords: ['french', 'provence', 'vineyard', 'countryside'] },
-  { id: 'luxury-estate',    name: 'Luxury Estate',     accent: '#C79A3A', keywords: ['luxury', 'estate', 'mansion', 'grand'] },
-  { id: 'tiny-home',        name: 'Tiny Home',         accent: '#7C9473', keywords: ['tiny', 'small', 'compact', 'efficient'] },
-  { id: 'family-home',      name: 'Family Home',       accent: '#5C87A6', keywords: ['family', 'suburban', 'traditional'] },
-];
-
 export const WORLD_THEMES = [
   { id: 'coastal',    name: 'Coastal Neighborhood', icon: 'droplet', keywords: ['coastal', 'beach', 'ocean', 'california', 'cliff', 'palm'], features: ['Ocean Cliffs', 'Palm-Lined Streets', 'Boutique Shopping', 'Beach Access'], palette: '#5C87A6' },
   { id: 'mountain',   name: 'Mountain Town',        icon: 'tree', keywords: ['mountain', 'pine', 'lodge', 'ski'], features: ['Pine Forests', 'Alpine Lake', 'Ski Lodge', 'Mountain Trails'], palette: '#6B4F3A' },
@@ -184,14 +170,4 @@ export function matchTheme(prompt) {
     if (score > bestScore) { bestScore = score; best = t; }
   }
   return best || WORLD_THEMES[0];
-}
-
-export function matchStyle(prompt) {
-  const p = (prompt || '').toLowerCase();
-  let best = null, bestScore = 0;
-  for (const s of STYLE_PRESETS) {
-    const score = s.keywords.reduce((sc, k) => sc + (p.includes(k) ? 1 : 0), 0);
-    if (score > bestScore) { bestScore = score; best = s; }
-  }
-  return best || STYLE_PRESETS[0];
 }
