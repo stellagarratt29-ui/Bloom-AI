@@ -30,7 +30,7 @@ const ACCENT = 0xC1602E;
 // --- Stylized toon shading: a soft 4-step gradient instead of physically-based
 // shading, so Blueprint reads as its own illustrated look rather than a photoreal render.
 const GRADIENT_MAP = (() => {
-  const data = new Uint8Array([90, 90, 90, 255, 160, 160, 160, 255, 215, 215, 215, 255, 255, 255, 255, 255]);
+  const data = new Uint8Array([72, 64, 56, 255, 165, 148, 120, 255, 218, 200, 168, 255, 255, 250, 232, 255]);
   const tex = new THREE.DataTexture(data, 4, 1, THREE.RGBAFormat);
   tex.needsUpdate = true;
   tex.magFilter = THREE.NearestFilter;
@@ -38,6 +38,12 @@ const GRADIENT_MAP = (() => {
   return tex;
 })();
 const toonMat = (hex, extra) => new THREE.MeshToonMaterial({ color: hex, gradientMap: GRADIENT_MAP, ...extra });
+const enableShadows = (obj, cast = true, receive = true) => {
+  obj.traverse((child) => {
+    if (child.isMesh) { child.castShadow = cast; child.receiveShadow = receive; }
+  });
+  return obj;
+};
 
 function makeSkyTexture(day) {
   const c = document.createElement('canvas');
@@ -45,9 +51,10 @@ function makeSkyTexture(day) {
   const ctx = c.getContext('2d');
   const grad = ctx.createLinearGradient(0, 0, 0, 128);
   if (day) {
-    grad.addColorStop(0, '#5F9BD6');
-    grad.addColorStop(0.55, '#BFE0EE');
-    grad.addColorStop(1, '#F3E8D8');
+    grad.addColorStop(0, '#4A85C9');
+    grad.addColorStop(0.45, '#8FBFDE');
+    grad.addColorStop(0.75, '#F6D9A8');
+    grad.addColorStop(1, '#F4B97D');
   } else {
     grad.addColorStop(0, '#050814');
     grad.addColorStop(0.6, '#141B33');
@@ -124,22 +131,62 @@ function makeAvatar({ skin = 0xF0C29B, top = ACCENT, bottom = 0x3A3733, hair = 0
 
   group.add(head, hairCap, eyeL, eyeR, cheekL, cheekR, torso, legL, legR, shoeL, shoeR, armL, armR);
   group.userData = { legL, legR, armL, armR, head, baseY: 0 };
-  return group;
+  return enableShadows(group);
 }
 
-function makeTree(scale = 1) {
+function makeTree(scale = 1, kind = 'round') {
   const group = new THREE.Group();
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.9, 8), toonMat(0x8a6a4a));
   trunk.position.y = 0.45;
-  const foliageMat = toonMat(0x6f9a5c);
-  const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), foliageMat); c1.position.y = 1.15;
-  const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), foliageMat); c2.position.set(0.28, 0.95, 0.1);
-  const c3 = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), foliageMat); c3.position.set(-0.25, 0.9, -0.15);
-  group.add(trunk, c1, c2, c3);
+  group.add(trunk);
+  if (kind === 'pine') {
+    const foliageMat = toonMat(0x4d7a4a);
+    const tiers = [
+      { r: 0.5, y: 1.0 }, { r: 0.4, y: 1.35 }, { r: 0.3, y: 1.65 },
+    ];
+    const foliage = tiers.map(t => {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(t.r, 0.6, 9), foliageMat);
+      cone.position.y = t.y;
+      group.add(cone);
+      return cone;
+    });
+    group.userData.sway = Math.random() * Math.PI * 2;
+    group.userData.foliage = foliage;
+  } else {
+    const foliageMat = toonMat(0x6f9a5c);
+    const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), foliageMat); c1.position.y = 1.15;
+    const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), foliageMat); c2.position.set(0.28, 0.95, 0.1);
+    const c3 = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), foliageMat); c3.position.set(-0.25, 0.9, -0.15);
+    group.add(c1, c2, c3);
+    group.userData.sway = Math.random() * Math.PI * 2;
+    group.userData.foliage = [c1, c2, c3];
+  }
   group.scale.setScalar(scale);
-  group.userData.sway = Math.random() * Math.PI * 2;
-  group.userData.foliage = [c1, c2, c3];
-  return group;
+  return enableShadows(group);
+}
+
+function makeFlowerBed(colors) {
+  const group = new THREE.Group();
+  const bedMat = toonMat(0x5C4A3A);
+  const bed = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 0.12, 12), bedMat);
+  bed.position.y = 0.06;
+  group.add(bed);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const flower = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), toonMat(colors[i % colors.length]));
+    flower.position.set(Math.cos(a) * 0.3, 0.18, Math.sin(a) * 0.3);
+    group.add(flower);
+  }
+  return enableShadows(group);
+}
+
+function makeFencePost() {
+  const group = new THREE.Group();
+  const mat = toonMat(0xEDE6D6);
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.07), mat);
+  post.position.y = 0.325;
+  group.add(post);
+  return enableShadows(group);
 }
 
 function makeCar(color) {
@@ -159,7 +206,25 @@ function makeCar(color) {
     group.add(wheel);
   });
   group.add(body, cabin);
-  return group;
+  return enableShadows(group);
+}
+
+function makeVan(color) {
+  const group = new THREE.Group();
+  const bodyMat = toonMat(color);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.75, 0.68), bodyMat);
+  body.position.y = 0.5;
+  const wheelMat = toonMat(0x2A2622);
+  const wheelGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.1, 12);
+  const positions = [[-0.5, 0.18, 0.34], [0.5, 0.18, 0.34], [-0.5, 0.18, -0.34], [0.5, 0.18, -0.34]];
+  positions.forEach(([x, y, z]) => {
+    const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(x, y, z);
+    group.add(wheel);
+  });
+  group.add(body);
+  return enableShadows(group);
 }
 
 function makeHouse(color, roofColor) {
@@ -169,8 +234,103 @@ function makeHouse(color, roofColor) {
   const roof = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.0, 4), toonMat(roofColor));
   roof.position.y = 2.1;
   roof.rotation.y = Math.PI / 4;
-  group.add(body, roof);
-  return group;
+  const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.8), toonMat(roofColor));
+  porchRoof.position.set(0, 1.5, 1.5);
+  const porchPostGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8);
+  const postMat = toonMat(0xF5F1E8);
+  const postL = new THREE.Mesh(porchPostGeo, postMat); postL.position.set(-0.6, 0.75, 1.85);
+  const postR = postL.clone(); postR.position.x = 0.6;
+  const garage = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 0.06), toonMat(0xDCD3C0));
+  garage.position.set(-0.9, 0.55, 1.13);
+  group.add(body, roof, porchRoof, postL, postR, garage);
+  return enableShadows(group);
+}
+
+function makeBench() {
+  const group = new THREE.Group();
+  const mat = toonMat(0x8a6a4a);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.4), mat);
+  seat.position.y = 0.45;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.06), mat);
+  back.position.set(0, 0.68, -0.17);
+  const legMat = toonMat(0x3A3733);
+  [[-0.48, 0.22, 0.15], [0.48, 0.22, 0.15], [-0.48, 0.22, -0.15], [0.48, 0.22, -0.15]].forEach(([x, y, z]) => {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.44, 0.06), legMat);
+    leg.position.set(x, y, z);
+    group.add(leg);
+  });
+  group.add(seat, back);
+  return enableShadows(group);
+}
+
+function makeLamppost() {
+  const group = new THREE.Group();
+  const poleMat = toonMat(0x3A3733);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.2, 8), poleMat);
+  pole.position.y = 1.1;
+  const lampMat = new THREE.MeshBasicMaterial({ color: 0xFFE9B0 });
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), lampMat);
+  lamp.position.y = 2.25;
+  group.add(pole, lamp);
+  return enableShadows(group, true, false);
+}
+
+function makeCafe() {
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.4, 1.8), toonMat(0xE9D9BE));
+  body.position.y = 0.7;
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 2.0), toonMat(0x5C6B4F));
+  roof.position.y = 1.46;
+  const awning = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.08, 0.6), toonMat(0xB0452F));
+  awning.position.set(0, 1.1, 1.1);
+  awning.rotation.x = -0.25;
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.28, 0.06), toonMat(0xF5F1E8));
+  sign.position.set(0, 1.55, 0.92);
+  group.add(body, roof, awning, sign);
+  return enableShadows(group);
+}
+
+function makeDog(color = 0x8a6a4a) {
+  const group = new THREE.Group();
+  const mat = toonMat(color);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.22, 4, 8), mat);
+  body.rotation.z = Math.PI / 2;
+  body.position.y = 0.16;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), mat);
+  head.position.set(0.2, 0.2, 0);
+  const earMat = toonMat(0x5C4A3A);
+  const earL = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 6), earMat);
+  earL.position.set(0.24, 0.28, 0.06);
+  const earR = earL.clone(); earR.position.z = -0.06;
+  const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.16, 6);
+  const legs = [];
+  [[-0.12, 0.08, 0.07], [-0.12, 0.08, -0.07], [0.1, 0.08, 0.07], [0.1, 0.08, -0.07]].forEach(([x, y, z]) => {
+    const leg = new THREE.Mesh(legGeo, mat);
+    leg.position.set(x, y, z);
+    group.add(leg);
+    legs.push(leg);
+  });
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.03, 0.18, 6), mat);
+  tail.position.set(-0.22, 0.22, 0);
+  tail.rotation.z = Math.PI / 3;
+  group.add(body, head, earL, earR, tail);
+  group.userData.legs = legs;
+  return enableShadows(group);
+}
+
+function makeBike() {
+  const group = new THREE.Group();
+  const frameMat = toonMat(0x3E5C76);
+  const wheelMat = toonMat(0x2A2622);
+  const wheelGeo = new THREE.TorusGeometry(0.22, 0.025, 8, 16);
+  const wheelF = new THREE.Mesh(wheelGeo, wheelMat); wheelF.position.set(0.32, 0.22, 0);
+  const wheelB = new THREE.Mesh(wheelGeo, wheelMat); wheelB.position.set(-0.32, 0.22, 0);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.04, 0.04), frameMat);
+  frame.position.set(0, 0.32, 0);
+  const seatPost = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.22, 6), frameMat);
+  seatPost.position.set(-0.2, 0.44, 0);
+  group.add(wheelF, wheelB, frame, seatPost);
+  return enableShadows(group);
 }
 
 function makeBird() {
@@ -209,6 +369,7 @@ function makeFurnitureMesh(cellData, opacity = 1) {
     mesh = new THREE.Mesh(new THREE.BoxGeometry(shape.w, shape.h, shape.d), mat);
   }
   mesh.position.y = shape.y;
+  mesh.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
   return mesh;
 }
 
@@ -237,31 +398,44 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
     if (Platform.OS !== 'web' || !canvasRef.current) return;
     const canvas = canvasRef.current;
     const parent = canvas.parentElement;
+    canvas.tabIndex = 0;
+    canvas.style.outline = 'none';
+    canvas.focus();
+    const refocus = () => canvas.focus();
+    canvas.addEventListener('pointerdown', refocus);
+    canvas.addEventListener('mouseenter', refocus);
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.shadowMap.enabled = false;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.12;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 150);
 
-    const hemi = new THREE.HemisphereLight(0xfff3e0, 0x53514a, 1.0);
-    const sun = new THREE.DirectionalLight(0xffe8c2, 1.15);
-    sun.position.set(6, 10, 4);
-    const fill = new THREE.DirectionalLight(0x9db8d8, 0.35);
+    const hemi = new THREE.HemisphereLight(0xfff0d8, 0x4a4438, 1.0);
+    const sun = new THREE.DirectionalLight(0xffd9a0, 1.3);
+    sun.position.set(10, 7, 5);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.left = -20; sun.shadow.camera.right = 20;
+    sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -20;
+    sun.shadow.camera.near = 1; sun.shadow.camera.far = 45;
+    sun.shadow.bias = -0.0015;
+    const fill = new THREE.DirectionalLight(0xa9c3dd, 0.28);
     fill.position.set(-6, 4, -4);
     scene.add(hemi, sun, fill);
 
     const applyLighting = () => {
       const day = daytimeRef.current;
       scene.background = makeSkyTexture(day);
-      scene.fog = new THREE.Fog(day ? 0xcfe3ee : 0x0c1120, 14, day ? 55 : 40);
-      hemi.intensity = day ? 1.0 : 0.32;
-      hemi.groundColor.set(day ? 0x53514a : 0x14141c);
-      sun.intensity = day ? 1.15 : 0.12;
-      sun.color.set(day ? 0xffe8c2 : 0x6c85c9);
-      fill.intensity = day ? 0.35 : 0.15;
+      scene.fog = new THREE.Fog(day ? 0xe8c9a0 : 0x0c1120, 16, day ? 58 : 40);
+      hemi.intensity = day ? 1.05 : 0.32;
+      hemi.groundColor.set(day ? 0x4a4438 : 0x14141c);
+      sun.intensity = day ? 1.3 : 0.12;
+      sun.color.set(day ? 0xffd9a0 : 0x6c85c9);
+      fill.intensity = day ? 0.28 : 0.15;
     };
     applyLighting();
     stateRef.current.applyLighting = applyLighting;
@@ -272,23 +446,65 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
 
     const buildNeighborhood = (gridW, gridH) => {
       worldGroup.clear();
-      const groundMat = toonMat(0x9CB07A);
+      const groundMat = toonMat(0x8FAD62);
       const ground = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, gridH + OUT * 2), groundMat);
       ground.rotation.x = -Math.PI / 2;
       ground.position.set(gridW / 2, -0.01, gridH / 2);
+      ground.receiveShadow = true;
       worldGroup.add(ground);
 
+      // patchy grass texture: scattered soft tone variations so the lawn isn't one flat color
+      const patchTones = [0x9BBF6E, 0x84A557, 0x7A9E50];
+      for (let i = 0; i < 46; i++) {
+        const px = (Math.sin(i * 12.9898) * 0.5 + 0.5) * (gridW + OUT * 2) - OUT;
+        const pz = (Math.sin(i * 78.233 + 4) * 0.5 + 0.5) * (gridH + OUT * 2) - OUT;
+        if (pz > -6.5 && pz < gridH + 1 && px > -1 && px < gridW + 1) continue; // keep near-lot clear-ish
+        const patch = new THREE.Mesh(new THREE.CircleGeometry(0.7 + (i % 3) * 0.35, 8), toonMat(patchTones[i % patchTones.length]));
+        patch.rotation.x = -Math.PI / 2;
+        patch.position.set(px, 0, pz);
+        worldGroup.add(patch);
+      }
+
       const roadZ = -5;
-      const road = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 3.4), toonMat(0x4a4a48));
+      const road = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 3.4), toonMat(0x38352F));
       road.rotation.x = -Math.PI / 2;
       road.position.set(gridW / 2, 0.005, roadZ);
+      road.receiveShadow = true;
       worldGroup.add(road);
       for (let x = -OUT; x < gridW + OUT; x += 1.6) {
-        const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), toonMat(0xE7C55A));
+        const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), toonMat(0xEDE0BE));
         dash.rotation.x = -Math.PI / 2;
         dash.position.set(x, 0.01, roadZ);
         worldGroup.add(dash);
       }
+      [roadZ - 1.9, roadZ + 1.9].forEach(sz => {
+        const sidewalk = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 1.1), toonMat(0xD8D0BE));
+        sidewalk.rotation.x = -Math.PI / 2;
+        sidewalk.position.set(gridW / 2, 0.006, sz);
+        sidewalk.receiveShadow = true;
+        worldGroup.add(sidewalk);
+      });
+
+      // low fence along the lot's side property lines
+      const fenceRailMat = toonMat(0xEDE6D6);
+      [-0.35, gridW + 0.35].forEach(fx => {
+        for (let z = 0; z <= gridH; z += 0.9) {
+          const post = makeFencePost();
+          post.position.set(fx, 0, z);
+          worldGroup.add(post);
+        }
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, gridH), fenceRailMat);
+        rail.position.set(fx, 0.5, gridH / 2);
+        worldGroup.add(enableShadows(rail));
+      });
+
+      // flower beds flanking the front door
+      const flowerPalette = [0xE6879B, 0xF2C94C, 0xF5F1E8, 0xB07CC6];
+      [[gridW * 0.5 - 1.6, -0.6], [gridW * 0.5 + 1.6, -0.6]].forEach(([x, z]) => {
+        const bed = makeFlowerBed(flowerPalette);
+        bed.position.set(x, 0, z);
+        worldGroup.add(bed);
+      });
 
       const houseColors = [[0xE8DCC8, 0xB05A3C], [0xCFE0E6, 0x5C6B6F]];
       [gridW * 0.18, gridW * 0.82].forEach((x, i) => {
@@ -298,13 +514,31 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         worldGroup.add(h);
       });
 
+      // a small park: bench + lamppost + flowers, somewhere to walk to
+      const parkX = gridW + 8, parkZ = -1.5;
+      const parkBench = makeBench(); parkBench.position.set(parkX, 0, parkZ); parkBench.rotation.y = Math.PI * 0.4;
+      const parkLamp = makeLamppost(); parkLamp.position.set(parkX + 1, 0, parkZ - 1);
+      const parkFlowers = makeFlowerBed(flowerPalette); parkFlowers.position.set(parkX - 1, 0, parkZ + 0.5);
+      worldGroup.add(parkBench, parkLamp, parkFlowers);
+      [parkX - 1.8, parkX + 1.6].forEach((x, i) => {
+        const t = makeTree(1.0, i % 2 === 0 ? 'pine' : 'round');
+        t.position.set(x, 0, parkZ - 2.2);
+        worldGroup.add(t);
+      });
+
+      // a cafe down the street
+      const cafe = makeCafe();
+      cafe.position.set(-8, 0, roadZ - 3.6);
+      cafe.rotation.y = 0.3;
+      worldGroup.add(cafe);
+
       const treeSpots = [
         [-2.5, 1.5], [-2.5, gridH - 1.5], [gridW + 2.5, 1.5], [gridW + 2.5, gridH - 1.5],
         [-2, -2.5], [gridW * 0.35, -2.7], [gridW * 0.9, -2.4], [-1.5, gridH * 0.6],
         [gridW + 1.8, gridH * 0.4], [gridW * 0.6, gridH + 2],
       ];
       treeSpots.forEach(([x, z], i) => {
-        const t = makeTree(0.85 + (i % 3) * 0.12);
+        const t = makeTree(0.85 + (i % 3) * 0.12, i % 3 === 0 ? 'pine' : 'round');
         t.position.set(x, 0, z);
         worldGroup.add(t);
       });
@@ -315,12 +549,24 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
     const extrasGroup = new THREE.Group();
     scene.add(extrasGroup);
     const gw = roomRef.current?.gridW || 8;
-    const cars = [makeCar(0xB2452F), makeCar(0x3E5C76)];
+    const cars = [makeCar(0xB2452F), makeVan(0xE0DCC8)];
     cars.forEach((c, i) => { c.userData.phase = i * 6; c.userData.speed = 1.4 + i * 0.3; extrasGroup.add(c); });
     const roadLen = gw + OUT * 2 - 2;
 
     const npcs = [makeAvatar({ skin: 0xE0B48E, top: 0x7C9473, bottom: 0x4A4238, hair: 0x2B2620 }), makeAvatar({ skin: 0xF0C29B, top: 0x5C87A6, bottom: 0x3A3733, hair: 0x6B4A2A })];
     npcs.forEach((n, i) => { n.userData.baseY = 0; n.userData.phase = i * 3; n.userData.center = gw * (0.3 + i * 0.4); n.position.set(n.userData.center, 0, -2.2); extrasGroup.add(n); });
+
+    const dog = makeDog();
+    extrasGroup.add(dog);
+
+    const cyclist = new THREE.Group();
+    const rider = makeAvatar({ skin: 0xF0C29B, top: 0xC1602E, bottom: 0x2B2620, hair: 0x2B2620 });
+    rider.position.y = 0.28;
+    rider.scale.setScalar(0.92);
+    const bike = makeBike();
+    cyclist.add(bike, rider);
+    cyclist.userData = { legL: rider.userData.legL, legR: rider.userData.legR, armL: rider.userData.armL, armR: rider.userData.armR, baseY: 0 };
+    extrasGroup.add(cyclist);
 
     const birds = [makeBird(), makeBird(), makeBird()];
     birds.forEach((b, i) => { b.userData.phase = i * 2.1; extrasGroup.add(b); });
@@ -354,11 +600,12 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(r.gridW, r.gridH), floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.position.set(r.gridW / 2, 0.002, r.gridH / 2);
+      floor.receiveShadow = true;
       roomGroup.add(floor);
 
       const wallMat = toonMat(new THREE.Color(colorHex(r.wallColor)));
       const wallH = 2.4, t = 0.08;
-      const mk = (w, d, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, d), wallMat); m.position.set(x, wallH / 2, z); return m; };
+      const mk = (w, d, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, d), wallMat); m.position.set(x, wallH / 2, z); m.castShadow = true; m.receiveShadow = true; return m; };
       const doorHalf = Math.min(0.9, r.gridW * 0.15);
       const doorCenter = r.gridW / 2;
       roomGroup.add(
@@ -368,13 +615,31 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         mk(t, r.gridH + t, 0, r.gridH / 2),
         mk(t, r.gridH + t, r.gridW, r.gridH / 2),
       );
+
+      // pitched roof so the house reads as a real building from outside, not an open box
+      const roofRise = Math.min(1.3, r.gridW * 0.22);
+      const halfSpan = r.gridW / 2;
+      const slopeLen = Math.sqrt(halfSpan * halfSpan + roofRise * roofRise) + 0.3;
+      const angle = Math.atan2(roofRise, halfSpan);
+      const roofMat = toonMat(0x8B5A3C);
+      const mkSlab = (sign) => {
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.12, r.gridH + 0.6), roofMat);
+        slab.position.set(r.gridW / 2 + sign * (halfSpan / 2) * 0.98, wallH + roofRise / 2, r.gridH / 2);
+        slab.rotation.z = sign * angle;
+        slab.castShadow = true;
+        slab.receiveShadow = true;
+        return slab;
+      };
+      roomGroup.add(mkSlab(1), mkSlab(-1));
     };
     buildRoom();
 
+    let knownCellKeys = new Set();
     const rebuildFurniture = () => {
       furnitureGroup.clear();
       const r = roomRef.current;
       if (!r) return;
+      const nextKeys = new Set();
       Object.entries(r.cells).forEach(([key, cellData]) => {
         const [gx, gy] = key.split(',').map(Number);
         const mesh = makeFurnitureMesh(cellData);
@@ -382,8 +647,11 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         mesh.position.x += gx + 0.5;
         mesh.position.z += gy + 0.5;
         mesh.userData.cellKey = key;
+        nextKeys.add(key);
+        if (!knownCellKeys.has(key)) mesh.userData.popT = 0;
         furnitureGroup.add(mesh);
       });
+      knownCellKeys = nextKeys;
     };
     rebuildFurniture();
     stateRef.current.rebuildFurniture = rebuildFurniture;
@@ -435,7 +703,7 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    let yaw = 0, pitch = 0.12;
+    let yaw = 0, pitch = 0.12, camBlend = 0;
     let dragging = false, lastX = 0, lastY = 0, moved = false, downOnCanvas = false;
     const raycaster = new THREE.Raycaster();
     const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -552,6 +820,27 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         n.rotation.y = Math.cos(t) >= 0 ? Math.PI / 2 : -Math.PI / 2;
         animateWalkCycle(n, elapsed * 6 + i, true);
       });
+      {
+        // dog trails just behind and to the side of the first NPC (its "owner")
+        const owner = npcs[0];
+        const trail = elapsed * 0.6 + npcs[0].userData.phase - 0.35;
+        dog.position.set(owner.position.x - Math.sin(trail) * 0.6, 0, owner.position.z + 0.5);
+        dog.rotation.y = owner.rotation.y;
+        const dt2 = elapsed * 10;
+        dog.userData.legs[0].rotation.x = Math.sin(dt2) * 0.7;
+        dog.userData.legs[1].rotation.x = -Math.sin(dt2) * 0.7;
+        dog.userData.legs[2].rotation.x = -Math.sin(dt2) * 0.7;
+        dog.userData.legs[3].rotation.x = Math.sin(dt2) * 0.7;
+      }
+      {
+        const ct = elapsed * 0.35;
+        const cyRadius = gw / 2 + 3.6;
+        cyclist.position.set(gw / 2 + Math.cos(ct) * cyRadius, 0, -3.3 + Math.sin(ct) * 1.2);
+        cyclist.rotation.y = -ct + Math.PI / 2;
+        const pedal = elapsed * 9;
+        cyclist.userData.legL.rotation.x = Math.sin(pedal) * 0.8;
+        cyclist.userData.legR.rotation.x = -Math.sin(pedal) * 0.8;
+      }
       birds.forEach((b, i) => {
         const t = elapsed * 0.5 + b.userData.phase;
         const r = gw * 0.5 + 4;
@@ -565,15 +854,26 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         c.position.x = ((elapsed * 0.15 + i * 3) % (gw + OUT * 2 + 6)) - OUT - 3;
       });
 
+      const targetBlend = activeRef.current.piece ? 1 : 0;
+      camBlend += (targetBlend - camBlend) * Math.min(1, dt * 3);
       const camMargin = 0.4;
-      let camDist = 4.6;
-      camDist = Math.max(camDist, 1.2);
+      const camDist = Math.max(1.2, 2.7 + camBlend * 1.9);
+      const camBaseHeight = 1.5 + camBlend * 1.1;
       const camHoriz = camDist * Math.cos(pitch);
-      const camHeight = player.position.y + 2.0 + camDist * Math.sin(pitch);
+      const camHeight = player.position.y + camBaseHeight + camDist * Math.sin(pitch);
       const camX = Math.max(-OUT + camMargin, Math.min(bounds.w() + OUT - camMargin, player.position.x - Math.sin(yaw) * camHoriz));
       const camZ = Math.max(-OUT + camMargin, Math.min(bounds.h() + OUT - camMargin, player.position.z - Math.cos(yaw) * camHoriz));
       camera.position.set(camX, camHeight, camZ);
       camera.lookAt(player.position.x, player.position.y + 1.2, player.position.z);
+
+      furnitureGroup.children.forEach((mesh) => {
+        if (mesh.userData.popT !== undefined && mesh.userData.popT < 1) {
+          mesh.userData.popT = Math.min(1, mesh.userData.popT + dt * 4.5);
+          const t = mesh.userData.popT;
+          const overshoot = t < 1 ? 1 + Math.sin(t * Math.PI) * 0.18 * (1 - t) : 1;
+          mesh.scale.setScalar(t * overshoot);
+        }
+      });
 
       onAvatarPosRef.current && onAvatarPosRef.current(player.position);
       renderer.render(scene, camera);
@@ -599,6 +899,8 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointerdown', refocus);
+      canvas.removeEventListener('mouseenter', refocus);
       renderer.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

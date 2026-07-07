@@ -6,53 +6,87 @@ import PhotoCard from '../components/PhotoCard';
 import { Button, Chip, EmptyState } from '../components/UI';
 import { C, SPACING, FONT, RADIUS } from '../constants/theme';
 import { useGame } from '../context/AppContext';
-import { ENVIRONMENT_TILES, TIME_OF_DAY, SEASONS, WEATHER } from '../constants/catalog';
+import { ENVIRONMENT_TILES, TIME_OF_DAY, SEASONS, WEATHER, matchTheme } from '../constants/catalog';
+
+const EXAMPLES = [
+  'Affluent coastal California neighborhood with modern white homes, palm trees, ocean views, boutique coffee shops, bike paths, and luxury landscaping.',
+  'Cozy mountain town with pine forests, an alpine lake, and a ski lodge.',
+  'European village with cobblestone streets and a town square café.',
+];
 
 function CreateWorldModal({ visible, onClose, onCreate }) {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 700;
+  const [prompt, setPrompt] = useState('');
   const [name, setName] = useState('');
-  const [envId, setEnvId] = useState(ENVIRONMENT_TILES[0].id);
+  const [manualEnvId, setManualEnvId] = useState(null);
   const [timeOfDay, setTimeOfDay] = useState('Golden Hour');
   const [season, setSeason] = useState('Summer');
   const [weather, setWeather] = useState('Clear');
 
+  const detected = prompt.trim() ? matchTheme(prompt) : null;
+  const selectedTile = manualEnvId ? ENVIRONMENT_TILES.find(e => e.id === manualEnvId) : null;
+  const effectiveTheme = selectedTile || detected || ENVIRONMENT_TILES[0];
+
   const submit = () => {
-    const env = ENVIRONMENT_TILES.find(e => e.id === envId);
-    onCreate(name.trim() || env.name, env, { timeOfDay, season, weather });
+    onCreate(name.trim() || effectiveTheme.name, effectiveTheme, { timeOfDay, season, weather });
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={s.modalBackdrop}>
-        <View style={[s.modalCard, isDesktop && { width: 560 }]}>
+        <View style={[s.modalCard, isDesktop && { width: 600 }]}>
           <View style={s.modalHeader}>
             <Text style={FONT.h2}>Create New World</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Icon name="x" size={20} color={C.textFaint} />
             </TouchableOpacity>
           </View>
-          <ScrollView style={{ maxHeight: 480 }}>
-            <Text style={FONT.label}>WORLD NAME</Text>
+          <ScrollView style={{ maxHeight: 500 }}>
+            <View style={s.promptBadge}>
+              <Icon name="sparkles" size={13} color={C.accentDeep} />
+              <Text style={s.promptBadgeText}>Describe it and we'll build it</Text>
+            </View>
             <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="My World"
+              value={prompt}
+              onChangeText={(v) => { setPrompt(v); setManualEnvId(null); }}
+              placeholder="Affluent coastal California neighborhood with modern white homes, palm trees, ocean views, boutique coffee shops, and luxury landscaping..."
               placeholderTextColor={C.textFaint}
-              style={s.input}
+              multiline
+              style={s.promptInput}
             />
+            {!prompt.trim() && (
+              <View style={{ marginTop: 6 }}>
+                {EXAMPLES.map(ex => (
+                  <TouchableOpacity key={ex} onPress={() => setPrompt(ex)} style={s.exampleRow}>
+                    <Icon name="chevron-right" size={13} color={C.textFaint} />
+                    <Text style={s.exampleText} numberOfLines={1}>{ex}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
-            <Text style={[FONT.label, { marginTop: SPACING.lg }]}>ENVIRONMENT</Text>
+            {detected && !selectedTile && (
+              <View style={[s.detectedRow, { borderColor: detected.palette + '55' }]}>
+                <Icon name={detected.icon} size={15} color={detected.palette} />
+                <Text style={s.detectedText}>Detected: {detected.name}</Text>
+              </View>
+            )}
+
+            <Text style={[FONT.label, { marginTop: SPACING.lg }]}>WORLD NAME (OPTIONAL)</Text>
+            <TextInput value={name} onChangeText={setName} placeholder={effectiveTheme.name} placeholderTextColor={C.textFaint} style={s.input} />
+
+            <Text style={[FONT.label, { marginTop: SPACING.lg }]}>OR QUICK START WITH A PRESET</Text>
             <View style={s.envGrid}>
               {ENVIRONMENT_TILES.map(env => (
                 <PhotoCard
                   key={env.id}
                   icon={env.icon}
                   accent={env.palette}
-                  height={72}
+                  height={64}
                   title={env.name}
-                  style={[s.envTile, envId === env.id && s.envTileActive]}
-                  onPress={() => setEnvId(env.id)}
+                  style={[s.envTile, selectedTile?.id === env.id && s.envTileActive]}
+                  onPress={() => setManualEnvId(env.id)}
                 />
               ))}
             </View>
@@ -128,8 +162,18 @@ const s = StyleSheet.create({
   list: { padding: SPACING.lg, paddingBottom: SPACING.xxl, maxWidth: 700, width: '100%', alignSelf: 'center' },
   deleteBtn: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: SPACING.lg },
-  modalCard: { backgroundColor: C.surface, borderRadius: RADIUS.xl, padding: SPACING.lg, width: '100%', maxWidth: 560 },
+  modalCard: { backgroundColor: C.surface, borderRadius: RADIUS.xl, padding: SPACING.lg, width: '100%', maxWidth: 600 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.md },
+  promptBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.accentSoft, alignSelf: 'flex-start', borderRadius: RADIUS.pill, paddingVertical: 5, paddingHorizontal: 11, marginBottom: 8 },
+  promptBadgeText: { ...FONT.caption, color: C.accentDeep, fontWeight: '700' },
+  promptInput: {
+    backgroundColor: C.surfaceAlt, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border,
+    padding: SPACING.md, fontSize: 15, color: C.text, minHeight: 90, textAlignVertical: 'top',
+  },
+  exampleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  exampleText: { ...FONT.caption, color: C.textMuted, flex: 1 },
+  detectedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, borderWidth: 1, borderRadius: RADIUS.pill, alignSelf: 'flex-start', paddingVertical: 5, paddingHorizontal: 11 },
+  detectedText: { ...FONT.caption, fontWeight: '700', color: C.textMuted },
   input: {
     backgroundColor: C.surfaceAlt, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border,
     padding: SPACING.md, fontSize: 15, color: C.text, marginTop: 6,
