@@ -62,6 +62,15 @@ export function AppProvider({ children }) {
   const [lastDumpDate, setLastDumpDate] = useState('');
   const [calendarConnected, setCalendarConnected] = useState(false);
 
+  // Daily check-in (not persisted — resets each session/day)
+  const [checkIn, setCheckIn] = useState(null); // { mood, sleep, energy, date }
+  const [checkInDone, setCheckInDone] = useState(false);
+
+  const saveCheckIn = useCallback((data) => {
+    setCheckIn({ ...data, date: todayStr() });
+    setCheckInDone(true);
+  }, []);
+
   // Neurodivergent support
   const [ndSupport, setNdSupport]   = useState(null); // null | 'yes' | 'no' | 'skip'
   const [ndToggles, setNdToggles]   = useState(DEFAULT_ND_TOGGLES);
@@ -265,6 +274,7 @@ export function AppProvider({ children }) {
       ndToggles, setNdToggles, updateNdToggles,
       tutorialSeen, setTutorialSeen,
       showTutorialReplay, openTutorial, closeTutorial,
+      checkIn, checkInDone, saveCheckIn,
     }}>
       {children}
     </AppContext.Provider>

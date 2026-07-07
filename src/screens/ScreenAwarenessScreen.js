@@ -10,7 +10,7 @@ const MOCK_UNLOCKS = 28;
 
 const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
 
-export default function ScreenAwarenessScreen() {
+export default function ScreenAwarenessScreen({ navigation }) {
   const { hobbies } = useApp();
   const { colors: t } = useTheme();
   const [insight, setInsight] = useState('');
@@ -56,6 +56,7 @@ export default function ScreenAwarenessScreen() {
             key={h.id}
             style={[s.redirectBtn, { borderColor: C.clay, backgroundColor: t.card }]}
             activeOpacity={0.7}
+            onPress={() => navigation.navigate('GrowTab', { screen: 'HobbyDetail', params: { hobby: h } })}
           >
             <Text style={s.redirectEmoji}>{HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length]}</Text>
             <Text style={[s.redirectText, { color: C.clay }]}>{h.name} instead?</Text>

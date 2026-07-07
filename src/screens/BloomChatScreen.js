@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, Animated,
 } from 'react-native';
 import Icon from '../components/Icon';
+import CheckInModal from '../components/CheckInModal';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -146,22 +147,25 @@ const MOODS = [
 ];
 
 export default function BloomChatScreen() {
-  const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles } = useApp();
+  const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles, checkIn, checkInDone, saveCheckIn } = useApp();
   const { colors: t } = useTheme();
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
   ]);
-  const [input, setInput]       = useState('');
-  const [thinking, setThinking] = useState(false);
-  const [hasKey, setHasKey]     = useState(null);
-  const [mood, setMood]         = useState(null);
+  const [input, setInput]         = useState('');
+  const [thinking, setThinking]   = useState(false);
+  const [hasKey, setHasKey]       = useState(null);
+  const [showCheckIn, setShowCheckIn] = useState(false);
   const scrollRef      = useRef(null);
   const historyRef     = useRef([]);
   const recognitionRef = useRef(null);
   const pulseAnim      = useRef(new Animated.Value(1)).current;
   const [listening, setListening] = useState(false);
 
-  useFocusEffect(useCallback(() => { getApiKey().then(k => setHasKey(!!k)); }, []));
+  useFocusEffect(useCallback(() => {
+    getApiKey().then(k => setHasKey(!!k));
+    if (!checkInDone) setShowCheckIn(true);
+  }, [checkInDone]));
 
   // Pulse animation while listening
   useEffect(() => {
@@ -280,7 +284,7 @@ export default function BloomChatScreen() {
 
       // AI chat
       if (hasKey) {
-        const system = buildBloomSystem({ userName, goals, tasks, ndToggles, mood: mood?.key });
+        const system = buildBloomSystem({ userName, goals, tasks, ndToggles, checkIn });
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
         setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
@@ -306,11 +310,15 @@ export default function BloomChatScreen() {
 
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
           <Text style={s.headerTitle}>Bloom</Text>
-          {mood && (
-            <TouchableOpacity onPress={() => setMood(null)} style={[s.moodBadge, { backgroundColor: mood.bg }]}>
-              <Text style={[s.moodBadgeText, { color: mood.text }]}>{mood.label}</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={() => setShowCheckIn(true)}
+            style={[s.checkInBtn, { backgroundColor: checkIn ? '#D4EDD4' : t.card, borderColor: checkIn ? C.moss : t.border }]}
+            activeOpacity={0.7}
+          >
+            <Text style={[s.checkInBtnText, { color: checkIn ? C.moss : t.subtext }]}>
+              {checkIn ? `${checkIn.mood} · ${checkIn.sleep} sleep` : 'Check in'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -320,25 +328,6 @@ export default function BloomChatScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Mood check-in — shows until user picks one */}
-          {!mood && (
-            <View style={[s.moodCard, { backgroundColor: t.card, borderColor: t.border }]}>
-              <Text style={[s.moodCardTitle, { color: t.text }]}>How are you feeling?</Text>
-              <View style={s.moodChips}>
-                {MOODS.map(m => (
-                  <TouchableOpacity
-                    key={m.key}
-                    style={[s.moodChip, { backgroundColor: m.bg }]}
-                    onPress={() => setMood(m)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[s.moodChipText, { color: m.text }]}>{m.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
           {messages.map(m => {
             if (m.from === 'user') {
               return (
@@ -419,6 +408,11 @@ export default function BloomChatScreen() {
         </View>
 
       </KeyboardAvoidingView>
+
+      <CheckInModal
+        visible={showCheckIn}
+        onDone={(data) => { saveCheckIn(data); setShowCheckIn(false); }}
+      />
     </SafeAreaView>
   );
 }

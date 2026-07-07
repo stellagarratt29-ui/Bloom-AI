@@ -61,7 +61,7 @@ function stripMarkdown(text) {
     .trim();
 }
 
-export function buildBloomSystem({ userName, goals, tasks, ndToggles, mood }) {
+export function buildBloomSystem({ userName, goals, tasks, ndToggles, checkIn }) {
   const name = userName || 'there';
   const goalList = goals?.length ? goals.map(g => g.text).join('; ') : 'none yet';
   const taskList = tasks?.filter(t => !t.done).slice(0, 6).map(t => `• ${t.text} [${t.priority}]`).join('\n') || 'none';
@@ -78,7 +78,7 @@ Goals: ${goalList}
 Pending tasks:\n${taskList}
 
 Be direct, warm, practical. 2–4 sentences unless asked for more.
-Reference actual tasks and goals by name. Never use filler phrases. Never mention streaks.${mood ? `\nUser's current mood: ${mood}. Adjust your tone accordingly — e.g. if stressed/overwhelmed, be especially gentle and suggest starting small; if great/good, be energetic and ambitious.` : ''}${extra}`;
+Reference actual tasks and goals by name. Never use filler phrases. Never mention streaks.${checkIn ? `\nUser's check-in today — mood: ${checkIn.mood}, sleep: ${checkIn.sleep}, energy: ${checkIn.energy}. Let this subtly shape your tone: if they're tired/low energy, suggest smaller steps; if overwhelmed/stressed, be extra gentle; if great/high energy, be more ambitious.` : ''}${extra}`;
 }
 
 // Parse brain dump → items + AI-generated personalised response
