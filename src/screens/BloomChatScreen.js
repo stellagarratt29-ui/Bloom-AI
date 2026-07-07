@@ -137,7 +137,7 @@ function getFallback(msg, { userName, goals, tasks, history }) {
 }
 
 export default function BloomChatScreen() {
-  const { userName, goals, tasks, addTask, processBrainDump, ndToggles } = useApp();
+  const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles } = useApp();
   const { colors: t } = useTheme();
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
@@ -178,7 +178,7 @@ export default function BloomChatScreen() {
 
       // Brain dump path — only if the message is clearly task/worry listing, not a question
       if (!isConversationalOrQuestion(trimmed) && looksLikeTaskDump(trimmed)) {
-        const { items, response } = await parseBrainDump(trimmed, userName, ndToggles);
+        const { items, response } = await parseBrainDump(trimmed, userName, ndToggles, userOccupation);
         if (items.length > 0) {
           const goalItems = items.filter(i => i.category === 'goal');
           const goalActionsMap = {};

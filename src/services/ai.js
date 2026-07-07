@@ -82,7 +82,7 @@ Reference actual tasks and goals by name. Never use filler phrases. Never mentio
 }
 
 // Parse brain dump → items + AI-generated personalised response
-export async function parseBrainDump(rawText, userName = '', ndToggles = {}) {
+export async function parseBrainDump(rawText, userName = '', ndToggles = {}, userOccupation = '') {
   const name = userName || 'the user';
   const autoBreak = ndToggles?.autoBreakTasks;
   try {
@@ -133,28 +133,33 @@ ${autoBreak ? '- For each task, if it can logically split into 2–3 concrete st
 
 ═══ PRIORITY RULES — follow exactly ═══
 These map directly to the 3 sections the user sees:
-  high   → SCHOOL & HEALTH section
+  high   → top priority section
   medium → TASKS section
   low    → FUN & LEISURE section
 
-high (School & Health ONLY): school assignments, tests, exams, homework, essays, doctor/dentist/nurse/medical appointments, prescriptions, urgent deadlines, overdue bills, emergencies, anything school- or health-related.
-medium (everything else): chores, errands, shopping, daily routines, communication, home tasks, social tasks, work tasks, admin, scheduling.
-low: hobbies, fun activities, optional nice-to-haves, leisure.
+User occupation: ${userOccupation || 'not specified'}
 
-PRIORITY EXAMPLES — use these as your guide:
-"Call school nurse" → high (health + school)
-"Doctor appointment" → high (health)
-"Submit essay" → high (school)
-"Bake sale donation prep" → high (school event)
-"Take medication" → high (health)
-"Get dressed" → medium (daily routine — NOT high)
-"Do laundry" → medium (chore — NOT high)
-"Let dog out" → medium (chore — NOT high)
-"Reschedule electrician" → medium (home errand)
-"Order gift" → medium (shopping)
-"Apologize to neighbor" → medium (social)
-"Watch a movie" → low (leisure)
-"Practice guitar" → low (hobby)
+high (top priority — only these things):
+${userOccupation === 'Working' ? '- Work: deadlines, client deliverables, urgent work tasks, job interviews, performance reviews' : ''}
+${userOccupation === 'Student' || !userOccupation ? '- School: homework, essays, exams, tests, assignments, school events (bake sale, field trips)' : ''}
+${userOccupation === 'Both' ? '- Work deadlines, client deliverables\n- School: homework, essays, exams, tests, school events' : ''}
+- Health: doctor, dentist, nurse, hospital, prescriptions, medication, therapy
+- Urgent/overdue: overdue bills, emergencies
+
+medium (everything else — most tasks go here):
+- Chores: laundry, cleaning, cooking, dishes, taking out trash
+- Daily routines: getting dressed, walking the dog, feeding pets
+- Errands: shopping, picking up, dropping off, returns
+- Social: calling people back, apologizing, RSVPs
+- Admin: scheduling, booking, rescheduling, emails, forms
+
+low: hobbies, fun, leisure, optional, nice-to-haves
+
+EXAMPLES:
+"Doctor appointment" → high | "Call school nurse" → high | "Submit essay" → high
+"Do laundry" → medium | "Let dog out" → medium | "Get dressed" → medium
+"Order gift" → medium | "Apologize to neighbor" → medium | "Reschedule electrician" → medium
+"Watch a movie" → low | "Practice guitar" → low
 
 ═══ RESPONSE RULES ═══
 - 2–3 sentences, warm and direct

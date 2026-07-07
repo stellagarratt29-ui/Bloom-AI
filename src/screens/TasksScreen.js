@@ -8,17 +8,22 @@ import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
-const SECTIONS = [
-  { key: 'high',   label: 'School & Health',
-    pillBg: C.pillPinkBg, pillText: C.pillPinkText, cbColor: C.pillPinkText },
-  { key: 'medium', label: 'Tasks',
-    pillBg: C.pillLavBg,  pillText: C.pillLavText,  cbColor: C.pillLavText  },
-  { key: 'low',    label: 'Fun & Leisure',
-    pillBg: C.pillSkyBg,  pillText: C.pillSkyText,  cbColor: C.pillSkyText  },
+function getHighLabel(occupation) {
+  if (!occupation || occupation === 'Student') return 'School & Health';
+  if (occupation === 'Working') return 'Work & Health';
+  if (occupation === 'Both') return 'Work, School & Health';
+  return 'Health & Urgent';
+}
+
+const SECTION_BASE = [
+  { key: 'high',   pillBg: C.pillPinkBg, pillText: C.pillPinkText, cbColor: C.pillPinkText },
+  { key: 'medium', label: 'Tasks',       pillBg: C.pillLavBg,  pillText: C.pillLavText,  cbColor: C.pillLavText  },
+  { key: 'low',    label: 'Fun & Leisure', pillBg: C.pillSkyBg, pillText: C.pillSkyText,  cbColor: C.pillSkyText  },
 ];
 
 export default function TasksScreen({ navigation }) {
-  const { tasks, toggleTask, deleteTask, updateTask, addTask, ndToggles } = useApp();
+  const { tasks, toggleTask, deleteTask, updateTask, addTask, ndToggles, userOccupation } = useApp();
+  const SECTIONS = SECTION_BASE.map(s => s.key === 'high' ? { ...s, label: getHighLabel(userOccupation) } : s);
   const { colors: t } = useTheme();
   const reducedClutter = !!ndToggles?.reducedClutter;
   const ideaCapture    = !!ndToggles?.ideaCapture;
