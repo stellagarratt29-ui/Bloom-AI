@@ -1,0 +1,130 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Platform, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+if (Platform.OS !== 'web') {
+  require('react-native-gesture-handler');
+  require('react-native-screens').enableScreens();
+}
+
+import { GameProvider } from './src/context/AppContext';
+import Icon from './src/components/Icon';
+import { C } from './src/constants/theme';
+
+import HomeScreen from './src/screens/HomeScreen';
+import NewWorldScreen from './src/screens/NewWorldScreen';
+import WorldScreen from './src/screens/WorldScreen';
+import BuildScreen from './src/screens/BuildScreen';
+import AIDesignerScreen from './src/screens/AIDesignerScreen';
+import InspirationScreen from './src/screens/InspirationScreen';
+import InspirationBoardScreen from './src/screens/InspirationBoardScreen';
+import ExploreScreen from './src/screens/ExploreScreen';
+import BuildDetailScreen from './src/screens/BuildDetailScreen';
+import ChallengesScreen from './src/screens/ChallengesScreen';
+import MarketplaceScreen from './src/screens/MarketplaceScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import FriendsScreen from './src/screens/FriendsScreen';
+import MessagesScreen from './src/screens/MessagesScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const SHARED_SCREENS = (Nav) => (
+  <>
+    <Nav.Screen name="NewWorld" component={NewWorldScreen} />
+    <Nav.Screen name="World" component={WorldScreen} />
+    <Nav.Screen name="Build" component={BuildScreen} />
+    <Nav.Screen name="AIDesigner" component={AIDesignerScreen} options={{ presentation: 'modal' }} />
+    <Nav.Screen name="Inspiration" component={InspirationScreen} />
+    <Nav.Screen name="InspirationBoard" component={InspirationBoardScreen} />
+    <Nav.Screen name="BuildDetail" component={BuildDetailScreen} />
+    <Nav.Screen name="Challenges" component={ChallengesScreen} />
+    <Nav.Screen name="Friends" component={FriendsScreen} />
+    <Nav.Screen name="Messages" component={MessagesScreen} />
+    <Nav.Screen name="Notifications" component={NotificationsScreen} />
+    <Nav.Screen name="Settings" component={SettingsScreen} />
+    <Nav.Screen name="Marketplace" component={MarketplaceScreen} />
+    <Nav.Screen name="Profile" component={ProfileScreen} />
+    <Nav.Screen name="Explore" component={ExploreScreen} />
+  </>
+);
+
+function HomeStackNav() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      {SHARED_SCREENS(Stack)}
+    </Stack.Navigator>
+  );
+}
+
+function ExploreStackNav() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ExploreMain" component={ExploreScreen} />
+      {SHARED_SCREENS(Stack)}
+    </Stack.Navigator>
+  );
+}
+
+function MarketplaceStackNav() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MarketplaceMain" component={MarketplaceScreen} />
+      {SHARED_SCREENS(Stack)}
+    </Stack.Navigator>
+  );
+}
+
+function ProfileStackNav() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+      {SHARED_SCREENS(Stack)}
+    </Stack.Navigator>
+  );
+}
+
+const TAB_ITEMS = [
+  { name: 'HomeTab', icon: 'home', label: 'Home', component: HomeStackNav },
+  { name: 'ExploreTab', icon: 'compass', label: 'Explore', component: ExploreStackNav },
+  { name: 'MarketplaceTab', icon: 'shopping-bag', label: 'Shop', component: MarketplaceStackNav },
+  { name: 'ProfileTab', icon: 'user', label: 'Profile', component: ProfileStackNav },
+];
+
+function TabBarIcon({ name, focused }) {
+  return <Icon name={name} size={22} color={focused ? C.accent : C.textFaint} />;
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <GameProvider>
+        <NavigationContainer>
+          <Tab.Navigator
+            screenOptions={({ route }) => ({
+              headerShown: false,
+              tabBarActiveTintColor: C.accent,
+              tabBarInactiveTintColor: C.textFaint,
+              tabBarStyle: { backgroundColor: C.surface, borderTopColor: C.border },
+              tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+              tabBarIcon: ({ focused }) => {
+                const item = TAB_ITEMS.find(t => t.name === route.name);
+                return <TabBarIcon name={item.icon} focused={focused} />;
+              },
+            })}
+          >
+            {TAB_ITEMS.map(t => (
+              <Tab.Screen key={t.name} name={t.name} component={t.component} options={{ title: t.label }} />
+            ))}
+          </Tab.Navigator>
+        </NavigationContainer>
+      </GameProvider>
+    </SafeAreaProvider>
+  );
+}

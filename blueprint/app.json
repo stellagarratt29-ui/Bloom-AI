@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Blueprint",
+    "slug": "blueprint-game",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F4F1EC"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.blueprint.game"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F4F1EC"
+      },
+      "package": "com.blueprint.game"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
