@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, SafeAreaView, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Animated,
 } from 'react-native';
 import Icon from '../components/Icon';
 import { C } from '../constants/colors';
@@ -136,6 +136,15 @@ function getFallback(msg, { userName, goals, tasks, history }) {
   return `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
 
+const MOODS = [
+  { key: 'great',       label: 'Great',        bg: '#D6EDD4', text: '#2D6B34' },
+  { key: 'good',        label: 'Good',         bg: '#E4F0E2', text: '#4A7A52' },
+  { key: 'okay',        label: 'Okay',         bg: '#EDE8E1', text: '#6B5E4A' },
+  { key: 'tired',       label: 'Tired',        bg: '#E8E4F0', text: '#5A4A7A' },
+  { key: 'stressed',    label: 'Stressed',     bg: '#F5E8DC', text: '#8B4A1E' },
+  { key: 'overwhelmed', label: 'Overwhelmed',  bg: '#F5DCE0', text: '#8B1E35' },
+];
+
 export default function BloomChatScreen() {
   const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles } = useApp();
   const { colors: t } = useTheme();
@@ -145,10 +154,56 @@ export default function BloomChatScreen() {
   const [input, setInput]       = useState('');
   const [thinking, setThinking] = useState(false);
   const [hasKey, setHasKey]     = useState(null);
-  const scrollRef  = useRef(null);
-  const historyRef = useRef([]);
+  const [mood, setMood]         = useState(null);
+  const scrollRef      = useRef(null);
+  const historyRef     = useRef([]);
+  const recognitionRef = useRef(null);
+  const pulseAnim      = useRef(new Animated.Value(1)).current;
+  const [listening, setListening] = useState(false);
 
   useFocusEffect(useCallback(() => { getApiKey().then(k => setHasKey(!!k)); }, []));
+
+  // Pulse animation while listening
+  useEffect(() => {
+    if (listening) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.35, duration: 600, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1,    duration: 600, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.stopAnimation();
+      pulseAnim.setValue(1);
+    }
+  }, [listening]);
+
+  const toggleVoice = () => {
+    if (typeof window === 'undefined') return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Voice input isn\'t supported in this browser. Try Chrome or Safari.'); return; }
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const r = new SR();
+    r.continuous = false;
+    r.interimResults = true;
+    r.lang = 'en-US';
+
+    r.onstart  = () => setListening(true);
+    r.onend    = () => { setListening(false); recognitionRef.current = null; };
+    r.onerror  = () => { setListening(false); recognitionRef.current = null; };
+    r.onresult = (e) => {
+      const transcript = Array.from(e.results).map(res => res[0].transcript).join('');
+      setInput(transcript);
+    };
+
+    recognitionRef.current = r;
+    r.start();
+  };
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
@@ -225,7 +280,7 @@ export default function BloomChatScreen() {
 
       // AI chat
       if (hasKey) {
-        const system = buildBloomSystem({ userName, goals, tasks, ndToggles });
+        const system = buildBloomSystem({ userName, goals, tasks, ndToggles, mood: mood?.key });
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
         setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
         historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
@@ -251,6 +306,11 @@ export default function BloomChatScreen() {
 
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
           <Text style={s.headerTitle}>Bloom</Text>
+          {mood && (
+            <TouchableOpacity onPress={() => setMood(null)} style={[s.moodBadge, { backgroundColor: mood.bg }]}>
+              <Text style={[s.moodBadgeText, { color: mood.text }]}>{mood.label}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <ScrollView
@@ -260,6 +320,25 @@ export default function BloomChatScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Mood check-in — shows until user picks one */}
+          {!mood && (
+            <View style={[s.moodCard, { backgroundColor: t.card, borderColor: t.border }]}>
+              <Text style={[s.moodCardTitle, { color: t.text }]}>How are you feeling?</Text>
+              <View style={s.moodChips}>
+                {MOODS.map(m => (
+                  <TouchableOpacity
+                    key={m.key}
+                    style={[s.moodChip, { backgroundColor: m.bg }]}
+                    onPress={() => setMood(m)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[s.moodChipText, { color: m.text }]}>{m.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
           {messages.map(m => {
             if (m.from === 'user') {
               return (
@@ -308,16 +387,27 @@ export default function BloomChatScreen() {
         </ScrollView>
 
         <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
+          {/* Mic button */}
+          <TouchableOpacity onPress={toggleVoice} style={s.micBtn} activeOpacity={0.7}>
+            <Animated.View style={[
+              s.micInner,
+              { backgroundColor: listening ? '#E84040' : t.card, borderColor: listening ? '#E84040' : t.border },
+              { transform: [{ scale: pulseAnim }] },
+            ]}>
+              <Icon name={listening ? 'mic' : 'mic'} size={18} color={listening ? C.white : t.subtext} />
+            </Animated.View>
+          </TouchableOpacity>
+
           <TextInput
-            style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
-            placeholder="Tell Bloom what's on your mind…"
-            placeholderTextColor={t.subtext}
+            style={[s.input, { backgroundColor: t.card, borderColor: listening ? '#E84040' : t.border, color: t.text }]}
+            placeholder={listening ? 'Listening…' : 'Tell Bloom what\'s on your mind…'}
+            placeholderTextColor={listening ? '#E84040' : t.subtext}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
             returnKeyType="send"
             multiline={false}
-            editable={!thinking}
+            editable={!thinking && !listening}
           />
           <TouchableOpacity
             style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
@@ -391,4 +481,24 @@ const s = StyleSheet.create({
     backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
+  micBtn: { alignItems: 'center', justifyContent: 'center' },
+  micInner: {
+    width: 42, height: 42, borderRadius: 21, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  moodBadge: {
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
+  },
+  moodBadgeText: { fontSize: 13, fontWeight: '600' },
+
+  moodCard: {
+    borderRadius: 18, borderWidth: 1, padding: 16, gap: 12,
+  },
+  moodCardTitle: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  moodChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  moodChip: {
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+  },
+  moodChipText: { fontSize: 14, fontWeight: '600' },
 });
