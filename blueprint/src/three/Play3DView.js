@@ -27,17 +27,11 @@ const CATEGORY_SHAPE = {
 const OUT = 11; // how far the neighborhood extends beyond the room
 const ACCENT = 0xC1602E;
 
-// --- Stylized toon shading: a soft 4-step gradient instead of physically-based
-// shading, so Blueprint reads as its own illustrated look rather than a photoreal render.
-const GRADIENT_MAP = (() => {
-  const data = new Uint8Array([72, 64, 56, 255, 165, 148, 120, 255, 218, 200, 168, 255, 255, 250, 232, 255]);
-  const tex = new THREE.DataTexture(data, 4, 1, THREE.RGBAFormat);
-  tex.needsUpdate = true;
-  tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.NearestFilter;
-  return tex;
-})();
-const toonMat = (hex, extra) => new THREE.MeshToonMaterial({ color: hex, gradientMap: GRADIENT_MAP, ...extra });
+// --- Physically-based materials lit by a real environment map, so surfaces pick up
+// believable sky/ground reflections and soft ambient color instead of flat cartoon shading.
+const mat = (hex, extra) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.82, metalness: 0.04, envMapIntensity: 0.7, ...extra });
+const metalMat = (hex, extra) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.35, metalness: 0.85, envMapIntensity: 1, ...extra });
+const glossMat = (hex, extra) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.18, metalness: 0.1, envMapIntensity: 1, ...extra });
 const enableShadows = (obj, cast = true, receive = true) => {
   obj.traverse((child) => {
     if (child.isMesh) { child.castShadow = cast; child.receiveShadow = receive; }
@@ -67,6 +61,62 @@ function makeSkyTexture(day) {
   return tex;
 }
 
+// Tileable procedural lawn: base color plus thousands of speckled blades and a few
+// bare-earth flecks, so grass reads as a real textured surface instead of flat green.
+function makeGrassTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#7C9C56';
+  ctx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 5200; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256;
+    const len = 2 + Math.random() * 4;
+    const g = 130 + Math.random() * 60;
+    const r = 90 + Math.random() * 40;
+    const b = 50 + Math.random() * 30;
+    ctx.strokeStyle = `rgba(${r},${g},${b},${0.35 + Math.random() * 0.35})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (Math.random() - 0.5) * 2, y - len);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 90; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256;
+    ctx.fillStyle = `rgba(94,74,52,${0.08 + Math.random() * 0.1})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 3 + Math.random() * 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Tileable asphalt: charcoal base with fine speckle grain and faint tire-wear streaks.
+function makeAsphaltTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#302E2B';
+  ctx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 4000; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256;
+    const v = 30 + Math.random() * 45;
+    ctx.fillStyle = `rgba(${v},${v},${v},${0.15 + Math.random() * 0.2})`;
+    ctx.fillRect(x, y, 1, 1);
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(60, 0, 26, 256);
+  ctx.fillRect(170, 0, 26, 256);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 function animateWalkCycle(group, t, moving) {
   if (moving) {
     group.userData.legL.rotation.x = Math.sin(t) * 0.55;
@@ -85,12 +135,12 @@ function animateWalkCycle(group, t, moving) {
 // A rounder, chibi-proportioned character — Blueprint's own look rather than blocky Roblox minifigs.
 function makeAvatar({ skin = 0xF0C29B, top = ACCENT, bottom = 0x3A3733, hair = 0x4A342A } = {}) {
   const group = new THREE.Group();
-  const skinMat = toonMat(skin);
-  const topMat = toonMat(top);
-  const bottomMat = toonMat(bottom);
-  const hairMat = toonMat(hair);
+  const skinMat = mat(skin);
+  const topMat = mat(top);
+  const bottomMat = mat(bottom);
+  const hairMat = mat(hair);
   const eyeMat = new THREE.MeshBasicMaterial({ color: 0x2B2620 });
-  const shoeMat = toonMat(0xFAF6EE);
+  const shoeMat = mat(0xFAF6EE);
 
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 16), skinMat);
   head.position.y = 1.42;
@@ -136,11 +186,11 @@ function makeAvatar({ skin = 0xF0C29B, top = ACCENT, bottom = 0x3A3733, hair = 0
 
 function makeTree(scale = 1, kind = 'round') {
   const group = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.9, 8), toonMat(0x8a6a4a));
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.9, 8), mat(0x8a6a4a));
   trunk.position.y = 0.45;
   group.add(trunk);
   if (kind === 'pine') {
-    const foliageMat = toonMat(0x4d7a4a);
+    const foliageMat = mat(0x4d7a4a);
     const tiers = [
       { r: 0.5, y: 1.0 }, { r: 0.4, y: 1.35 }, { r: 0.3, y: 1.65 },
     ];
@@ -153,7 +203,7 @@ function makeTree(scale = 1, kind = 'round') {
     group.userData.sway = Math.random() * Math.PI * 2;
     group.userData.foliage = foliage;
   } else {
-    const foliageMat = toonMat(0x6f9a5c);
+    const foliageMat = mat(0x6f9a5c);
     const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), foliageMat); c1.position.y = 1.15;
     const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), foliageMat); c2.position.set(0.28, 0.95, 0.1);
     const c3 = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), foliageMat); c3.position.set(-0.25, 0.9, -0.15);
@@ -167,13 +217,13 @@ function makeTree(scale = 1, kind = 'round') {
 
 function makeFlowerBed(colors) {
   const group = new THREE.Group();
-  const bedMat = toonMat(0x5C4A3A);
+  const bedMat = mat(0x5C4A3A);
   const bed = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 0.12, 12), bedMat);
   bed.position.y = 0.06;
   group.add(bed);
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2;
-    const flower = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), toonMat(colors[i % colors.length]));
+    const flower = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), mat(colors[i % colors.length]));
     flower.position.set(Math.cos(a) * 0.3, 0.18, Math.sin(a) * 0.3);
     group.add(flower);
   }
@@ -182,8 +232,8 @@ function makeFlowerBed(colors) {
 
 function makeFencePost() {
   const group = new THREE.Group();
-  const mat = toonMat(0xEDE6D6);
-  const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.07), mat);
+  const postMat = mat(0xEDE6D6);
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.07), postMat);
   post.position.y = 0.325;
   group.add(post);
   return enableShadows(group);
@@ -191,12 +241,12 @@ function makeFencePost() {
 
 function makeCar(color) {
   const group = new THREE.Group();
-  const bodyMat = toonMat(color);
+  const bodyMat = glossMat(color);
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.35, 0.55), bodyMat);
   body.position.y = 0.35;
   const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.28, 0.5), bodyMat);
   cabin.position.set(-0.05, 0.62, 0);
-  const wheelMat = toonMat(0x2A2622);
+  const wheelMat = mat(0x2A2622, { roughness: 0.95, metalness: 0 });
   const wheelGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.1, 12);
   const positions = [[-0.32, 0.16, 0.28], [0.32, 0.16, 0.28], [-0.32, 0.16, -0.28], [0.32, 0.16, -0.28]];
   positions.forEach(([x, y, z]) => {
@@ -211,10 +261,10 @@ function makeCar(color) {
 
 function makeVan(color) {
   const group = new THREE.Group();
-  const bodyMat = toonMat(color);
+  const bodyMat = glossMat(color);
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.75, 0.68), bodyMat);
   body.position.y = 0.5;
-  const wheelMat = toonMat(0x2A2622);
+  const wheelMat = mat(0x2A2622, { roughness: 0.95, metalness: 0 });
   const wheelGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.1, 12);
   const positions = [[-0.5, 0.18, 0.34], [0.5, 0.18, 0.34], [-0.5, 0.18, -0.34], [0.5, 0.18, -0.34]];
   positions.forEach(([x, y, z]) => {
@@ -229,18 +279,18 @@ function makeVan(color) {
 
 function makeHouse(color, roofColor) {
   const group = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 2.2), toonMat(color));
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 2.2), mat(color));
   body.position.y = 0.8;
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.0, 4), toonMat(roofColor));
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(2.0, 1.0, 4), mat(roofColor));
   roof.position.y = 2.1;
   roof.rotation.y = Math.PI / 4;
-  const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.8), toonMat(roofColor));
+  const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.8), mat(roofColor));
   porchRoof.position.set(0, 1.5, 1.5);
   const porchPostGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8);
-  const postMat = toonMat(0xF5F1E8);
+  const postMat = mat(0xF5F1E8);
   const postL = new THREE.Mesh(porchPostGeo, postMat); postL.position.set(-0.6, 0.75, 1.85);
   const postR = postL.clone(); postR.position.x = 0.6;
-  const garage = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 0.06), toonMat(0xDCD3C0));
+  const garage = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 0.06), mat(0xDCD3C0));
   garage.position.set(-0.9, 0.55, 1.13);
   group.add(body, roof, porchRoof, postL, postR, garage);
   return enableShadows(group);
@@ -248,12 +298,12 @@ function makeHouse(color, roofColor) {
 
 function makeBench() {
   const group = new THREE.Group();
-  const mat = toonMat(0x8a6a4a);
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.4), mat);
+  const benchMat = mat(0x8a6a4a);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.4), benchMat);
   seat.position.y = 0.45;
-  const back = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.06), mat);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.06), benchMat);
   back.position.set(0, 0.68, -0.17);
-  const legMat = toonMat(0x3A3733);
+  const legMat = mat(0x3A3733);
   [[-0.48, 0.22, 0.15], [0.48, 0.22, 0.15], [-0.48, 0.22, -0.15], [0.48, 0.22, -0.15]].forEach(([x, y, z]) => {
     const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.44, 0.06), legMat);
     leg.position.set(x, y, z);
@@ -265,7 +315,7 @@ function makeBench() {
 
 function makeLamppost() {
   const group = new THREE.Group();
-  const poleMat = toonMat(0x3A3733);
+  const poleMat = metalMat(0x3A3733);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.2, 8), poleMat);
   pole.position.y = 1.1;
   const lampMat = new THREE.MeshBasicMaterial({ color: 0xFFE9B0 });
@@ -277,14 +327,14 @@ function makeLamppost() {
 
 function makeCafe() {
   const group = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.4, 1.8), toonMat(0xE9D9BE));
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.4, 1.8), mat(0xE9D9BE));
   body.position.y = 0.7;
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 2.0), toonMat(0x5C6B4F));
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 2.0), mat(0x5C6B4F));
   roof.position.y = 1.46;
-  const awning = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.08, 0.6), toonMat(0xB0452F));
+  const awning = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.08, 0.6), mat(0xB0452F));
   awning.position.set(0, 1.1, 1.1);
   awning.rotation.x = -0.25;
-  const sign = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.28, 0.06), toonMat(0xF5F1E8));
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.28, 0.06), mat(0xF5F1E8));
   sign.position.set(0, 1.55, 0.92);
   group.add(body, roof, awning, sign);
   return enableShadows(group);
@@ -292,25 +342,25 @@ function makeCafe() {
 
 function makeDog(color = 0x8a6a4a) {
   const group = new THREE.Group();
-  const mat = toonMat(color);
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.22, 4, 8), mat);
+  const dogMat = mat(color);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.22, 4, 8), dogMat);
   body.rotation.z = Math.PI / 2;
   body.position.y = 0.16;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), mat);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), dogMat);
   head.position.set(0.2, 0.2, 0);
-  const earMat = toonMat(0x5C4A3A);
+  const earMat = mat(0x5C4A3A);
   const earL = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 6), earMat);
   earL.position.set(0.24, 0.28, 0.06);
   const earR = earL.clone(); earR.position.z = -0.06;
   const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.16, 6);
   const legs = [];
   [[-0.12, 0.08, 0.07], [-0.12, 0.08, -0.07], [0.1, 0.08, 0.07], [0.1, 0.08, -0.07]].forEach(([x, y, z]) => {
-    const leg = new THREE.Mesh(legGeo, mat);
+    const leg = new THREE.Mesh(legGeo, dogMat);
     leg.position.set(x, y, z);
     group.add(leg);
     legs.push(leg);
   });
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.03, 0.18, 6), mat);
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.03, 0.18, 6), dogMat);
   tail.position.set(-0.22, 0.22, 0);
   tail.rotation.z = Math.PI / 3;
   group.add(body, head, earL, earR, tail);
@@ -320,8 +370,8 @@ function makeDog(color = 0x8a6a4a) {
 
 function makeBike() {
   const group = new THREE.Group();
-  const frameMat = toonMat(0x3E5C76);
-  const wheelMat = toonMat(0x2A2622);
+  const frameMat = metalMat(0x3E5C76);
+  const wheelMat = mat(0x2A2622, { roughness: 0.95, metalness: 0 });
   const wheelGeo = new THREE.TorusGeometry(0.22, 0.025, 8, 16);
   const wheelF = new THREE.Mesh(wheelGeo, wheelMat); wheelF.position.set(0.32, 0.22, 0);
   const wheelB = new THREE.Mesh(wheelGeo, wheelMat); wheelB.position.set(-0.32, 0.22, 0);
@@ -335,11 +385,11 @@ function makeBike() {
 
 function makeBird() {
   const group = new THREE.Group();
-  const mat = toonMat(0x3A3733);
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), mat);
+  const birdMat = mat(0x3A3733);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), birdMat);
   body.scale.set(1.4, 0.8, 0.8);
   const wingGeo = new THREE.CircleGeometry(0.11, 8, 0, Math.PI);
-  const wingL = new THREE.Mesh(wingGeo, mat);
+  const wingL = new THREE.Mesh(wingGeo, birdMat);
   wingL.position.set(-0.05, 0, 0); wingL.rotation.y = Math.PI / 2;
   const wingR = wingL.clone(); wingR.position.x = 0.05;
   group.add(body, wingL, wingR);
@@ -352,21 +402,21 @@ function makeFurnitureMesh(cellData, opacity = 1) {
   if (!piece) return null;
   const shape = CATEGORY_SHAPE[piece.category] || CATEGORY_SHAPE.decor;
   const hex = new THREE.Color(colorHex(cellData.color));
-  const mat = toonMat(hex, opacity < 1 ? { transparent: true, opacity } : undefined);
+  const pieceMat = mat(hex, opacity < 1 ? { transparent: true, opacity } : undefined);
   let mesh;
   if (shape.kind === 'sphere') {
-    mesh = new THREE.Mesh(new THREE.SphereGeometry(shape.r, 12, 12), mat);
+    mesh = new THREE.Mesh(new THREE.SphereGeometry(shape.r, 12, 12), pieceMat);
   } else if (shape.kind === 'plant') {
     const group = new THREE.Group();
-    const potMat = toonMat(0x8a6a52, opacity < 1 ? { transparent: true, opacity } : undefined);
+    const potMat = mat(0x8a6a52, opacity < 1 ? { transparent: true, opacity } : undefined);
     const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.22, 10), potMat);
     pot.position.y = 0.11;
-    const foliage = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), mat);
+    const foliage = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), pieceMat);
     foliage.position.y = 0.48;
     group.add(pot, foliage);
     mesh = group;
   } else {
-    mesh = new THREE.Mesh(new THREE.BoxGeometry(shape.w, shape.h, shape.d), mat);
+    mesh = new THREE.Mesh(new THREE.BoxGeometry(shape.w, shape.h, shape.d), pieceMat);
   }
   mesh.position.y = shape.y;
   mesh.traverse((child) => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
@@ -421,33 +471,55 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.05;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 150);
 
-    const hemi = new THREE.HemisphereLight(0xfff0d8, 0x4a4438, 1.0);
-    const sun = new THREE.DirectionalLight(0xffd9a0, 1.3);
+    const hemi = new THREE.HemisphereLight(0xfff0d8, 0x6b5c46, 1.1);
+    const ambient = new THREE.AmbientLight(0xffe6c2, 0.16);
+    scene.add(ambient);
+    const sun = new THREE.DirectionalLight(0xffd9a0, 1.55);
     sun.position.set(10, 7, 5);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -20; sun.shadow.camera.right = 20;
     sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -20;
     sun.shadow.camera.near = 1; sun.shadow.camera.far = 45;
-    sun.shadow.bias = -0.0015;
+    sun.shadow.bias = -0.0012;
+    sun.shadow.normalBias = 0.02;
+    sun.shadow.radius = 2.5;
     const fill = new THREE.DirectionalLight(0xa9c3dd, 0.28);
     fill.position.set(-6, 4, -4);
     scene.add(hemi, sun, fill);
 
+    // ---- real-feeling ambient reflections: PMREM-filter the sky gradient into an
+    // environment map so PBR materials pick up believable sky/ground color and
+    // specular highlights instead of looking flat-lit.
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    let envRT = null;
+
     const applyLighting = () => {
       const day = daytimeRef.current;
-      scene.background = makeSkyTexture(day);
+      const sky = makeSkyTexture(day);
+      scene.background = sky;
       scene.fog = new THREE.Fog(day ? 0xe8c9a0 : 0x0c1120, 16, day ? 58 : 40);
-      hemi.intensity = day ? 1.05 : 0.32;
-      hemi.groundColor.set(day ? 0x4a4438 : 0x14141c);
-      sun.intensity = day ? 1.3 : 0.12;
+      hemi.intensity = day ? 1.1 : 0.36;
+      hemi.groundColor.set(day ? 0x6b5c46 : 0x1c1a22);
+      sun.intensity = day ? 1.55 : 0.12;
       sun.color.set(day ? 0xffd9a0 : 0x6c85c9);
       fill.intensity = day ? 0.28 : 0.15;
+      ambient.intensity = day ? 0.16 : 0.06;
+
+      const envSource = sky.clone();
+      envSource.needsUpdate = true;
+      envSource.mapping = THREE.EquirectangularReflectionMapping;
+      const nextRT = pmremGenerator.fromEquirectangular(envSource);
+      scene.environment = nextRT.texture;
+      envSource.dispose();
+      if (envRT) envRT.dispose();
+      envRT = nextRT;
     };
     applyLighting();
     stateRef.current.applyLighting = applyLighting;
@@ -458,7 +530,9 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
 
     const buildNeighborhood = (gridW, gridH) => {
       worldGroup.clear();
-      const groundMat = toonMat(0x8FAD62);
+      const groundTex = makeGrassTexture();
+      groundTex.repeat.set((gridW + OUT * 2) / 2.2, (gridH + OUT * 2) / 2.2);
+      const groundMat = mat(0xffffff, { map: groundTex, roughness: 0.97, metalness: 0, envMapIntensity: 0.35 });
       const ground = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, gridH + OUT * 2), groundMat);
       ground.rotation.x = -Math.PI / 2;
       ground.position.set(gridW / 2, -0.01, gridH / 2);
@@ -471,26 +545,28 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
         const px = (Math.sin(i * 12.9898) * 0.5 + 0.5) * (gridW + OUT * 2) - OUT;
         const pz = (Math.sin(i * 78.233 + 4) * 0.5 + 0.5) * (gridH + OUT * 2) - OUT;
         if (pz > -6.5 && pz < gridH + 1 && px > -1 && px < gridW + 1) continue; // keep near-lot clear-ish
-        const patch = new THREE.Mesh(new THREE.CircleGeometry(0.7 + (i % 3) * 0.35, 8), toonMat(patchTones[i % patchTones.length]));
+        const patch = new THREE.Mesh(new THREE.CircleGeometry(0.7 + (i % 3) * 0.35, 8), mat(patchTones[i % patchTones.length]));
         patch.rotation.x = -Math.PI / 2;
         patch.position.set(px, 0, pz);
         worldGroup.add(patch);
       }
 
       const roadZ = -5;
-      const road = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 3.4), toonMat(0x38352F));
+      const roadTex = makeAsphaltTexture();
+      roadTex.repeat.set((gridW + OUT * 2) / 3, 1);
+      const road = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 3.4), mat(0xffffff, { map: roadTex, roughness: 0.88, metalness: 0, envMapIntensity: 0.5 }));
       road.rotation.x = -Math.PI / 2;
       road.position.set(gridW / 2, 0.005, roadZ);
       road.receiveShadow = true;
       worldGroup.add(road);
       for (let x = -OUT; x < gridW + OUT; x += 1.6) {
-        const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), toonMat(0xEDE0BE));
+        const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), mat(0xEDE0BE));
         dash.rotation.x = -Math.PI / 2;
         dash.position.set(x, 0.01, roadZ);
         worldGroup.add(dash);
       }
       [roadZ - 1.9, roadZ + 1.9].forEach(sz => {
-        const sidewalk = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 1.1), toonMat(0xD8D0BE));
+        const sidewalk = new THREE.Mesh(new THREE.PlaneGeometry(gridW + OUT * 2, 1.1), mat(0xD8D0BE));
         sidewalk.rotation.x = -Math.PI / 2;
         sidewalk.position.set(gridW / 2, 0.006, sz);
         sidewalk.receiveShadow = true;
@@ -498,7 +574,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
       });
 
       // low fence along the lot's side property lines
-      const fenceRailMat = toonMat(0xEDE6D6);
+      const fenceRailMat = mat(0xEDE6D6);
       [-0.35, gridW + 0.35].forEach(fx => {
         for (let z = 0; z <= gridH; z += 0.9) {
           const post = makeFencePost();
@@ -558,7 +634,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
     buildNeighborhood(plotWRef.current, plotHRef.current);
 
     // distant mountain ridge for scenic depth beyond the neighborhood
-    const mountainMat = toonMat(0x8FA3B8, { transparent: true, opacity: 0.85 });
+    const mountainMat = mat(0x8FA3B8, { transparent: true, opacity: 0.85 });
     const ridgeGroup = new THREE.Group();
     const ridgePeaks = [
       [-0.6, 6.5, 5.5], [0.15, 9, 7], [0.55, 7.5, 6], [1.0, 10.5, 8], [1.5, 7, 5.5], [1.9, 8.5, 6.5],
@@ -600,7 +676,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
     const clouds = [];
     for (let i = 0; i < 4; i++) {
       const cloud = new THREE.Group();
-      const cm = toonMat(0xffffff, { transparent: true, opacity: 0.9 });
+      const cm = mat(0xffffff, { transparent: true, opacity: 0.9 });
       for (let j = 0; j < 3; j++) {
         const puff = new THREE.Mesh(new THREE.SphereGeometry(0.9 + Math.random() * 0.4, 8, 6), cm);
         puff.position.set(j * 1.1 - 1, Math.random() * 0.3, 0);
@@ -625,7 +701,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
     scene.add(padGroup);
     const buildFoundationPad = (gridW, gridH) => {
       padGroup.clear();
-      const padMat = toonMat(0xC9BC9E);
+      const padMat = mat(0xC9BC9E);
       const pad = new THREE.Mesh(new THREE.BoxGeometry(gridW, 0.06, gridH), padMat);
       pad.position.set(gridW / 2, 0.03, gridH / 2);
       pad.receiveShadow = true;
@@ -643,7 +719,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
     // live drag/hover preview of the footprint the player is about to build, anchored at (0,0)
     const foundationPreviewGroup = new THREE.Group();
     scene.add(foundationPreviewGroup);
-    const foundationPreviewMat = toonMat(ACCENT, { transparent: true, opacity: 0.4 });
+    const foundationPreviewMat = mat(ACCENT, { transparent: true, opacity: 0.4 });
     const foundationPreviewMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), foundationPreviewMat);
     foundationPreviewGroup.add(foundationPreviewMesh);
     foundationPreviewGroup.visible = false;
@@ -677,7 +753,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
         buildFoundationPad(plotWRef.current, plotHRef.current);
         return;
       }
-      const floorMat = toonMat(new THREE.Color(colorHex(r.floorColor)));
+      const floorMat = mat(new THREE.Color(colorHex(r.floorColor)));
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(r.gridW, r.gridH), floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.position.set(r.gridW / 2, 0.002, r.gridH / 2);
@@ -688,7 +764,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
       const risen = new THREE.Group();
       roomGroup.add(risen);
 
-      const wallMat = toonMat(new THREE.Color(colorHex(r.wallColor)));
+      const wallMat = mat(new THREE.Color(colorHex(r.wallColor)));
       const wallH = 2.4, t = 0.08;
       const mk = (w, d, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, d), wallMat); m.position.set(x, wallH / 2, z); m.castShadow = true; m.receiveShadow = true; return m; };
       const doorHalf = Math.min(0.9, r.gridW * 0.15);
@@ -706,7 +782,7 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
       const halfSpan = r.gridW / 2;
       const slopeLen = Math.sqrt(halfSpan * halfSpan + roofRise * roofRise) + 0.3;
       const angle = Math.atan2(roofRise, halfSpan);
-      const roofMat = toonMat(0x8B5A3C);
+      const roofMat = mat(0x8B5A3C);
       const mkSlab = (sign) => {
         const slab = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.12, r.gridH + 0.6), roofMat);
         slab.position.set(r.gridW / 2 + sign * (halfSpan / 2) * 0.98, wallH + roofRise / 2, r.gridH / 2);
@@ -1019,6 +1095,8 @@ export default function Play3DView({ room, plotW, plotH, daytime, flying, runnin
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointerdown', refocus);
       canvas.removeEventListener('mouseenter', refocus);
+      if (envRT) envRT.dispose();
+      pmremGenerator.dispose();
       renderer.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
