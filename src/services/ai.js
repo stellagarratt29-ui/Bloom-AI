@@ -128,9 +128,33 @@ TRANSFORMATION EXAMPLES — always do this:
 - "goal": big life aspirations (start a business, get a degree, run a marathon, make £10k, buy a house)
 - "hobby": creative/skill practice (practice guitar, do yoga, paint) — NOT buying supplies
 - "task": everything else — errands, chores, appointments, schoolwork, communication, bills
-- Priority: high=medical/school deadline/urgent/overdue/bills, medium=errands/communication, low=leisure/fun/optional
 - Extract EVERY distinct action — never merge, never drop, never duplicate
 ${autoBreak ? '- For each task, if it can logically split into 2–3 concrete steps, return each step as its own item with the same priority.' : ''}
+
+═══ PRIORITY RULES — follow exactly ═══
+These map directly to the 3 sections the user sees:
+  high   → SCHOOL & HEALTH section
+  medium → TASKS section
+  low    → FUN & LEISURE section
+
+high (School & Health ONLY): school assignments, tests, exams, homework, essays, doctor/dentist/nurse/medical appointments, prescriptions, urgent deadlines, overdue bills, emergencies, anything school- or health-related.
+medium (everything else): chores, errands, shopping, daily routines, communication, home tasks, social tasks, work tasks, admin, scheduling.
+low: hobbies, fun activities, optional nice-to-haves, leisure.
+
+PRIORITY EXAMPLES — use these as your guide:
+"Call school nurse" → high (health + school)
+"Doctor appointment" → high (health)
+"Submit essay" → high (school)
+"Bake sale donation prep" → high (school event)
+"Take medication" → high (health)
+"Get dressed" → medium (daily routine — NOT high)
+"Do laundry" → medium (chore — NOT high)
+"Let dog out" → medium (chore — NOT high)
+"Reschedule electrician" → medium (home errand)
+"Order gift" → medium (shopping)
+"Apologize to neighbor" → medium (social)
+"Watch a movie" → low (leisure)
+"Practice guitar" → low (hobby)
 
 ═══ RESPONSE RULES ═══
 - 2–3 sentences, warm and direct
@@ -221,8 +245,10 @@ function _parseTasksFallback(rawText) {
     let priority = overridePriority || 'medium';
 
     if (!overridePriority) {
-      if (/\b(homework|essay|exam|test|quiz|doctor|dentist|appointment|deadline|urgent|overdue|pay|bill|prescription|medication)\b/i.test(t)) priority = 'high';
-      else if (/\b(watch|game|chill|relax|movie|show|youtube|scroll)\b/i.test(t)) priority = 'low';
+      // high = ONLY school/health/medical/urgent — nothing else
+      if (/\b(homework|essay|exam|test|quiz|doctor|dentist|nurse|hospital|clinic|appointment|deadline|urgent|overdue|bill|prescription|medication|school nurse|bake sale|field trip form)\b/i.test(t)) priority = 'high';
+      else if (/\b(watch|game|chill|relax|movie|show|youtube|scroll|fun|party|hang out)\b/i.test(t)) priority = 'low';
+      // everything else (chores, errands, daily routines) stays medium
     }
     if (/\b(become a|start a|launch|build a)\b/.test(t) ||
         /\b(make|earn|save)\b.{0,25}\b(\d+k|\d{4,}|thousand|million)\b/.test(t) ||
