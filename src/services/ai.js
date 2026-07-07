@@ -76,29 +76,54 @@ export async function parseBrainDump(rawText, userName = '', ndToggles = {}) {
     if (!key) throw new Error('no key');
 
     const reply = await callClaude({
-      system: `Parse a free-form brain dump and generate a personalised Bloom response.
-Return ONLY valid JSON (no markdown fences):
+      system: `You are a task parser. Parse a free-form brain dump into clean task cards.
+Return ONLY valid JSON (no markdown fences, no extra text):
 {
-  "items": [{"text":"clean item","category":"task|goal|hobby","priority":"high|medium|low"}],
-  "response": "Bloom's 2–3 sentence reply to ${name}"
+  "items": [{"text":"short label","category":"task|goal|hobby","priority":"high|medium|low"}],
+  "response": "Bloom's reply to ${name}"
 }
 
-Item rules:
-- "goal": big life aspirations, career changes, financial targets, major milestones (start a business, write a book, move city, make £10k, become a doctor, run a marathon, buy a house)
-- "hobby": creative or skill-building practice sessions (practice guitar, do yoga, paint something) — NOT buying supplies
-- "task": everything else — errands, chores, appointments, schoolwork, buying things, communication
-- Task priority: high=school/medical/urgent/overdue/bills, medium=errands/communication, low=leisure/fun/optional
-- Hobbies: always priority "low"
-- Goals: always priority "medium"
-- Extract EVERY distinct item — never merge, never drop anything
-- Rewrite each item's "text" as a short, clean imperative action label — strip filler words, first-person phrasing, and casual language. Title-case imperative style (e.g. "Take out the garbage" not "I really need to take out the garbage can"; "Write English essay outline" not "ugh i still haven't done my english essay outline")
-${autoBreak ? '- For each task (not goals or hobbies), if it can logically be broken into 2–3 smaller concrete steps, return each step as its own separate item with the same priority. Prefer more items over fewer.' : ''}
-Response rules (critical):
-- Name 2–3 specific items from the dump using the user's own words
-- If goals found, mention they've been added to Goals tab with a real plan
-- Acknowledge emotional tone if evident (stressed, excited, overwhelmed)
-- NEVER say "Here are your X tasks" or any generic opener
-- 2–3 sentences, direct and warm`,
+═══ LABEL RULES (most important — read carefully) ═══
+Every "text" must be a SHORT ACTION LABEL: 3–7 words maximum.
+NEVER copy the user's sentence. ALWAYS rewrite as a short imperative.
+Start with a strong verb. Remove all filler, commentary, first-person, and reasoning.
+
+TRANSFORMATION EXAMPLES — always do this:
+"The baby has a checkup today, I think it's today, let me check — yeah it's today, it's in forty minutes, phenomenal"
+→ "Baby checkup today"
+
+"Cancel a subscription I forgot I had, it just charged me again for the third month in a row"
+→ "Cancel forgotten subscription"
+
+"There's a field trip form that needs a check attached, physical check, who has checks, where are my checks"
+→ "Find checks for field trip form"
+
+"Call my mom back, she's called four times, I love her, I'm avoiding her"
+→ "Call mom back"
+
+"So I woke up to a text from the HOA, apparently our sprinklers were running at 2am, great, cool, no idea how"
+→ "Fix HOA sprinkler issue"
+
+"I have to empty the refrigerator out at 3 o'clock"
+→ "Empty fridge at 3pm"
+
+"I've been meaning to get back to Sarah about the dinner thing"
+→ "Reply to Sarah about dinner"
+
+═══ CATEGORY RULES ═══
+- "goal": big life aspirations (start a business, get a degree, run a marathon, make £10k, buy a house)
+- "hobby": creative/skill practice (practice guitar, do yoga, paint) — NOT buying supplies
+- "task": everything else — errands, chores, appointments, schoolwork, communication, bills
+- Priority: high=medical/school deadline/urgent/overdue/bills, medium=errands/communication, low=leisure/fun/optional
+- Extract EVERY distinct action — never merge, never drop, never duplicate
+${autoBreak ? '- For each task, if it can logically split into 2–3 concrete steps, return each step as its own item with the same priority.' : ''}
+
+═══ RESPONSE RULES ═══
+- 2–3 sentences, warm and direct
+- Name 2–3 specific things from the dump
+- If goals found, mention they're in the Goals tab
+- Acknowledge stress/overwhelm if present
+- NEVER start with "Here are your X tasks"`,
       messages: [{ role: 'user', content: rawText }],
       maxTokens: 1100,
     });
@@ -106,8 +131,28 @@ Response rules (critical):
     const clean = reply.trim().replace(/^```json?\n?/, '').replace(/\n?```$/, '');
     const parsed = JSON.parse(clean);
     if (!Array.isArray(parsed.items)) throw new Error('bad format');
+
+    const seen = new Set();
+    const STRIP_LEAD = /^(?:i\s+(?:need\s+to|have\s+to|gotta|want\s+to|should|must|will)\s+)+/i;
+    const items = parsed.items
+      .filter(i => i.text && ['task', 'goal', 'hobby'].includes(i.category))
+      .map(i => {
+        let t = i.text.trim().replace(STRIP_LEAD, '');
+        // Truncate labels that are clearly still full sentences (>50 chars, >8 words)
+        const words = t.split(/\s+/);
+        if (words.length > 8) t = words.slice(0, 6).join(' ');
+        t = t.charAt(0).toUpperCase() + t.slice(1);
+        return { ...i, text: t };
+      })
+      .filter(i => {
+        const key = i.text.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return i.text.length >= 3;
+      });
+
     return {
-      items: parsed.items.filter(i => i.text && ['task', 'goal', 'hobby'].includes(i.category)),
+      items,
       response: typeof parsed.response === 'string' ? parsed.response : null,
     };
   } catch {
