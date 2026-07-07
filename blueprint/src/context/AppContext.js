@@ -19,26 +19,30 @@ function defaultExterior() {
   };
 }
 
-function makeRoom(roomTypeId) {
+function makeRoom(roomTypeId, sizeOverride) {
   const rt = ROOM_TYPES.find(r => r.id === roomTypeId) || ROOM_TYPES[0];
   return {
     id: uid('room'),
     typeId: rt.id,
     name: rt.name,
-    gridW: rt.gridW,
-    gridH: rt.gridH,
+    gridW: sizeOverride?.gridW || rt.gridW,
+    gridH: sizeOverride?.gridH || rt.gridH,
     cells: {},
     wallColor: 'Warm White',
     floorColor: 'Sand',
   };
 }
 
+// A lot spawns as an empty buildable pad (no walls) inside the neighborhood —
+// the player draws their own foundation rather than starting inside a pre-built box.
 function makeLot(name) {
   return {
     id: uid('lot'),
     name,
     exterior: defaultExterior(),
-    rooms: [makeRoom('living')],
+    plotW: 14,
+    plotH: 11,
+    rooms: [],
   };
 }
 
@@ -104,6 +108,19 @@ export function GameProvider({ children }) {
     update(prev => ({ ...prev, worlds: prev.worlds.filter(w => w.id !== worldId) }));
   }, [update]);
 
+  const buildRoomFootprint = useCallback((worldId, lotId, gridW, gridH) => {
+    const room = makeRoom('custom', { gridW, gridH });
+    update(prev => ({
+      ...prev,
+      worlds: prev.worlds.map(w => w.id !== worldId ? w : {
+        ...w,
+        lots: w.lots.map(l => l.id !== lotId ? l : { ...l, rooms: [room] }),
+      }),
+    }));
+    awardXP(30);
+    return room;
+  }, [update, awardXP]);
+
   const setRoomCells = useCallback((worldId, lotId, roomId, cells) => {
     update(prev => ({
       ...prev,
@@ -132,7 +149,7 @@ export function GameProvider({ children }) {
 
   const value = {
     loaded, ...state,
-    createWorld, deleteWorld, setRoomCells, setRoomStyle, awardXP,
+    createWorld, deleteWorld, buildRoomFootprint, setRoomCells, setRoomStyle, awardXP,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

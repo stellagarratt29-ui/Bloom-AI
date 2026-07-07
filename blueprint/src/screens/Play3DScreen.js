@@ -123,11 +123,12 @@ function CatalogCard({ piece, active, favorite, onPress, onFavorite }) {
 
 export default function Play3DScreen({ navigation, route }) {
   const { worldId, lotId, roomId } = route.params;
-  const { worlds, profile, setRoomCells, setRoomStyle, awardXP } = useGame();
+  const { worlds, profile, setRoomCells, setRoomStyle, buildRoomFootprint, awardXP } = useGame();
   const world = worlds.find(w => w.id === worldId);
   const lot = world?.lots.find(l => l.id === lotId);
-  const room = lot?.rooms.find(r => r.id === roomId);
+  const room = roomId ? lot?.rooms.find(r => r.id === roomId) : lot?.rooms[0];
 
+  const [foundationPreview, setFoundationPreview] = useState(null);
   const [activePiece, setActivePiece] = useState(null);
   const [activeColor, setActiveColor] = useState(COLORS[3].name);
   const [recent, setRecent] = useState([]);
@@ -147,14 +148,20 @@ export default function Play3DScreen({ navigation, route }) {
   const [chatDraft, setChatDraft] = useState('');
   const [note, setNote] = useState('');
 
-  if (!world || !lot || !room) {
+  if (!world || !lot) {
     return (
       <SafeAreaView style={s.root}>
-        <Text style={{ color: '#fff', padding: 20 }}>This room no longer exists.</Text>
+        <Text style={{ color: '#fff', padding: 20 }}>This lot no longer exists.</Text>
         <TouchableOpacity onPress={() => navigation.goBack()}><Text style={{ color: '#fff', padding: 20 }}>Go back</Text></TouchableOpacity>
       </SafeAreaView>
     );
   }
+
+  const handleFoundationCommit = (gridW, gridH) => {
+    const newRoom = buildRoomFootprint(worldId, lotId, gridW, gridH);
+    setFoundationPreview(null);
+    navigation.setParams({ roomId: newRoom.id });
+  };
 
   const flash = (text) => { setNote(text); setTimeout(() => setNote(''), 1600); };
 
@@ -168,16 +175,17 @@ export default function Play3DScreen({ navigation, route }) {
   const toggleFavorite = (id) => setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handlePlace = (gx, gy) => {
-    if (!activePiece) return;
+    if (!activePiece || !room) return;
     const key = `${gx},${gy}`;
-    setRoomCells(worldId, lotId, roomId, { ...room.cells, [key]: { pieceId: activePiece.id, color: activeColor, material: activePiece.materials[0] } });
+    setRoomCells(worldId, lotId, room.id, { ...room.cells, [key]: { pieceId: activePiece.id, color: activeColor, material: activePiece.materials[0] } });
     awardXP(2);
   };
 
   const handleRemove = (key) => {
+    if (!room) return;
     const next = { ...room.cells };
     delete next[key];
-    setRoomCells(worldId, lotId, roomId, next);
+    setRoomCells(worldId, lotId, room.id, next);
   };
 
   const sendChat = () => {
@@ -186,12 +194,14 @@ export default function Play3DScreen({ navigation, route }) {
     setChatDraft('');
   };
 
-  const objectCount = Object.keys(room.cells).length;
+  const objectCount = room ? Object.keys(room.cells).length : 0;
 
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>
       <Play3DView
         room={room}
+        plotW={lot.plotW}
+        plotH={lot.plotH}
         daytime={daytime}
         flying={flying}
         running={running}
@@ -199,6 +209,8 @@ export default function Play3DScreen({ navigation, route }) {
         activeColor={activeColor}
         onPlaceCell={handlePlace}
         onRemoveCell={handleRemove}
+        onFoundationPreview={setFoundationPreview}
+        onFoundationCommit={handleFoundationCommit}
       />
 
       {/* top-left: single menu button */}
@@ -264,9 +276,18 @@ export default function Play3DScreen({ navigation, route }) {
 
       {!!note && <View style={s.noteBanner}><Text style={s.noteText}>{note}</Text></View>}
 
+      {!room && (
+        <View style={s.buildPrompt}>
+          <Icon name="edit-2" size={16} color="#fff" />
+          <Text style={s.buildPromptText}>
+            {foundationPreview ? `Foundation: ${foundationPreview.gridW} × ${foundationPreview.gridH} — release to build` : 'Drag on your lot to lay your foundation'}
+          </Text>
+        </View>
+      )}
+
       {/* bottom: hotbar + browse trigger (contextual catalog opens on demand) */}
       <View style={s.bottomBar}>
-        {activePiece && (
+        {activePiece && room && (
           <View style={s.placingPill}>
             <Text style={s.placingText}>Placing: {activePiece.name}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 10 }}>
@@ -278,36 +299,40 @@ export default function Play3DScreen({ navigation, route }) {
             <Text style={s.objCount}>{objectCount} objects</Text>
           </View>
         )}
-        <View style={s.hotbarRow}>
-          <TouchableOpacity style={s.browseBtn} onPress={() => setCatalogOpen(v => !v)}>
-            <Icon name={catalogOpen ? 'chevron-down' : 'grid'} size={16} color="#fff" />
-            <Text style={s.browseLabel}>Catalog</Text>
-          </TouchableOpacity>
-          <View style={s.hotbar}>
-            {Array.from({ length: 8 }).map((_, i) => {
-              const pieceId = recent[i];
-              const piece = pieceId ? PIECES.find(p => p.id === pieceId) : null;
-              return (
-                <TouchableOpacity key={i} style={[s.hotSlot, activePiece && piece?.id === activePiece.id && s.hotSlotActive]} onPress={() => piece && pickPiece(piece)}>
-                  <Text style={s.hotIndex}>{i + 1}</Text>
-                  {piece && <Icon name={piece.icon} size={16} color="#fff" />}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-        <CatalogSheet
-          visible={catalogOpen}
-          onClose={() => setCatalogOpen(false)}
-          recent={recent}
-          favorites={favorites}
-          toggleFavorite={toggleFavorite}
-          onPick={pickPiece}
-          activePiece={activePiece}
-          room={room}
-          onFloorColor={(name) => setRoomStyle(worldId, lotId, roomId, { floorColor: name })}
-          onWallColor={(name) => setRoomStyle(worldId, lotId, roomId, { wallColor: name })}
-        />
+        {room && (
+          <>
+            <View style={s.hotbarRow}>
+              <TouchableOpacity style={s.browseBtn} onPress={() => setCatalogOpen(v => !v)}>
+                <Icon name={catalogOpen ? 'chevron-down' : 'grid'} size={16} color="#fff" />
+                <Text style={s.browseLabel}>Catalog</Text>
+              </TouchableOpacity>
+              <View style={s.hotbar}>
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const pieceId = recent[i];
+                  const piece = pieceId ? PIECES.find(p => p.id === pieceId) : null;
+                  return (
+                    <TouchableOpacity key={i} style={[s.hotSlot, activePiece && piece?.id === activePiece.id && s.hotSlotActive]} onPress={() => piece && pickPiece(piece)}>
+                      <Text style={s.hotIndex}>{i + 1}</Text>
+                      {piece && <Icon name={piece.icon} size={16} color="#fff" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+            <CatalogSheet
+              visible={catalogOpen}
+              onClose={() => setCatalogOpen(false)}
+              recent={recent}
+              favorites={favorites}
+              toggleFavorite={toggleFavorite}
+              onPick={pickPiece}
+              activePiece={activePiece}
+              room={room}
+              onFloorColor={(name) => setRoomStyle(worldId, lotId, room.id, { floorColor: name })}
+              onWallColor={(name) => setRoomStyle(worldId, lotId, room.id, { wallColor: name })}
+            />
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -345,6 +370,8 @@ const s = StyleSheet.create({
   leaderLevel: { color: '#F2C94C', fontSize: 12, fontWeight: '700' },
   noteBanner: { position: 'absolute', top: 68, alignSelf: 'center', backgroundColor: 'rgba(20,16,12,0.7)', borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 14 },
   noteText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  buildPrompt: { position: 'absolute', bottom: 30, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(193,96,46,0.92)', borderRadius: RADIUS.pill, paddingVertical: 10, paddingHorizontal: 18 },
+  buildPromptText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   placingPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(76,143,209,0.85)', marginHorizontal: 14, marginBottom: 8, borderRadius: RADIUS.pill, paddingVertical: 6, paddingHorizontal: 12 },
   placingText: { color: '#fff', fontSize: 12, fontWeight: '700' },

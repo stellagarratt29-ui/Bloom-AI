@@ -133,6 +133,7 @@ export const ROOM_TYPES = [
   { id: 'office',   name: 'Office',      icon: 'edit-2',   gridW: 6, gridH: 5, categories: ['office', 'storage', 'lighting', 'decor', 'wallart', 'plants'] },
   { id: 'closet',   name: 'Closet',      icon: 'layers',   gridW: 4, gridH: 4, categories: ['closet', 'storage'] },
   { id: 'garage',   name: 'Garage',      icon: 'grid',     gridW: 8, gridH: 6, categories: ['garage', 'storage'] },
+  { id: 'custom',   name: 'My Home',     icon: 'home',     gridW: 8, gridH: 6, categories: ['living', 'kitchen', 'dining', 'bedroom', 'bathroom', 'laundry', 'office', 'closet', 'outdoor', 'garage', 'decor', 'lighting', 'plants', 'wallart', 'storage'] },
 ];
 
 export const EXTERIOR_OPTIONS = {

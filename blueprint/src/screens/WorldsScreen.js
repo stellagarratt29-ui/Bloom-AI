@@ -115,7 +115,7 @@ export default function WorldsScreen({ navigation }) {
   const enterWorld = (world) => {
     const lot = world.lots[0];
     const room = lot.rooms[0];
-    navigation.navigate('Play3D', { worldId: world.id, lotId: lot.id, roomId: room.id });
+    navigation.navigate('Play3D', { worldId: world.id, lotId: lot.id, roomId: room?.id ?? null });
   };
 
   const handleCreate = (name, env, settings) => {

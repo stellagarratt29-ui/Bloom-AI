@@ -373,22 +373,34 @@ function makeFurnitureMesh(cellData, opacity = 1) {
   return mesh;
 }
 
-export default function Play3DView({ room, daytime, flying, running, activePiece, activeColor, onPlaceCell, onRemoveCell, onAvatarPos }) {
+export default function Play3DView({ room, plotW, plotH, daytime, flying, running, activePiece, activeColor, onPlaceCell, onRemoveCell, onAvatarPos, onFoundationPreview, onFoundationCommit }) {
   const canvasRef = useRef(null);
   const stateRef = useRef({});
   const roomRef = useRef(room);
+  const plotWRef = useRef(plotW || 14);
+  const plotHRef = useRef(plotH || 11);
   const activeRef = useRef({ piece: activePiece, color: activeColor });
   const onPlaceCellRef = useRef(onPlaceCell);
   const onRemoveCellRef = useRef(onRemoveCell);
   const onAvatarPosRef = useRef(onAvatarPos);
+  const onFoundationPreviewRef = useRef(onFoundationPreview);
+  const onFoundationCommitRef = useRef(onFoundationCommit);
   onPlaceCellRef.current = onPlaceCell;
   onRemoveCellRef.current = onRemoveCell;
   onAvatarPosRef.current = onAvatarPos;
+  onFoundationPreviewRef.current = onFoundationPreview;
+  onFoundationCommitRef.current = onFoundationCommit;
   const daytimeRef = useRef(daytime);
   const flyingRef = useRef(flying);
   const runningRef = useRef(running);
 
-  useEffect(() => { roomRef.current = room; if (stateRef.current.rebuildFurniture) stateRef.current.rebuildFurniture(); }, [room]);
+  useEffect(() => {
+    roomRef.current = room;
+    if (stateRef.current.buildRoom) stateRef.current.buildRoom();
+    if (stateRef.current.rebuildFurniture) stateRef.current.rebuildFurniture();
+    if (stateRef.current.rebuildGridOverlay) stateRef.current.rebuildGridOverlay();
+  }, [room]);
+  useEffect(() => { plotWRef.current = plotW || 14; plotHRef.current = plotH || 11; }, [plotW, plotH]);
   useEffect(() => { activeRef.current = { piece: activePiece, color: activeColor }; if (stateRef.current.rebuildGhost) stateRef.current.rebuildGhost(); }, [activePiece, activeColor]);
   useEffect(() => { daytimeRef.current = daytime; if (stateRef.current.applyLighting) stateRef.current.applyLighting(); }, [daytime]);
   useEffect(() => { flyingRef.current = flying; }, [flying]);
@@ -543,12 +555,26 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         worldGroup.add(t);
       });
     };
-    buildNeighborhood(roomRef.current?.gridW || 8, roomRef.current?.gridH || 6);
+    buildNeighborhood(plotWRef.current, plotHRef.current);
+
+    // distant mountain ridge for scenic depth beyond the neighborhood
+    const mountainMat = toonMat(0x8FA3B8, { transparent: true, opacity: 0.85 });
+    const ridgeGroup = new THREE.Group();
+    const ridgePeaks = [
+      [-0.6, 6.5, 5.5], [0.15, 9, 7], [0.55, 7.5, 6], [1.0, 10.5, 8], [1.5, 7, 5.5], [1.9, 8.5, 6.5],
+    ];
+    ridgePeaks.forEach(([fx, h, w]) => {
+      const peak = new THREE.Mesh(new THREE.ConeGeometry(w, h, 5), mountainMat);
+      peak.position.set(plotWRef.current * fx, h / 2 - 0.3, -OUT - 34);
+      ridgeGroup.add(peak);
+    });
+    ridgeGroup.renderOrder = -1;
+    scene.add(ridgeGroup);
 
     // ---- moving extras: cars, NPCs, birds, clouds ----
     const extrasGroup = new THREE.Group();
     scene.add(extrasGroup);
-    const gw = roomRef.current?.gridW || 8;
+    const gw = plotWRef.current;
     const cars = [makeCar(0xB2452F), makeVan(0xE0DCC8)];
     cars.forEach((c, i) => { c.userData.phase = i * 6; c.userData.speed = 1.4 + i * 0.3; extrasGroup.add(c); });
     const roadLen = gw + OUT * 2 - 2;
@@ -591,11 +617,66 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
     const roomGroup = new THREE.Group();
     const furnitureGroup = new THREE.Group();
     scene.add(roomGroup, furnitureGroup);
+    let risingGroup = null; // walls+roof group currently mid rise-animation
+    let riseT = 1;
+
+    // an empty lot still shows a defined, inviting foundation pad rather than bare lawn
+    const padGroup = new THREE.Group();
+    scene.add(padGroup);
+    const buildFoundationPad = (gridW, gridH) => {
+      padGroup.clear();
+      const padMat = toonMat(0xC9BC9E);
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(gridW, 0.06, gridH), padMat);
+      pad.position.set(gridW / 2, 0.03, gridH / 2);
+      pad.receiveShadow = true;
+      padGroup.add(pad);
+      const borderMat = new THREE.LineBasicMaterial({ color: 0xEDE6D6, transparent: true, opacity: 0.85 });
+      const pts = [
+        new THREE.Vector3(0, 0.065, 0), new THREE.Vector3(gridW, 0.065, 0),
+        new THREE.Vector3(gridW, 0.065, gridH), new THREE.Vector3(0, 0.065, gridH),
+        new THREE.Vector3(0, 0.065, 0),
+      ];
+      padGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), borderMat));
+    };
+    buildFoundationPad(plotWRef.current, plotHRef.current);
+
+    // live drag/hover preview of the footprint the player is about to build, anchored at (0,0)
+    const foundationPreviewGroup = new THREE.Group();
+    scene.add(foundationPreviewGroup);
+    const foundationPreviewMat = toonMat(ACCENT, { transparent: true, opacity: 0.4 });
+    const foundationPreviewMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), foundationPreviewMat);
+    foundationPreviewGroup.add(foundationPreviewMesh);
+    foundationPreviewGroup.visible = false;
+    let pendingFoundation = { gridW: 8, gridH: 6 };
+    const MIN_FOOTPRINT = 4;
+    const setFoundationPreviewSize = (gridW, gridH) => {
+      pendingFoundation = { gridW, gridH };
+      foundationPreviewMesh.scale.set(gridW, 1, gridH);
+      foundationPreviewMesh.position.set(gridW / 2, 0.09, gridH / 2);
+      onFoundationPreviewRef.current && onFoundationPreviewRef.current({ gridW, gridH });
+    };
+    const updateFoundationPreview = (clientX, clientY) => {
+      const rect = canvas.getBoundingClientRect();
+      const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(ndc, camera);
+      const hit = new THREE.Vector3();
+      if (!raycaster.ray.intersectPlane(floorPlane, hit)) return;
+      const gridW = Math.min(plotWRef.current, Math.max(MIN_FOOTPRINT, Math.round(hit.x)));
+      const gridH = Math.min(plotHRef.current, Math.max(MIN_FOOTPRINT, Math.round(hit.z)));
+      foundationPreviewGroup.visible = true;
+      setFoundationPreviewSize(gridW, gridH);
+    };
 
     const buildRoom = () => {
-      roomGroup.clear();
       const r = roomRef.current;
-      if (!r) return;
+      const wasRoomId = roomGroup.userData.roomId;
+      roomGroup.clear();
+      padGroup.visible = !r;
+      foundationPreviewGroup.visible = false;
+      if (!r) {
+        buildFoundationPad(plotWRef.current, plotHRef.current);
+        return;
+      }
       const floorMat = toonMat(new THREE.Color(colorHex(r.floorColor)));
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(r.gridW, r.gridH), floorMat);
       floor.rotation.x = -Math.PI / 2;
@@ -603,12 +684,16 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
       floor.receiveShadow = true;
       roomGroup.add(floor);
 
+      // walls + roof rise together so a freshly built room feels like it's under construction
+      const risen = new THREE.Group();
+      roomGroup.add(risen);
+
       const wallMat = toonMat(new THREE.Color(colorHex(r.wallColor)));
       const wallH = 2.4, t = 0.08;
       const mk = (w, d, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, d), wallMat); m.position.set(x, wallH / 2, z); m.castShadow = true; m.receiveShadow = true; return m; };
       const doorHalf = Math.min(0.9, r.gridW * 0.15);
       const doorCenter = r.gridW / 2;
-      roomGroup.add(
+      risen.add(
         mk(doorCenter - doorHalf, t, (doorCenter - doorHalf) / 2, 0),
         mk(r.gridW - (doorCenter + doorHalf), t, doorCenter + doorHalf + (r.gridW - (doorCenter + doorHalf)) / 2, 0),
         mk(r.gridW + t, t, r.gridW / 2, r.gridH),
@@ -630,9 +715,22 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
         slab.receiveShadow = true;
         return slab;
       };
-      roomGroup.add(mkSlab(1), mkSlab(-1));
+      risen.add(mkSlab(1), mkSlab(-1));
+
+      risen.position.y = 0;
+      risen.userData.riseOrigin = 0;
+      if (wasRoomId !== r.id) {
+        // genuinely new room: animate it rising out of the foundation
+        risingGroup = risen;
+        riseT = 0;
+        risen.scale.y = 0.001;
+      } else {
+        risen.scale.y = 1;
+      }
+      roomGroup.userData.roomId = r.id;
     };
     buildRoom();
+    stateRef.current.buildRoom = buildRoom;
 
     let knownCellKeys = new Set();
     const rebuildFurniture = () => {
@@ -670,6 +768,8 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       gridHelperGroup.add(new THREE.LineSegments(geo, lineMat));
     };
+    buildGridOverlay();
+    stateRef.current.rebuildGridOverlay = buildGridOverlay;
 
     const ghostGroup = new THREE.Group();
     scene.add(ghostGroup);
@@ -693,8 +793,8 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
     let hoverCell = null;
 
     const player = makeAvatar();
-    const bounds = { w: () => roomRef.current?.gridW || 8, h: () => roomRef.current?.gridH || 6 };
-    player.position.set(bounds.w() / 2, 0, bounds.h() / 2);
+    const bounds = { w: () => plotWRef.current, h: () => plotHRef.current };
+    player.position.set(bounds.w() * 0.5, 0, bounds.h() * 0.65);
     scene.add(player);
 
     const keys = {};
@@ -727,6 +827,12 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
 
     const onPointerDown = (e) => { dragging = true; downOnCanvas = true; lastX = e.clientX; lastY = e.clientY; moved = false; };
     const onPointerMove = (e) => {
+      if (!roomRef.current) {
+        // no room yet: dragging (or just hovering) sizes the foundation footprint instead of rotating the camera
+        updateFoundationPreview(e.clientX, e.clientY);
+        lastX = e.clientX; lastY = e.clientY;
+        return;
+      }
       if (dragging) {
         const dx = e.clientX - lastX, dy = e.clientY - lastY;
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
@@ -739,8 +845,13 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
     };
     const onPointerUp = (e) => {
       dragging = false;
-      if (!downOnCanvas || moved) { downOnCanvas = false; return; }
+      if (!downOnCanvas) { downOnCanvas = false; return; }
       downOnCanvas = false;
+      if (!roomRef.current) {
+        onFoundationCommitRef.current && onFoundationCommitRef.current(pendingFoundation.gridW, pendingFoundation.gridH);
+        return;
+      }
+      if (moved) return;
       const active = activeRef.current.piece;
       if (active && hoverCell) {
         onPlaceCellRef.current && onPlaceCellRef.current(hoverCell[0], hoverCell[1]);
@@ -853,6 +964,13 @@ export default function Play3DView({ room, daytime, flying, running, activePiece
       clouds.forEach((c, i) => {
         c.position.x = ((elapsed * 0.15 + i * 3) % (gw + OUT * 2 + 6)) - OUT - 3;
       });
+
+      if (risingGroup && riseT < 1) {
+        riseT = Math.min(1, riseT + dt * 1.1);
+        const overshoot = riseT < 1 ? 1 + Math.sin(riseT * Math.PI) * 0.1 * (1 - riseT) : 1;
+        risingGroup.scale.y = Math.max(0.001, riseT * overshoot);
+        if (riseT >= 1) { risingGroup.scale.y = 1; risingGroup = null; }
+      }
 
       const targetBlend = activeRef.current.piece ? 1 : 0;
       camBlend += (targetBlend - camBlend) * Math.min(1, dt * 3);
