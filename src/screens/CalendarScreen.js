@@ -4,6 +4,7 @@ import {
   SafeAreaView, StyleSheet, Platform, ActivityIndicator,
 } from 'react-native';
 import Icon from '../components/Icon';
+import VoiceMicButton from '../components/VoiceMicButton';
 import { C } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import {
@@ -203,6 +204,7 @@ export default function CalendarScreen() {
       </ScrollView>
 
       <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
+        <VoiceMicButton onTranscript={(txt) => setInput(txt)} color={t.card} />
         <TextInput
           style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
           placeholder="Ask about your schedule…"

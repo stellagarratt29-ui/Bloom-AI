@@ -5,9 +5,17 @@ const API_KEY_STORAGE = '@bloom_ai_key';
 const AI_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.1-8b-instant';
 
+// Default key embedded at build time — set EXPO_PUBLIC_GROQ_KEY in .env.local
+// so users don't need to enter their own key.
+const DEFAULT_KEY = process.env.EXPO_PUBLIC_GROQ_KEY ?? '';
+
 export async function getApiKey() {
-  try { return await AsyncStorage.getItem(API_KEY_STORAGE); }
-  catch { return null; }
+  try {
+    const stored = await AsyncStorage.getItem(API_KEY_STORAGE);
+    return stored || DEFAULT_KEY || null;
+  } catch {
+    return DEFAULT_KEY || null;
+  }
 }
 
 export async function saveApiKey(key) {

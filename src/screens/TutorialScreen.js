@@ -19,7 +19,7 @@ const SLIDES = [
     color: C.clay,
     bg:    C.clayPale,
     title: 'Tap a task to learn exactly how to do it',
-    body:  "Your tasks are sorted by priority. Tap the task title for step-by-step guidance from Bloom. Tap the small circle to mark it done and earn +5 points.",
+    body:  "Your tasks are sorted by priority. Tap the task title for step-by-step guidance from Bloom. Tap the circle to mark it done.",
   },
   {
     icon:  'target',

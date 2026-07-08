@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import Icon from '../components/Icon';
+import VoiceMicButton from '../components/VoiceMicButton';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey, generateGoalAction } from '../services/ai';
@@ -173,6 +174,7 @@ export default function GoalDetailScreen({ route, navigation }) {
         </ScrollView>
 
         <View style={s.inputBar}>
+          <VoiceMicButton onTranscript={(t) => setInput(t)} />
           <TextInput
             style={s.input}
             placeholder="Ask Bloom about this step…"

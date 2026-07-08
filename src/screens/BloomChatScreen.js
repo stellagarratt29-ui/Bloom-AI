@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, SafeAreaView, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator, Animated,
+  KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import Icon from '../components/Icon';
 import CheckInModal from '../components/CheckInModal';
+import VoiceMicButton from '../components/VoiceMicButton';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -156,58 +157,13 @@ export default function BloomChatScreen() {
   const [thinking, setThinking]   = useState(false);
   const [hasKey, setHasKey]       = useState(null);
   const [showCheckIn, setShowCheckIn] = useState(false);
-  const scrollRef      = useRef(null);
-  const historyRef     = useRef([]);
-  const recognitionRef = useRef(null);
-  const pulseAnim      = useRef(new Animated.Value(1)).current;
-  const [listening, setListening] = useState(false);
+  const scrollRef  = useRef(null);
+  const historyRef = useRef([]);
 
   useFocusEffect(useCallback(() => {
     getApiKey().then(k => setHasKey(!!k));
     if (!checkInDone) setShowCheckIn(true);
   }, [checkInDone]));
-
-  // Pulse animation while listening
-  useEffect(() => {
-    if (listening) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.35, duration: 600, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1,    duration: 600, useNativeDriver: true }),
-        ])
-      ).start();
-    } else {
-      pulseAnim.stopAnimation();
-      pulseAnim.setValue(1);
-    }
-  }, [listening]);
-
-  const toggleVoice = () => {
-    if (typeof window === 'undefined') return;
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('Voice input isn\'t supported in this browser. Try Chrome or Safari.'); return; }
-
-    if (listening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-
-    const r = new SR();
-    r.continuous = false;
-    r.interimResults = true;
-    r.lang = 'en-US';
-
-    r.onstart  = () => setListening(true);
-    r.onend    = () => { setListening(false); recognitionRef.current = null; };
-    r.onerror  = () => { setListening(false); recognitionRef.current = null; };
-    r.onresult = (e) => {
-      const transcript = Array.from(e.results).map(res => res[0].transcript).join('');
-      setInput(transcript);
-    };
-
-    recognitionRef.current = r;
-    r.start();
-  };
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
@@ -376,27 +332,21 @@ export default function BloomChatScreen() {
         </ScrollView>
 
         <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
-          {/* Mic button */}
-          <TouchableOpacity onPress={toggleVoice} style={s.micBtn} activeOpacity={0.7}>
-            <Animated.View style={[
-              s.micInner,
-              { backgroundColor: listening ? '#E84040' : t.card, borderColor: listening ? '#E84040' : t.border },
-              { transform: [{ scale: pulseAnim }] },
-            ]}>
-              <Icon name={listening ? 'mic' : 'mic'} size={18} color={listening ? C.white : t.subtext} />
-            </Animated.View>
-          </TouchableOpacity>
+          <VoiceMicButton
+            onTranscript={(t) => setInput(t)}
+            color={t.card}
+          />
 
           <TextInput
-            style={[s.input, { backgroundColor: t.card, borderColor: listening ? '#E84040' : t.border, color: t.text }]}
-            placeholder={listening ? 'Listening…' : 'Tell Bloom what\'s on your mind…'}
-            placeholderTextColor={listening ? '#E84040' : t.subtext}
+            style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
+            placeholder="Tell Bloom what's on your mind…"
+            placeholderTextColor={t.subtext}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
             returnKeyType="send"
             multiline={false}
-            editable={!thinking && !listening}
+            editable={!thinking}
           />
           <TouchableOpacity
             style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
