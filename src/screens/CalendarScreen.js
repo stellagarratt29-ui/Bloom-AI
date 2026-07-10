@@ -135,6 +135,28 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Connect card — shown when not yet connected */}
+        {!connected && (
+          <TouchableOpacity
+            style={[s.connectCard, { backgroundColor: t.card, borderColor: t.border }]}
+            onPress={handleConnect}
+            activeOpacity={0.85}
+          >
+            <View style={[s.calIconRound, { backgroundColor: C.lavWash ?? '#EDE8F5' }]}>
+              <Icon name="calendar" size={28} color={C.lavDark ?? C.clay} />
+            </View>
+            <Text style={[s.connectCardTitle, { color: t.text }]}>Connect Google Calendar</Text>
+            <Text style={[s.connectCardSub, { color: t.subtext }]}>
+              Allow Bloom AI to access your Google Calendar — see upcoming events and plan your schedule in chat.
+            </Text>
+            <View style={[s.connectBtn, { backgroundColor: C.moss }]}>
+              <Icon name="calendar" size={15} color="#fff" />
+              <Text style={s.connectBtnText}>Allow access</Text>
+            </View>
+            {!!connectErr && <Text style={s.errText}>{connectErr}</Text>}
+          </TouchableOpacity>
+        )}
+
         {/* Events — only when Google Calendar is connected */}
         {connected && (
           <>
@@ -314,9 +336,16 @@ const s = StyleSheet.create({
   savedText:  { flex: 1, fontSize: 12 },
   changeLink: { fontSize: 12, fontWeight: '600' },
 
+  connectCard: {
+    borderRadius: 20, borderWidth: 1, padding: 22, marginBottom: 18, alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+  },
+  connectCardTitle: { fontSize: 18, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
+  connectCardSub: { fontSize: 14, lineHeight: 22, textAlign: 'center', marginBottom: 20 },
   connectBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    marginTop: 20, paddingVertical: 15, borderRadius: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14, width: '100%',
   },
   connectBtnDisabled: { opacity: 0.45 },
   connectBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },

@@ -154,9 +154,14 @@ export default function OnboardingScreen({ onFinish }) {
               onSubmitEditing={next}
               autoCapitalize="words"
             />
-            <TouchableOpacity style={s.primaryBtn} onPress={next}>
-              <Text style={s.primaryBtnText}>{name.trim() ? 'Continue →' : 'Skip →'}</Text>
+            <TouchableOpacity style={s.primaryBtn} onPress={next} disabled={!name.trim()}>
+              <Text style={s.primaryBtnText}>Continue →</Text>
             </TouchableOpacity>
+            {!name.trim() && (
+              <TouchableOpacity style={s.skipBtn} onPress={next}>
+                <Text style={s.skipBtnText}>Skip</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -210,9 +215,14 @@ export default function OnboardingScreen({ onFinish }) {
             />
           )}
 
-          <TouchableOpacity style={[s.primaryBtn, { marginTop: 32 }]} onPress={next}>
-            <Text style={s.primaryBtnText}>Continue →</Text>
-          </TouchableOpacity>
+          <View style={[s.btnRow, { marginTop: 32 }]}>
+            <TouchableOpacity style={[s.primaryBtn, s.btnRowMain]} onPress={next}>
+              <Text style={s.primaryBtnText}>Continue →</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.skipBtn} onPress={next}>
+              <Text style={s.skipBtnText}>Skip</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -269,9 +279,20 @@ export default function OnboardingScreen({ onFinish }) {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={[s.primaryBtn, { marginTop: 20 }]} onPress={next}>
-            <Text style={s.primaryBtnText}>{selHobbies.length > 0 ? `Add ${selHobbies.length} ${selHobbies.length === 1 ? 'hobby' : 'hobbies'} →` : 'Skip →'}</Text>
-          </TouchableOpacity>
+          <View style={s.btnRow}>
+            <TouchableOpacity
+              style={[s.primaryBtn, s.btnRowMain, selHobbies.length === 0 && { opacity: 0.4 }]}
+              onPress={next}
+              disabled={selHobbies.length === 0}
+            >
+              <Text style={s.primaryBtnText}>
+                {selHobbies.length > 0 ? `Add ${selHobbies.length} ${selHobbies.length === 1 ? 'hobby' : 'hobbies'} →` : 'Add hobbies →'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.skipBtn} onPress={next}>
+              <Text style={s.skipBtnText}>Skip</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -528,10 +549,16 @@ const s = StyleSheet.create({
   toggleLabelActive: { color: C.ink },
   toggleSub:   { fontSize: 12, color: C.muted, lineHeight: 18 },
 
+  btnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%', marginTop: 20 },
+  btnRowMain: { flex: 1, width: undefined },
+
   primaryBtn: {
     backgroundColor: C.moss, borderRadius: 14,
     paddingVertical: 16, paddingHorizontal: 32,
     alignItems: 'center', width: '100%',
   },
   primaryBtnText: { color: C.white, fontWeight: '700', fontSize: 16 },
+
+  skipBtn: { paddingVertical: 14, paddingHorizontal: 16 },
+  skipBtnText: { fontSize: 15, fontWeight: '600', color: C.muted },
 });
