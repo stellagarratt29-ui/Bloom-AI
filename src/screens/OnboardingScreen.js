@@ -63,6 +63,15 @@ function Dots({ current, total }) {
   );
 }
 
+function BackBtn({ onPress }) {
+  return (
+    <TouchableOpacity style={s.backBtn} onPress={onPress} activeOpacity={0.7} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+      <Icon name="chevron-left" size={18} color={C.clay} />
+      <Text style={s.backBtnText}>Back</Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function OnboardingScreen({ onFinish }) {
   const [step,        setStep]       = useState(0);
   const [name,        setName]       = useState('');
@@ -81,6 +90,12 @@ export default function OnboardingScreen({ onFinish }) {
   const [saving, setSaving] = useState(false);
 
   const next = () => setStep(s => s + 1);
+
+  const goBack = () => {
+    // Step 5 (Ready) can be reached from step 3 (if no/skip) or step 4 (if yes)
+    if (step === 5) { setStep(ndChoice === 'yes' ? 4 : 3); return; }
+    setStep(s => s - 1);
+  };
 
   const toggleHobby = (h) =>
     setSelHobbies(prev =>
@@ -152,6 +167,7 @@ export default function OnboardingScreen({ onFinish }) {
   if (step === 1) {
     return (
       <SafeAreaView style={s.safe}>
+        <BackBtn onPress={goBack} />
         <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
           <Dots current={0} total={4} />
           <Text style={s.stepTitle}>A bit about you</Text>
@@ -206,6 +222,7 @@ export default function OnboardingScreen({ onFinish }) {
   if (step === 2) {
     return (
       <SafeAreaView style={s.safe}>
+        <BackBtn onPress={goBack} />
         <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
           <Dots current={1} total={4} />
           <Text style={s.stepTitle}>Any hobbies to start with?</Text>
@@ -264,6 +281,7 @@ export default function OnboardingScreen({ onFinish }) {
   if (step === 3) {
     return (
       <SafeAreaView style={s.safe}>
+        <BackBtn onPress={goBack} />
         <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
           <Dots current={2} total={4} />
           <View style={s.ndIconWrap}>
@@ -314,6 +332,7 @@ export default function OnboardingScreen({ onFinish }) {
   if (step === 4) {
     return (
       <SafeAreaView style={s.safe}>
+        <BackBtn onPress={goBack} />
         <ScrollView contentContainerStyle={[s.scrollCenter, { paddingTop: 32 }]} showsVerticalScrollIndicator={false}>
           <Dots current={3} total={4} />
           <Text style={s.stepTitle}>Choose what helps</Text>
@@ -369,6 +388,7 @@ export default function OnboardingScreen({ onFinish }) {
   // ── Step 5: Ready ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe}>
+      <BackBtn onPress={goBack} />
       <View style={s.center}>
         <Dots current={3} total={4} />
         <Text style={s.readyTitle}>
@@ -392,6 +412,13 @@ export default function OnboardingScreen({ onFinish }) {
 const s = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: C.cream },
+
+  backBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 18, paddingTop: 14, paddingBottom: 4,
+    alignSelf: 'flex-start',
+  },
+  backBtnText: { fontSize: 15, fontWeight: '600', color: C.clay },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   scrollCenter: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 40 },
 
