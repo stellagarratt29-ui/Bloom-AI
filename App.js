@@ -261,7 +261,7 @@ function ThemedShell({ children }) {
     return <View style={{ flex: 1, backgroundColor: colors.bg }}>{children}</View>;
   }
   return (
-    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#EAE5DE' }}>
+    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#E8E2D8' }}>
       <View style={{ flex: 1, width: '100%', maxWidth: 430, backgroundColor: colors.bg, overflow: 'hidden' }}>
         {children}
       </View>

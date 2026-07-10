@@ -303,8 +303,8 @@ const s = StyleSheet.create({
   hobbyCard: {
     borderRadius: 18, borderWidth: 1,
     padding: 18, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    shadowColor: '#2A3A2C', shadowOpacity: 0.09, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   emojiCircle: {

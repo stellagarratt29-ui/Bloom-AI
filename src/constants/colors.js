@@ -1,75 +1,75 @@
 // ─────────────────────────────────────────────────────
-//  BLOOM — Floral Pastel Palette
-//  Aesthetic stationery: rose · lilac · plum · sage
+//  BLOOM — Botanical Palette
+//  Earthy, grounded: warm cream · forest green · sage · clay
 // ─────────────────────────────────────────────────────
 export const C = {
-  // === Core palette ===
-  cream:    '#FAF6F8',   // petal white — barely-rose white, main bg
-  linen:    '#F5EFF8',   // soft lavender linen
-  ink:      '#3D2C4E',   // deep violet-plum (was earthy forest green)
-  moss:     '#C490A8',   // dusty rose — primary action accent (replaces earthy green)
-  mossDark: '#A87090',   // deeper rose for pressed/active
-  sage:     '#B8A8D0',   // soft lavender-grey (replaces mid-sage green)
-  clay:     '#9E8CC4',   // soft lilac — secondary accent (replaces terracotta)
-  clayDark: '#8270AA',   // deeper lilac
-  gold:     '#D4B8C8',   // soft mauve-rose (replaces yellow-gold)
+  // === Core palette (per spec) ===
+  cream:    '#FBF7EF',   // warm cream — main bg
+  linen:    '#F5F0E8',   // warm linen — secondary tint
+  ink:      '#3A4A3D',   // deep forest green — primary text
+  moss:     '#7C9473',   // sage green — primary action accent
+  mossDark: '#627864',   // deeper sage for pressed/active
+  sage:     '#A8BB9E',   // soft sage — supporting elements
+  clay:     '#C98B6B',   // dusty peach/clay — secondary accent
+  clayDark: '#B07050',   // deeper clay
+  gold:     '#D4A86A',   // warm amber-gold
   white:    '#FFFFFF',
-  shell:    '#F2EBF7',   // lavender shell
+  shell:    '#F5EFE6',   // warm shell
 
-  // === Floral accent pastels ===
-  lavender: '#C0AEDD',   // medium lavender
-  mint:     '#A8C4B8',   // very soft floral sage
-  sky:      '#A8BCDC',   // periwinkle blue
-  pink:     '#E8B0C4',   // soft blush
+  // === Supporting tones ===
+  lavender: '#A8AAC8',   // soft blue-grey (supporting)
+  mint:     '#A8C4A8',   // fresh mint green
+  sky:      '#7AAAC4',   // clear sky blue
+  pink:     '#D4A8A0',   // soft terracotta-rose
 
   // === Per-theme accent darks ===
-  lavDark:  '#9878CC',   // medium lilac (Grow tab via lavender bg)
-  mintDark: '#7BAAA0',   // soft sage-teal (Grow tab, muted nature)
-  skyDark:  '#7898C4',   // periwinkle (Calendar, sky tab)
-  pinkDark: '#D08098',   // dusty rose-pink (Goals tab)
+  lavDark:  '#7888B8',
+  mintDark: '#6A9A78',
+  skyDark:  '#5888A8',
+  pinkDark: '#B88878',
 
-  // === Category pill colors — all floral ===
-  pillPinkBg:   '#FDE8F0',   pillPinkText: '#B86080',   // rose (School & Health)
-  pillLavBg:    '#EEE8F8',   pillLavText:  '#8065B8',   // lilac (Tasks)
-  pillSkyBg:    '#E4ECF8',   pillSkyText:  '#5878C4',   // periwinkle (Fun)
-  pillMintBg:   '#E4F2EE',   pillMintText: '#5A8E7A',   // sage (extra)
+  // === Category pill colors — warm botanical ===
+  pillPinkBg:   '#FDE8E4',   pillPinkText: '#C06850',   // terracotta (School & Health)
+  pillLavBg:    '#EEE8F5',   pillLavText:  '#7060A8',   // soft violet (Tasks)
+  pillSkyBg:    '#E4EEF8',   pillSkyText:  '#4878A8',   // sky (Fun)
+  pillMintBg:   '#E4F0E8',   pillMintText: '#508A60',   // sage (extra)
 
   // === Background washes ===
-  lavWash:  '#F3EEF9',   // soft lilac wash
-  mintWash: '#EEF5F1',   // very soft sage wash
-  skyWash:  '#EEF2F9',   // periwinkle wash
-  pinkWash: '#FDF0F5',   // blush wash
+  lavWash:  '#F3EEF9',
+  mintWash: '#EEF5EE',
+  skyWash:  '#EEF4F8',
+  pinkWash: '#FDF0EE',
 
-  // === Dark mode (plum-based) ===
-  darkBg:      '#1E1624',   // deep plum-dark
-  darkCard:    '#2A1E34',   // medium plum
-  darkBorder:  '#3D2E4A',   // plum border
-  darkText:    '#EDE0F2',   // soft lavender-white
-  darkSubtext: '#9078A8',   // muted lavender
-  darkInput:   '#1E1624',
+  // === Dark mode (forest-based) ===
+  darkBg:      '#1A221C',   // deep forest dark
+  darkCard:    '#202E22',   // forest card
+  darkBorder:  '#2E3E30',   // forest border
+  darkText:    '#E4EDE4',   // soft greenish-white
+  darkSubtext: '#78A080',   // muted sage
+  darkInput:   '#1A221C',
 
   // === Aliases ===
-  forest:    '#3D2C4E',
-  sagePale:  '#F0EAF6',   // very soft lavender wash (was sage-pale green)
-  sageLight: '#DDD3E8',   // light lavender (was sage-light green)
-  sageMid:   '#B8A8D0',   // lavender (was mid-sage)
-  clayLight: '#D4BEDC',   // light lilac
-  clayPale:  '#F5F0FA',   // near-white lilac
-  goldLight: '#E8D0DC',   // soft rose-mauve light
-  goldPale:  '#FBF5F8',   // near-white rose
-  muted:     '#9B8FAA',   // dusty mauve (was neutral grey)
-  border:    '#EAE3F0',   // soft lavender-grey border (was warm linen)
-  overlay:   'rgba(61,44,78,0.28)',
+  forest:    '#3A4A3D',
+  sagePale:  '#EDF2E8',   // very light sage
+  sageLight: '#C8D8C0',   // light sage
+  sageMid:   '#A8BB9E',
+  clayLight: '#E0C4A8',
+  clayPale:  '#FBF0E8',
+  goldLight: '#E8D0A8',
+  goldPale:  '#FAF4E8',
+  muted:     '#7A8A7A',   // muted forest grey-green
+  border:    '#E4E0D8',   // warm linen border
+  overlay:   'rgba(58,74,61,0.28)',
 };
 
-// Background theme hex values (wash backgrounds, barely-tinted)
+// Background theme hex values
 export const BG_THEMES = {
-  cream:    '#FAF6F8',   // petal white (default)
+  cream:    '#FBF7EF',   // warm cream (default)
   lavender: '#F3EEF9',   // soft lilac wash
-  mint:     '#EEF5F1',   // very soft sage
-  sky:      '#EEF2F9',   // soft periwinkle
-  pink:     '#FDF0F5',   // soft blush
+  mint:     '#EEF5EE',   // very soft sage
+  sky:      '#EEF4F8',   // soft sky
+  pink:     '#FDF0EE',   // soft blush
 };
 
-// Goal card left-border accent colors — soft floral pastels
-export const GOAL_ACCENTS = ['#D4A5B8', '#9E8CC4', '#C0AEDD', '#96B5A4', '#D4B8C8'];
+// Goal card left-border accent colors — warm botanical
+export const GOAL_ACCENTS = ['#C98B6B', '#7C9473', '#A8BB9E', '#7AAAC4', '#D4A86A'];

@@ -322,10 +322,10 @@ const ss = StyleSheet.create({
 
   taskCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 14,
+    borderRadius: 16, paddingVertical: 14, paddingHorizontal: 14,
     borderWidth: 1, marginBottom: 8,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    shadowColor: '#2A3A2C', shadowOpacity: 0.09, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
   taskCardDone: { opacity: 0.55 },
   taskCardSlim: { paddingVertical: 10, marginBottom: 10 },
