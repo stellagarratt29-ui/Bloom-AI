@@ -2,8 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const API_KEY_STORAGE = '@bloom_ai_key';
-const AI_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.1-8b-instant';
+const AI_URL   = 'https://api.groq.com/openai/v1/chat/completions';
+const AUDIO_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
+const MODEL    = 'llama-3.1-8b-instant';
 
 // Default key embedded at build time — set EXPO_PUBLIC_GROQ_KEY in .env.local
 // so users don't need to enter their own key.
@@ -23,6 +24,32 @@ export async function saveApiKey(key) {
     if (key?.trim()) await AsyncStorage.setItem(API_KEY_STORAGE, key.trim());
     else await AsyncStorage.removeItem(API_KEY_STORAGE);
   } catch {}
+}
+
+export async function transcribeAudio(audioBlob) {
+  const key = await getApiKey();
+  if (!key) throw Object.assign(new Error('NO_KEY'), { code: 'NO_KEY' });
+
+  // Determine file extension from MIME type
+  const mime = audioBlob.type || 'audio/webm';
+  const ext  = mime.includes('mp4') || mime.includes('m4a') ? 'm4a'
+             : mime.includes('ogg') ? 'ogg'
+             : mime.includes('wav') ? 'wav'
+             : 'webm';
+
+  const form = new FormData();
+  form.append('file', audioBlob, `audio.${ext}`);
+  form.append('model', 'whisper-large-v3');
+
+  const res = await fetch(AUDIO_URL, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}` },
+    body: form,
+  });
+
+  if (!res.ok) throw new Error(`Transcription failed: ${res.status}`);
+  const data = await res.json();
+  return (data.text ?? '').trim();
 }
 
 export async function callClaude({ system, messages, maxTokens = 600 }) {

@@ -1,62 +1,86 @@
 import React, { useRef, useState } from 'react';
-import { TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { TouchableOpacity, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import Icon from './Icon';
 import { C } from '../constants/colors';
+import { transcribeAudio } from '../services/ai';
 
+// States: 'idle' | 'recording' | 'processing'
 export default function VoiceMicButton({ onTranscript, color, activeColor }) {
-  const [listening, setListening] = useState(false);
-  const recRef = useRef(null);
+  const [status, setStatus] = useState('idle');
+  const recorderRef = useRef(null);
+  const chunksRef   = useRef([]);
+  const streamRef   = useRef(null);
 
-  const toggle = () => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      alert('Voice input needs Chrome, Edge, or Safari. Try one of those browsers.');
-      return;
-    }
-
-    if (listening) {
-      recRef.current?.stop();
-      return;
-    }
-
+  const start = async () => {
     try {
-      const rec = new SR();
-      rec.lang = 'en-US';
-      rec.interimResults = true;
-      rec.continuous = false;
-      recRef.current = rec;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
 
-      rec.onstart  = () => setListening(true);
-      rec.onend    = () => { setListening(false); recRef.current = null; };
-      rec.onerror  = (e) => {
-        setListening(false);
-        recRef.current = null;
-        if (e.error === 'not-allowed') {
-          alert('Microphone blocked. Tap the lock icon in your browser address bar and allow microphone access, then try again.');
-        }
+      const rec = new MediaRecorder(stream);
+      recorderRef.current = rec;
+
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
       };
-      rec.onresult = (e) => {
-        const text = Array.from(e.results).map(r => r[0].transcript).join('');
-        onTranscript(text);
+
+      rec.onstop = async () => {
+        // Stop mic light immediately
+        stream.getTracks().forEach(t => t.stop());
+        setStatus('processing');
+
+        try {
+          const blob = new Blob(chunksRef.current, { type: rec.mimeType || 'audio/webm' });
+          const text = await transcribeAudio(blob);
+          if (text) onTranscript(text);
+        } catch (err) {
+          console.warn('Transcription error:', err);
+        } finally {
+          setStatus('idle');
+        }
       };
 
       rec.start();
+      setStatus('recording');
     } catch (err) {
-      setListening(false);
+      setStatus('idle');
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert('Microphone access is blocked.\n\nTap the lock icon in your browser address bar → allow microphone → try again.');
+      } else if (err.name === 'NotFoundError') {
+        alert('No microphone found on this device.');
+      }
     }
   };
 
-  const bg = listening ? (activeColor || '#E84040') : (color || C.border);
+  const stop = () => {
+    recorderRef.current?.stop();
+  };
+
+  const toggle = () => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert('Voice input needs HTTPS and a modern browser. Try Chrome or Safari.');
+      return;
+    }
+    if (status === 'idle')      start();
+    if (status === 'recording') stop();
+  };
+
+  const isRecording  = status === 'recording';
+  const isProcessing = status === 'processing';
+  const bg = isRecording ? (activeColor || '#E84040') : (color || C.border);
 
   return (
     <TouchableOpacity
       style={[s.btn, { backgroundColor: bg }]}
       onPress={toggle}
       activeOpacity={0.75}
+      disabled={isProcessing}
     >
-      <Icon name="mic" size={18} color={listening ? '#fff' : C.muted} />
+      {isProcessing
+        ? <ActivityIndicator size="small" color={C.muted} />
+        : <Icon name="mic" size={18} color={isRecording ? '#fff' : C.muted} />
+      }
     </TouchableOpacity>
   );
 }
