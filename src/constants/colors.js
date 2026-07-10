@@ -1,75 +1,76 @@
 // ─────────────────────────────────────────────────────
 //  BLOOM — Clean Girl Palette
-//  Warm oat milk · caramel latte · soft blush · warm near-black
+//  Crisp near-white · clean grey · dusty rose · near-black
+//  Think: Glossier, Rhode Skin, The Row — edited, not earthy
 // ─────────────────────────────────────────────────────
 export const C = {
   // === Core palette ===
-  cream:    '#FAF8F5',   // warm oat milk — main bg
-  linen:    '#F5F0EA',   // soft warm linen
-  ink:      '#211F1C',   // deep warm near-black (not pure, not green)
-  moss:     '#A88B68',   // caramel latte — primary action accent
-  mossDark: '#8A7050',   // deeper caramel for pressed/active
-  sage:     '#C8B8A0',   // soft warm nude-sand
-  clay:     '#C9907E',   // soft blush-nude — secondary accent
-  clayDark: '#A87060',   // deeper blush
-  gold:     '#C8A870',   // warm honey gold
+  cream:    '#F9F9F7',   // barely off-white — NOT warm, NOT sandy
+  linen:    '#F3F3F1',   // clean off-white secondary
+  ink:      '#18181B',   // clean near-black (no warm/green bias)
+  moss:     '#B5909A',   // dusty rose-mauve — primary action
+  mossDark: '#987480',   // deeper mauve
+  sage:     '#C4BEBA',   // barely-warm neutral grey
+  clay:     '#D4AEB6',   // soft petal rose — secondary accent
+  clayDark: '#B88E98',   // deeper petal
+  gold:     '#C8B090',   // champagne (used sparingly)
   white:    '#FFFFFF',
-  shell:    '#F8F4EE',   // very soft warm shell
+  shell:    '#F5F3F0',   // barely-off-white shell
 
-  // === Supporting tones ===
-  lavender: '#BFB8CC',   // dusty muted mauve (very desaturated)
-  mint:     '#B8C8B8',   // very desaturated sage
-  sky:      '#A8B8CC',   // soft steel blue
-  pink:     '#D8B8B0',   // soft blush-rose
+  // === Supporting tones — clean, desaturated ===
+  lavender: '#BEB8CC',   // barely lavender
+  mint:     '#B8C4BC',   // barely sage
+  sky:      '#B0BCCA',   // barely steel blue
+  pink:     '#D8B8BC',   // petal pink
 
   // === Per-theme accent darks ===
-  lavDark:  '#8878A0',
-  mintDark: '#608070',
-  skyDark:  '#6080A0',
-  pinkDark: '#B88878',
+  lavDark:  '#9088B0',
+  mintDark: '#708878',
+  skyDark:  '#6888A0',
+  pinkDark: '#B08890',
 
-  // === Category pill colors — muted, sophisticated ===
-  pillPinkBg:   '#FAE8E4',   pillPinkText: '#B87060',   // soft terracotta
-  pillLavBg:    '#F0ECF4',   pillLavText:  '#887898',   // muted mauve
-  pillSkyBg:    '#E8EEF4',   pillSkyText:  '#6080A0',   // soft steel
-  pillMintBg:   '#E8EEE8',   pillMintText: '#608070',   // muted sage
+  // === Category pills — barely-there, clean ===
+  pillPinkBg:   '#F5E8EA',   pillPinkText: '#A87880',   // soft rose
+  pillLavBg:    '#EEEAF4',   pillLavText:  '#8878A0',   // barely lavender
+  pillSkyBg:    '#E8EEF2',   pillSkyText:  '#6888A0',   // barely steel
+  pillMintBg:   '#E8EEEA',   pillMintText: '#688878',   // barely sage
 
-  // === Background washes ===
-  lavWash:  '#F4F0F8',
-  mintWash: '#F0F4F0',
-  skyWash:  '#EEF2F6',
-  pinkWash: '#F8F0EE',
+  // === Background washes — extremely light ===
+  lavWash:  '#F4F2F8',
+  mintWash: '#F2F4F2',
+  skyWash:  '#F0F2F6',
+  pinkWash: '#F8F0F2',
 
-  // === Dark mode (warm dark) ===
-  darkBg:      '#1A1814',   // deep warm dark
-  darkCard:    '#241E18',   // warm dark card
-  darkBorder:  '#342E26',   // warm dark border
-  darkText:    '#F0E8DC',   // soft warm white
-  darkSubtext: '#8A8078',   // warm muted
-  darkInput:   '#1A1814',
+  // === Dark mode — clean Apple-style dark ===
+  darkBg:      '#111113',   // deep clean dark
+  darkCard:    '#1C1C1E',   // Apple system card dark
+  darkBorder:  '#2C2C2E',   // Apple system separator
+  darkText:    '#F5F5F5',   // clean white
+  darkSubtext: '#8E8E93',   // Apple system secondary label
+  darkInput:   '#111113',
 
   // === Aliases ===
-  forest:    '#211F1C',
-  sagePale:  '#F4EEE6',   // warm pale
-  sageLight: '#DDD5C8',   // light warm sand
-  sageMid:   '#C8B8A0',
-  clayLight: '#E8CEC4',
-  clayPale:  '#FAF0EC',
-  goldLight: '#E8D4B0',
-  goldPale:  '#FAF2E4',
-  muted:     '#9A9490',   // warm neutral grey
-  border:    '#EDEAE4',   // barely-there warm border
-  overlay:   'rgba(33,31,28,0.24)',
+  forest:    '#18181B',
+  sagePale:  '#F0EFED',   // barely grey
+  sageLight: '#DCDAD8',   // clean light grey
+  sageMid:   '#C4BEBA',
+  clayLight: '#E8D0D4',
+  clayPale:  '#FAF0F2',
+  goldLight: '#E4D4B8',
+  goldPale:  '#FAF4EC',
+  muted:     '#9A9A9A',   // clean neutral grey — no earthy bias
+  border:    '#EBEBEB',   // clean light grey border
+  overlay:   'rgba(24,24,27,0.24)',
 };
 
-// Background theme hex values
+// Background themes — all extremely light, barely any color
 export const BG_THEMES = {
-  cream:    '#FAF8F5',   // warm oat milk (default)
-  lavender: '#F4F0F8',   // barely lilac
-  mint:     '#F0F4F0',   // barely sage
-  sky:      '#EEF2F6',   // barely steel
-  pink:     '#F8F0EE',   // barely blush
+  cream:    '#F9F9F7',   // barely off-white (default)
+  lavender: '#F4F2F8',   // barely lavender
+  mint:     '#F2F4F2',   // barely sage
+  sky:      '#F0F2F6',   // barely steel
+  pink:     '#F8F0F2',   // barely rose
 };
 
-// Goal card accent colors — warm, sophisticated
-export const GOAL_ACCENTS = ['#A88B68', '#C9907E', '#C8B8A0', '#A8B8CC', '#C8A870'];
+// Goal card accents — clean, soft
+export const GOAL_ACCENTS = ['#B5909A', '#D4AEB6', '#C4BEBA', '#B0BCCA', '#C8B090'];

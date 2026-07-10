@@ -14,12 +14,12 @@ const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
 
 const BADGE_GRADIENTS = [
-  ['#F2DBC8', '#E8C8B8'],
-  ['#D8E4D0', '#C8D8C0'],
-  ['#E8D8C0', '#D4C4A8'],
-  ['#F0E0D0', '#E8D0C0'],
-  ['#C8D8D4', '#B8C8C4'],
-  ['#E4D8CC', '#D4C8B8'],
+  ['#F0E4E8', '#E4D8DC'],
+  ['#E4E8E4', '#D8DCD8'],
+  ['#E8E4F0', '#DCD8E8'],
+  ['#F0E8E4', '#E4DCD8'],
+  ['#E4ECF0', '#D8E4E8'],
+  ['#EDE8EC', '#E4DDE2'],
 ];
 
 export default function HobbiesScreen({ navigation }) {
