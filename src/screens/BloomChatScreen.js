@@ -332,8 +332,13 @@ export default function BloomChatScreen() {
         </ScrollView>
 
         <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
+          {!!input.trim() && (
+            <TouchableOpacity style={s.clearBtn} onPress={() => setInput('')}>
+              <Icon name="x" size={16} color={C.muted} />
+            </TouchableOpacity>
+          )}
           <VoiceMicButton
-            onTranscript={(t) => setInput(t)}
+            onTranscript={(txt) => setInput(prev => prev ? prev + ' ' + txt : txt)}
             color={t.card}
           />
 
@@ -425,6 +430,10 @@ const s = StyleSheet.create({
     backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
+  clearBtn: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: C.border,
+    alignItems: 'center', justifyContent: 'center', marginRight: 2,
+  },
   micBtn: { alignItems: 'center', justifyContent: 'center' },
   micInner: {
     width: 42, height: 42, borderRadius: 21, borderWidth: 1.5,

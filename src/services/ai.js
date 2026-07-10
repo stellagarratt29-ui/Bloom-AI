@@ -396,13 +396,14 @@ function _hobbyFallback(hobbyName, stepIndex) {
 // Generate a goal action — first or next
 export async function generateGoalAction({ goalText, completedActions = [] }) {
   const isFirst = completedActions.length === 0;
-  const system = `You generate one specific next action for someone working toward a goal.
+  const system = `You generate one gentle, achievable next action for someone working toward a goal.
 Requirements:
-- Completable today or this week
-- Specific and concrete — not "research" but "open X and find Y and write down Z"
-- Most logical ${isFirst ? 'first step to get started' : 'next step given progress so far'}
-- Takes 30 minutes to 2 hours
-Write ONE action. 1–2 sentences. No bullet points.`;
+- As small and frictionless as possible — ideally under 10 minutes
+- Uses simple tools only: phone alarm, pen and paper, a quick search, a voice note — NEVER suggest spreadsheets, apps to install, or complex tracking systems
+- ${isFirst ? 'The tiniest possible first step — so easy it feels almost too simple' : 'The next natural step given what they have already done'}
+- Written for a busy person who might be a parent, has limited time, and needs to feel a small win quickly
+- Specific and concrete — not "research X" but "take out your phone and set a reminder for X tonight"
+Write ONE action. 1–2 sentences. No bullet points. No overwhelm.`;
 
   const content = isFirst
     ? `Goal: ${goalText}`
@@ -420,15 +421,16 @@ Write ONE action. 1–2 sentences. No bullet points.`;
 function _goalFallback(goalText, stepIndex) {
   const t = goalText.toLowerCase();
   if (stepIndex === 0) {
-    if (/money|earn|income|business|sell/.test(t)) return "Write down 3 realistic ways to earn money toward this goal, pick the one requiring the least startup cost, and list exactly what you'd need to begin.";
-    if (/fit|run|gym|weight|health/.test(t)) return 'Do 10 minutes of movement right now — done when 10 minutes is up.';
-    if (/learn|study|language|skill|code|programming/.test(t)) return 'Find one free resource for this topic and complete the very first lesson today.';
-    if (/write|book|blog|publish/.test(t)) return 'Write 200 words on this topic right now without stopping to edit — done when you hit 200 words.';
-    if (/travel|move|abroad/.test(t)) return 'Look up the full cost (transport, accommodation, daily budget) and write down real numbers — done when you have actual figures written out.';
-    if (/save|invest|financial/.test(t)) return "Open your bank app and calculate exactly how much you'd need to save per week to hit this goal by year end — write the number down.";
-    return `Write exactly what "done" looks like for this goal in specific, measurable terms — done when you have a clear finish line written out.`;
+    if (/sleep|rest|tired|bedtime/.test(t)) return "Set a bedtime alarm on your phone for 30 minutes earlier than usual tonight — done when the alarm is set.";
+    if (/money|earn|income|business|sell/.test(t)) return "Grab a piece of paper and write down one realistic way you could work toward this — don't overthink it, one idea is enough to start.";
+    if (/fit|run|gym|weight|health/.test(t)) return "Put on your shoes right now and step outside for 5 minutes — done when you get back through the door.";
+    if (/learn|study|language|skill|code|programming/.test(t)) return "Search for one beginner video on this topic and watch the first 5 minutes — done when you press play.";
+    if (/write|book|blog|publish/.test(t)) return "Set a 5-minute timer and write whatever comes to mind about this topic — stop when the timer goes off.";
+    if (/travel|move|abroad/.test(t)) return "Send yourself a voice note describing what this trip looks like in your head — done when you've recorded it.";
+    if (/save|invest|financial/.test(t)) return "Open your banking app and check your current balance — done once you know the number you're starting from.";
+    return "Take 2 minutes right now to write down what this goal means to you in one sentence — done when it's written somewhere you can see it.";
   }
-  return `Identify the single biggest obstacle blocking progress on "${goalText}" right now, and write one concrete action that would directly reduce or remove it.`;
+  return `Think of the smallest possible next thing you could do today for "${goalText}" and do just that — even 5 minutes of progress counts.`;
 }
 
 // Quick regex check — is this message likely a calendar action?

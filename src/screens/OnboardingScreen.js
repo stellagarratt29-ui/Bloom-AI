@@ -56,8 +56,10 @@ export default function OnboardingScreen({ onFinish }) {
   const [step,        setStep]       = useState(0);
   const [name,        setName]       = useState('');
   const [ageRange,    setAgeRange]   = useState('');
-  const [occupation,  setOccupation] = useState('');
-  const [selHobbies,  setSelHobbies] = useState([]);
+  const [occupation,        setOccupation]       = useState('');
+  const [customOccupation,  setCustomOccupation] = useState('');
+  const [selHobbies,        setSelHobbies]       = useState([]);
+  const [customHobbyText,   setCustomHobbyText]  = useState('');
   const [ndChoice,    setNdChoice]   = useState(null); // 'yes' | 'no' | 'skip'
   const [ndToggles,   setNdToggles]  = useState({
     autoBreakTasks: false, ideaCapture: false,
@@ -69,8 +71,15 @@ export default function OnboardingScreen({ onFinish }) {
 
   const toggleHobby = (h) =>
     setSelHobbies(prev =>
-      prev.includes(h) ? prev.filter(x => x !== h) : prev.length < 3 ? [...prev, h] : prev
+      prev.includes(h) ? prev.filter(x => x !== h) : prev.length < 5 ? [...prev, h] : prev
     );
+
+  const addCustomHobby = () => {
+    const h = customHobbyText.trim();
+    if (!h || selHobbies.includes(h) || selHobbies.length >= 5) return;
+    setSelHobbies(prev => [...prev, h]);
+    setCustomHobbyText('');
+  };
 
   const toggleNd = (key) =>
     setNdToggles(prev => ({ ...prev, [key]: !prev[key] }));
@@ -78,8 +87,11 @@ export default function OnboardingScreen({ onFinish }) {
   const finish = async () => {
     setSaving(true);
     try {
+      const finalOccupation = occupation === 'Other' && customOccupation.trim()
+        ? customOccupation.trim()
+        : occupation;
       onFinish(
-        name.trim(), ageRange, occupation,
+        name.trim(), ageRange, finalOccupation,
         null, null, selHobbies,
         ndChoice, ndChoice === 'yes' ? ndToggles : null,
       );
@@ -154,6 +166,17 @@ export default function OnboardingScreen({ onFinish }) {
               </TouchableOpacity>
             ))}
           </View>
+          {occupation === 'Other' && (
+            <TextInput
+              style={[s.textInput, { marginTop: 10, marginBottom: 0 }]}
+              placeholder="e.g. Mum, dentist, nurse, freelancer…"
+              placeholderTextColor={C.muted}
+              value={customOccupation}
+              onChangeText={setCustomOccupation}
+              autoCapitalize="words"
+              returnKeyType="done"
+            />
+          )}
 
           <TouchableOpacity style={[s.primaryBtn, { marginTop: 32 }]} onPress={next}>
             <Text style={s.primaryBtnText}>Continue →</Text>
@@ -182,10 +205,39 @@ export default function OnboardingScreen({ onFinish }) {
                 <Text style={[s.hobbyChipText, selHobbies.includes(h) && s.hobbyChipTextActive]}>{h}</Text>
               </TouchableOpacity>
             ))}
+            {selHobbies.filter(h => !HOBBY_SUGGESTIONS.includes(h)).map(h => (
+              <TouchableOpacity
+                key={h}
+                style={[s.hobbyChip, s.hobbyChipActive]}
+                onPress={() => toggleHobby(h)}
+              >
+                <Text style={[s.hobbyChipText, s.hobbyChipTextActive]}>{h}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <TouchableOpacity style={[s.primaryBtn, { marginTop: 28 }]} onPress={next}>
-            <Text style={s.primaryBtnText}>{selHobbies.length > 0 ? `Add ${selHobbies.length} hobbies →` : 'Skip →'}</Text>
+          <View style={s.customHobbyRow}>
+            <TextInput
+              style={s.customHobbyInput}
+              placeholder="Type your own hobby…"
+              placeholderTextColor={C.muted}
+              value={customHobbyText}
+              onChangeText={setCustomHobbyText}
+              onSubmitEditing={addCustomHobby}
+              returnKeyType="done"
+              autoCapitalize="words"
+            />
+            <TouchableOpacity
+              style={[s.customHobbyAdd, !customHobbyText.trim() && { opacity: 0.35 }]}
+              onPress={addCustomHobby}
+              disabled={!customHobbyText.trim()}
+            >
+              <Text style={s.customHobbyAddText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={[s.primaryBtn, { marginTop: 20 }]} onPress={next}>
+            <Text style={s.primaryBtnText}>{selHobbies.length > 0 ? `Add ${selHobbies.length} ${selHobbies.length === 1 ? 'hobby' : 'hobbies'} →` : 'Skip →'}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -353,7 +405,18 @@ const s = StyleSheet.create({
   chipText: { fontSize: 14, fontWeight: '600', color: C.muted },
   chipTextActive: { color: C.ink },
 
-  hobbyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%', justifyContent: 'center' },
+  hobbyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%', justifyContent: 'center', marginBottom: 16 },
+  customHobbyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', marginBottom: 4 },
+  customHobbyInput: {
+    flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
+    borderRadius: 14, paddingVertical: 11, paddingHorizontal: 16,
+    fontSize: 15, color: C.ink,
+  },
+  customHobbyAdd: {
+    backgroundColor: C.clay, borderRadius: 14,
+    paddingVertical: 11, paddingHorizontal: 18,
+  },
+  customHobbyAddText: { color: C.white, fontWeight: '700', fontSize: 14 },
   hobbyChip: {
     paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20,
     borderWidth: 1.5, borderColor: C.border, backgroundColor: C.white,

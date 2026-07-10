@@ -174,7 +174,12 @@ export default function GoalDetailScreen({ route, navigation }) {
         </ScrollView>
 
         <View style={s.inputBar}>
-          <VoiceMicButton onTranscript={(t) => setInput(t)} />
+          {!!input.trim() && (
+            <TouchableOpacity style={s.clearBtn} onPress={() => setInput('')}>
+              <Icon name="x" size={16} color={C.muted} />
+            </TouchableOpacity>
+          )}
+          <VoiceMicButton onTranscript={(txt) => setInput(prev => prev ? prev + ' ' + txt : txt)} />
           <TextInput
             style={s.input}
             placeholder="Ask Bloom about this step…"
@@ -260,4 +265,8 @@ const s = StyleSheet.create({
     backgroundColor: C.moss, alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
+  clearBtn: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: C.border,
+    alignItems: 'center', justifyContent: 'center', marginRight: 2,
+  },
 });

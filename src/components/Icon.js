@@ -118,6 +118,12 @@ const PATHS = {
     </>
   ),
   'zap': <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+  'x': (
+    <>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 20, color = '#3A4A3D', style }) {

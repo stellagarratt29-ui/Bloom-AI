@@ -204,7 +204,12 @@ export default function CalendarScreen() {
       </ScrollView>
 
       <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
-        <VoiceMicButton onTranscript={(txt) => setInput(txt)} color={t.card} />
+        {!!input.trim() && (
+          <TouchableOpacity style={s.clearBtn} onPress={() => setInput('')}>
+            <Icon name="x" size={16} color={C.muted} />
+          </TouchableOpacity>
+        )}
+        <VoiceMicButton onTranscript={(txt) => setInput(prev => prev ? prev + ' ' + txt : txt)} color={t.card} />
         <TextInput
           style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
           placeholder="Ask about your schedule…"
@@ -417,4 +422,8 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },
+  clearBtn: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: C.border,
+    alignItems: 'center', justifyContent: 'center', marginRight: 2,
+  },
 });
