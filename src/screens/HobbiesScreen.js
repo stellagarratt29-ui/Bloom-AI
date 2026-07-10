@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   SafeAreaView, StyleSheet, Platform, ActivityIndicator, Modal,
@@ -36,6 +36,20 @@ export default function HobbiesScreen({ navigation }) {
   const [regen,       setRegen]       = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [menuTarget, setMenuTarget] = useState(null);
+  const generatingIds = useRef(new Set());
+
+  // Auto-generate curricula for hobbies that arrived from onboarding with no milestones
+  useEffect(() => {
+    hobbies.forEach(h => {
+      if (!h.milestones?.length && !generatingIds.current.has(h.id)) {
+        generatingIds.current.add(h.id);
+        generateHobbyCurriculum({ hobbyName: h.name, skillLevel: h.skillLevel ?? 'beginner' })
+          .then(milestones => updateHobby(h.id, {}, milestones))
+          .catch(() => {})
+          .finally(() => generatingIds.current.delete(h.id));
+      }
+    });
+  }, [hobbies]);
 
   const handleAdd = async () => {
     const name = hobbyName.trim();

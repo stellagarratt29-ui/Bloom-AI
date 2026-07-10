@@ -62,9 +62,13 @@ export default function ScreenAwarenessScreen({ navigation }) {
             <Text style={[s.redirectText, { color: C.clay }]}>{h.name} instead?</Text>
           </TouchableOpacity>
         )) : (
-          <View style={[s.noHobbiesHint, { borderColor: t.border, backgroundColor: t.card }]}>
-            <Text style={[s.noHobbiesText, { color: t.subtext }]}>Add hobbies in the Grow tab to see redirect suggestions here.</Text>
-          </View>
+          <TouchableOpacity
+            style={[s.noHobbiesHint, { borderColor: C.clay, backgroundColor: t.card }]}
+            onPress={() => navigation.navigate('GrowTab')}
+            activeOpacity={0.7}
+          >
+            <Text style={[s.noHobbiesText, { color: C.clay }]}>Tap to add hobbies in Grow →</Text>
+          </TouchableOpacity>
         )}
 
         <View style={{ height: 48 }} />

@@ -241,7 +241,12 @@ export function AppProvider({ children }) {
     if (ndSupportChoice) setNdSupport(ndSupportChoice);
     if (ndToggleChoices) setNdToggles({ ...DEFAULT_ND_TOGGLES, ...ndToggleChoices });
     setTasks([]);
-    setHobbies([]);
+    // Save onboarding hobbies as proper objects — milestones generated lazily in HobbiesScreen
+    setHobbies(
+      Array.isArray(initialHobbies) && initialHobbies.length > 0
+        ? initialHobbies.map(name => makeHobby(name, 'beginner', []))
+        : []
+    );
     setHasOnboarded(true);
   }, []);
 
