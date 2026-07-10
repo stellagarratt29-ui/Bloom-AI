@@ -1,75 +1,75 @@
 // ─────────────────────────────────────────────────────
-//  BLOOM — Botanical Palette
-//  Earthy, grounded: warm cream · forest green · sage · clay
+//  BLOOM — Clean Girl Palette
+//  Warm oat milk · caramel latte · soft blush · warm near-black
 // ─────────────────────────────────────────────────────
 export const C = {
-  // === Core palette (per spec) ===
-  cream:    '#FBF7EF',   // warm cream — main bg
-  linen:    '#F5F0E8',   // warm linen — secondary tint
-  ink:      '#3A4A3D',   // deep forest green — primary text
-  moss:     '#7C9473',   // sage green — primary action accent
-  mossDark: '#627864',   // deeper sage for pressed/active
-  sage:     '#A8BB9E',   // soft sage — supporting elements
-  clay:     '#C98B6B',   // dusty peach/clay — secondary accent
-  clayDark: '#B07050',   // deeper clay
-  gold:     '#D4A86A',   // warm amber-gold
+  // === Core palette ===
+  cream:    '#FAF8F5',   // warm oat milk — main bg
+  linen:    '#F5F0EA',   // soft warm linen
+  ink:      '#211F1C',   // deep warm near-black (not pure, not green)
+  moss:     '#A88B68',   // caramel latte — primary action accent
+  mossDark: '#8A7050',   // deeper caramel for pressed/active
+  sage:     '#C8B8A0',   // soft warm nude-sand
+  clay:     '#C9907E',   // soft blush-nude — secondary accent
+  clayDark: '#A87060',   // deeper blush
+  gold:     '#C8A870',   // warm honey gold
   white:    '#FFFFFF',
-  shell:    '#F5EFE6',   // warm shell
+  shell:    '#F8F4EE',   // very soft warm shell
 
   // === Supporting tones ===
-  lavender: '#A8AAC8',   // soft blue-grey (supporting)
-  mint:     '#A8C4A8',   // fresh mint green
-  sky:      '#7AAAC4',   // clear sky blue
-  pink:     '#D4A8A0',   // soft terracotta-rose
+  lavender: '#BFB8CC',   // dusty muted mauve (very desaturated)
+  mint:     '#B8C8B8',   // very desaturated sage
+  sky:      '#A8B8CC',   // soft steel blue
+  pink:     '#D8B8B0',   // soft blush-rose
 
   // === Per-theme accent darks ===
-  lavDark:  '#7888B8',
-  mintDark: '#6A9A78',
-  skyDark:  '#5888A8',
+  lavDark:  '#8878A0',
+  mintDark: '#608070',
+  skyDark:  '#6080A0',
   pinkDark: '#B88878',
 
-  // === Category pill colors — warm botanical ===
-  pillPinkBg:   '#FDE8E4',   pillPinkText: '#C06850',   // terracotta (School & Health)
-  pillLavBg:    '#EEE8F5',   pillLavText:  '#7060A8',   // soft violet (Tasks)
-  pillSkyBg:    '#E4EEF8',   pillSkyText:  '#4878A8',   // sky (Fun)
-  pillMintBg:   '#E4F0E8',   pillMintText: '#508A60',   // sage (extra)
+  // === Category pill colors — muted, sophisticated ===
+  pillPinkBg:   '#FAE8E4',   pillPinkText: '#B87060',   // soft terracotta
+  pillLavBg:    '#F0ECF4',   pillLavText:  '#887898',   // muted mauve
+  pillSkyBg:    '#E8EEF4',   pillSkyText:  '#6080A0',   // soft steel
+  pillMintBg:   '#E8EEE8',   pillMintText: '#608070',   // muted sage
 
   // === Background washes ===
-  lavWash:  '#F3EEF9',
-  mintWash: '#EEF5EE',
-  skyWash:  '#EEF4F8',
-  pinkWash: '#FDF0EE',
+  lavWash:  '#F4F0F8',
+  mintWash: '#F0F4F0',
+  skyWash:  '#EEF2F6',
+  pinkWash: '#F8F0EE',
 
-  // === Dark mode (forest-based) ===
-  darkBg:      '#1A221C',   // deep forest dark
-  darkCard:    '#202E22',   // forest card
-  darkBorder:  '#2E3E30',   // forest border
-  darkText:    '#E4EDE4',   // soft greenish-white
-  darkSubtext: '#78A080',   // muted sage
-  darkInput:   '#1A221C',
+  // === Dark mode (warm dark) ===
+  darkBg:      '#1A1814',   // deep warm dark
+  darkCard:    '#241E18',   // warm dark card
+  darkBorder:  '#342E26',   // warm dark border
+  darkText:    '#F0E8DC',   // soft warm white
+  darkSubtext: '#8A8078',   // warm muted
+  darkInput:   '#1A1814',
 
   // === Aliases ===
-  forest:    '#3A4A3D',
-  sagePale:  '#EDF2E8',   // very light sage
-  sageLight: '#C8D8C0',   // light sage
-  sageMid:   '#A8BB9E',
-  clayLight: '#E0C4A8',
-  clayPale:  '#FBF0E8',
-  goldLight: '#E8D0A8',
-  goldPale:  '#FAF4E8',
-  muted:     '#7A8A7A',   // muted forest grey-green
-  border:    '#E4E0D8',   // warm linen border
-  overlay:   'rgba(58,74,61,0.28)',
+  forest:    '#211F1C',
+  sagePale:  '#F4EEE6',   // warm pale
+  sageLight: '#DDD5C8',   // light warm sand
+  sageMid:   '#C8B8A0',
+  clayLight: '#E8CEC4',
+  clayPale:  '#FAF0EC',
+  goldLight: '#E8D4B0',
+  goldPale:  '#FAF2E4',
+  muted:     '#9A9490',   // warm neutral grey
+  border:    '#EDEAE4',   // barely-there warm border
+  overlay:   'rgba(33,31,28,0.24)',
 };
 
 // Background theme hex values
 export const BG_THEMES = {
-  cream:    '#FBF7EF',   // warm cream (default)
-  lavender: '#F3EEF9',   // soft lilac wash
-  mint:     '#EEF5EE',   // very soft sage
-  sky:      '#EEF4F8',   // soft sky
-  pink:     '#FDF0EE',   // soft blush
+  cream:    '#FAF8F5',   // warm oat milk (default)
+  lavender: '#F4F0F8',   // barely lilac
+  mint:     '#F0F4F0',   // barely sage
+  sky:      '#EEF2F6',   // barely steel
+  pink:     '#F8F0EE',   // barely blush
 };
 
-// Goal card left-border accent colors — warm botanical
-export const GOAL_ACCENTS = ['#C98B6B', '#7C9473', '#A8BB9E', '#7AAAC4', '#D4A86A'];
+// Goal card accent colors — warm, sophisticated
+export const GOAL_ACCENTS = ['#A88B68', '#C9907E', '#C8B8A0', '#A8B8CC', '#C8A870'];

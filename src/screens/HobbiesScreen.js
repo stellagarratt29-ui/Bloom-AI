@@ -14,12 +14,12 @@ const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
 
 const BADGE_GRADIENTS = [
-  ['#F2B9C4', '#C9B8E8'],
-  ['#AEDCC4', '#A8D4E8'],
-  ['#C9B8E8', '#A8D4E8'],
-  ['#F2B9C4', '#AEDCC4'],
-  ['#A8D4E8', '#AEDCC4'],
-  ['#C9B8E8', '#F2B9C4'],
+  ['#F2DBC8', '#E8C8B8'],
+  ['#D8E4D0', '#C8D8C0'],
+  ['#E8D8C0', '#D4C4A8'],
+  ['#F0E0D0', '#E8D0C0'],
+  ['#C8D8D4', '#B8C8C4'],
+  ['#E4D8CC', '#D4C8B8'],
 ];
 
 export default function HobbiesScreen({ navigation }) {
@@ -303,7 +303,7 @@ const s = StyleSheet.create({
   hobbyCard: {
     borderRadius: 18, borderWidth: 1,
     padding: 18, marginBottom: 12,
-    shadowColor: '#2A3A2C', shadowOpacity: 0.09, shadowRadius: 12,
+    shadowColor: '#2A2420', shadowOpacity: 0.09, shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
