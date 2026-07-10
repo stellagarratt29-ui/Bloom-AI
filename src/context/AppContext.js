@@ -48,6 +48,8 @@ const DEFAULT_ND_TOGGLES = {
   timeBuffers:      false,
   reducedClutter:   false,
   gentlerLanguage:  false,
+  dyslexiaMode:     false,
+  textSize:         'normal', // 'normal' | 'large' | 'xl'
 };
 
 export function AppProvider({ children }) {

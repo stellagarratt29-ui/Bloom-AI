@@ -46,6 +46,17 @@ const ND_TOGGLES_DEF = [
     label: 'Gentler language for missed tasks',
     sub: 'Extra-soft copy when something doesn\'t get done.',
   },
+  {
+    key: 'dyslexiaMode',
+    label: 'Dyslexia-friendly text',
+    sub: 'More letter/word spacing, cleaner font, and larger text options.',
+  },
+];
+
+const TEXT_SIZE_OPTIONS = [
+  { key: 'normal', label: 'Normal' },
+  { key: 'large',  label: 'Large' },
+  { key: 'xl',     label: 'Extra large' },
 ];
 
 const APP_VERSION = '1.0.0';
@@ -290,6 +301,29 @@ export default function SettingsScreen() {
                 </View>
               ))}
             </View>
+
+            {!!ndToggles?.dyslexiaMode && (
+              <View style={[s.card, { backgroundColor: t.card, borderColor: t.border, marginTop: 8 }]}>
+                <Text style={[s.ndLabel, { color: t.text, marginBottom: 12 }]}>Text size</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {TEXT_SIZE_OPTIONS.map(opt => {
+                    const active = (ndToggles?.textSize || 'normal') === opt.key;
+                    return (
+                      <TouchableOpacity
+                        key={opt.key}
+                        style={[
+                          s.chip, { flex: 1, alignItems: 'center', justifyContent: 'center' },
+                          active && s.chipActive,
+                        ]}
+                        onPress={() => updateNdToggles({ textSize: opt.key })}
+                      >
+                        <Text style={[s.chipText, active && s.chipTextActive]}>{opt.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
           </>
         )}
 

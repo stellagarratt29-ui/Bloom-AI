@@ -17,6 +17,7 @@ if (Platform.OS !== 'web') {
 import { AppProvider, useApp } from './src/context/AppContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { C } from './src/constants/colors';
+import DyslexiaStyleInjector from './src/components/DyslexiaStyleInjector';
 
 import OnboardingScreen      from './src/screens/OnboardingScreen';
 import TutorialScreen        from './src/screens/TutorialScreen';
@@ -292,6 +293,7 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AppProvider>
+          <DyslexiaStyleInjector />
           <ThemeProvider>
             <ThemedShell>
               <RootNavigator />

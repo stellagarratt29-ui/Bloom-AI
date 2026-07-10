@@ -40,6 +40,17 @@ const ND_TOGGLES_DEF = [
     label: 'Gentler language for missed tasks',
     sub: 'Extra-soft copy when something doesn\'t get done — never "you didn\'t finish," always "that\'s okay, here\'s what\'s next."',
   },
+  {
+    key: 'dyslexiaMode',
+    label: 'Dyslexia-friendly text',
+    sub: 'More spacing between letters and words, cleaner font, and a text size you choose.',
+  },
+];
+
+const TEXT_SIZE_OPTIONS = [
+  { key: 'normal', label: 'Normal' },
+  { key: 'large',  label: 'Large' },
+  { key: 'xl',     label: 'Extra large' },
 ];
 
 function Dots({ current, total }) {
@@ -64,7 +75,9 @@ export default function OnboardingScreen({ onFinish }) {
   const [ndToggles,   setNdToggles]  = useState({
     autoBreakTasks: false, ideaCapture: false,
     timeBuffers: false, reducedClutter: false, gentlerLanguage: false,
+    dyslexiaMode: false,
   });
+  const [ndTextSize,  setNdTextSize] = useState('normal');
   const [saving, setSaving] = useState(false);
 
   const next = () => setStep(s => s + 1);
@@ -90,10 +103,13 @@ export default function OnboardingScreen({ onFinish }) {
       const finalOccupation = occupation === 'Other' && customOccupation.trim()
         ? customOccupation.trim()
         : occupation;
+      const finalNdToggles = ndChoice === 'yes'
+        ? { ...ndToggles, textSize: ndToggles.dyslexiaMode ? ndTextSize : 'normal' }
+        : null;
       onFinish(
         name.trim(), ageRange, finalOccupation,
         null, null, selHobbies,
-        ndChoice, ndChoice === 'yes' ? ndToggles : null,
+        ndChoice, finalNdToggles,
       );
     } finally {
       setSaving(false);
@@ -317,13 +333,30 @@ export default function OnboardingScreen({ onFinish }) {
                 <Text style={s.toggleSub}>{sub}</Text>
               </View>
               <Switch
-                value={ndToggles[key]}
+                value={!!ndToggles[key]}
                 onValueChange={() => toggleNd(key)}
                 trackColor={{ false: C.border, true: C.moss }}
                 thumbColor={C.white}
               />
             </TouchableOpacity>
           ))}
+
+          {ndToggles.dyslexiaMode && (
+            <View style={s.textSizeBox}>
+              <Text style={s.textSizeLabel}>TEXT SIZE</Text>
+              <View style={s.chipRow}>
+                {TEXT_SIZE_OPTIONS.map(opt => (
+                  <TouchableOpacity
+                    key={opt.key}
+                    style={[s.chip, ndTextSize === opt.key && s.chipActive]}
+                    onPress={() => setNdTextSize(opt.key)}
+                  >
+                    <Text style={[s.chipText, ndTextSize === opt.key && s.chipTextActive]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           <TouchableOpacity style={[s.primaryBtn, { marginTop: 24 }]} onPress={next}>
             <Text style={s.primaryBtnText}>Continue →</Text>
@@ -448,6 +481,12 @@ const s = StyleSheet.create({
   ndRadioFill: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.moss },
   ndOptionText: { fontSize: 14, fontWeight: '500', color: C.muted, flex: 1 },
   ndOptionTextActive: { color: C.ink, fontWeight: '600' },
+
+  textSizeBox: {
+    width: '100%', backgroundColor: C.sagePale,
+    borderRadius: 14, padding: 16, marginBottom: 10,
+  },
+  textSizeLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, marginBottom: 10 },
 
   // ND toggles
   toggleCard: {
