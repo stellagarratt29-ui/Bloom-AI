@@ -9,7 +9,25 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { generateYearReview } from '../services/ai';
 
-const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
+function getHobbyIcon(name) {
+  const n = (name || '').toLowerCase();
+  if (/guitar|piano|drum|violin|ukulele|bass/.test(n)) return 'music';
+  if (/sing|choir|vocal/.test(n)) return 'mic';
+  if (/paint|watercolou|watercolor|sketch|draw|art\b/.test(n)) return 'pen-tool';
+  if (/photo|camera/.test(n)) return 'camera';
+  if (/film|video/.test(n)) return 'film';
+  if (/run|jog|sprint/.test(n)) return 'activity';
+  if (/gym|lift|fitness/.test(n)) return 'trending-up';
+  if (/yoga|meditat|mindful/.test(n)) return 'sun';
+  if (/cook|bak|chef/.test(n)) return 'coffee';
+  if (/read|book/.test(n)) return 'book-open';
+  if (/writ|journal|blog/.test(n)) return 'edit-3';
+  if (/code|program|dev/.test(n)) return 'code';
+  if (/garden|plant|flower/.test(n)) return 'feather';
+  if (/knit|sew|crochet/.test(n)) return 'scissors';
+  if (/travel|explore/.test(n)) return 'globe';
+  return 'star';
+}
 
 export default function YearReviewScreen({ navigation }) {
   const { tasks, hobbies, goals } = useApp();
@@ -70,10 +88,11 @@ export default function YearReviewScreen({ navigation }) {
               const total   = h.milestones?.length ?? 1;
               const reached = h.milestoneIndex ?? 0;
               const pct     = total > 0 ? Math.round((reached / total) * 100) : 0;
-              const emoji   = HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length];
               return (
                 <View key={h.id} style={[s.hobbyCard, { backgroundColor: t.card, borderColor: t.border }]}>
-                  <Text style={s.hobbyEmoji}>{emoji}</Text>
+                  <View style={[s.hobbyIconBox, { backgroundColor: C.sagePale }]}>
+                    <Icon name={getHobbyIcon(h.name)} size={18} color={C.moss} />
+                  </View>
                   <View style={s.hobbyInfo}>
                     <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                     <Text style={[s.hobbyMeta, { color: t.subtext }]}>
@@ -180,7 +199,7 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  hobbyEmoji: { fontSize: 26, lineHeight: 30, flexShrink: 0 },
+  hobbyIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   hobbyInfo:  { flex: 1, gap: 4 },
   hobbyName:  { fontSize: 15, fontWeight: '700' },
   hobbyMeta:  { fontSize: 12, lineHeight: 17 },

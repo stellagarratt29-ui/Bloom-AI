@@ -5,14 +5,14 @@
 // ─────────────────────────────────────────────────────
 export const C = {
   // === Core palette ===
-  cream:    '#F9F9F7',   // barely off-white — NOT warm, NOT sandy
-  linen:    '#F3F3F1',   // clean off-white secondary
+  cream:    '#FAFAFA',   // clean near-white — crisp, not sandy
+  linen:    '#F4F4F4',   // light clean grey
   ink:      '#18181B',   // clean near-black (no warm/green bias)
-  moss:     '#B5909A',   // dusty rose-mauve — primary action
-  mossDark: '#987480',   // deeper mauve
-  sage:     '#C4BEBA',   // barely-warm neutral grey
-  clay:     '#D4AEB6',   // soft petal rose — secondary accent
-  clayDark: '#B88E98',   // deeper petal
+  moss:     '#C07A90',   // rose-mauve — primary action (more defined)
+  mossDark: '#A06078',   // deeper rose
+  sage:     '#BEB8BA',   // neutral grey (barely warm)
+  clay:     '#D9A8B4',   // soft petal rose — secondary accent
+  clayDark: '#BC8898',   // deeper petal
   gold:     '#C8B090',   // champagne (used sparingly)
   white:    '#FFFFFF',
   shell:    '#F5F3F0',   // barely-off-white shell
@@ -59,13 +59,13 @@ export const C = {
   goldLight: '#E4D4B8',
   goldPale:  '#FAF4EC',
   muted:     '#9A9A9A',   // clean neutral grey — no earthy bias
-  border:    '#EBEBEB',   // clean light grey border
+  border:    '#E8E8E8',   // clean light grey border
   overlay:   'rgba(24,24,27,0.24)',
 };
 
 // Background themes — all extremely light, barely any color
 export const BG_THEMES = {
-  cream:    '#F9F9F7',   // barely off-white (default)
+  cream:    '#FAFAFA',   // clean near-white (default)
   lavender: '#F4F2F8',   // barely lavender
   mint:     '#F2F4F2',   // barely sage
   sky:      '#F0F2F6',   // barely steel

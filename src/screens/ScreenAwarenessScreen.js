@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StyleSheet, Platform, ActivityIndicator } from 'react-native';
+import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -8,7 +9,25 @@ import { generateScreenInsight } from '../services/ai';
 const MOCK_SCREEN_TIME = '3h 42m';
 const MOCK_UNLOCKS = 28;
 
-const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
+function getHobbyIcon(name) {
+  const n = (name || '').toLowerCase();
+  if (/guitar|piano|drum|violin|ukulele|bass/.test(n)) return 'music';
+  if (/sing|choir|vocal/.test(n)) return 'mic';
+  if (/paint|watercolou|watercolor|sketch|draw|art\b/.test(n)) return 'pen-tool';
+  if (/photo|camera/.test(n)) return 'camera';
+  if (/film|video/.test(n)) return 'film';
+  if (/run|jog|sprint/.test(n)) return 'activity';
+  if (/gym|lift|fitness/.test(n)) return 'trending-up';
+  if (/yoga|meditat|mindful/.test(n)) return 'sun';
+  if (/cook|bak|chef/.test(n)) return 'coffee';
+  if (/read|book/.test(n)) return 'book-open';
+  if (/writ|journal|blog/.test(n)) return 'edit-3';
+  if (/code|program|dev/.test(n)) return 'code';
+  if (/garden|plant|flower/.test(n)) return 'feather';
+  if (/knit|sew|crochet/.test(n)) return 'scissors';
+  if (/travel|explore/.test(n)) return 'globe';
+  return 'star';
+}
 
 export default function ScreenAwarenessScreen({ navigation }) {
   const { hobbies } = useApp();
@@ -58,7 +77,7 @@ export default function ScreenAwarenessScreen({ navigation }) {
             activeOpacity={0.7}
             onPress={() => navigation.navigate('GrowTab', { screen: 'HobbyDetail', params: { hobby: h } })}
           >
-            <Text style={s.redirectEmoji}>{HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length]}</Text>
+            <Icon name={getHobbyIcon(h.name)} size={16} color={C.clay} />
             <Text style={[s.redirectText, { color: C.clay }]}>{h.name} instead?</Text>
           </TouchableOpacity>
         )) : (
@@ -119,7 +138,7 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
-  redirectEmoji: { fontSize: 20 },
+  redirectIcon: { flexShrink: 0 },
   redirectText: { fontSize: 15, fontWeight: '600' },
 
   noHobbiesHint: {

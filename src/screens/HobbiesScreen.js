@@ -11,15 +11,35 @@ import { generateHobbyCurriculum } from '../services/ai';
 
 const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
-const HOBBY_EMOJIS = ['🎨', '🎵', '🌱', '✨', '🎯', '📚', '🏃', '🎭', '🍳', '💻', '📷', '🎸'];
+// Maps hobby name keywords to Feather icon names
+function getHobbyIcon(name) {
+  const n = (name || '').toLowerCase();
+  if (/guitar|piano|drum|violin|ukulele|bass|cello|trumpet|flute|sax/.test(n)) return 'music';
+  if (/sing|choir|vocal|voice/.test(n)) return 'mic';
+  if (/paint|watercolou|watercolor|sketch|draw|illustrat|art\b/.test(n)) return 'pen-tool';
+  if (/photo|camera/.test(n)) return 'camera';
+  if (/film|video|edit|direct/.test(n)) return 'film';
+  if (/run|jog|sprint|marathon/.test(n)) return 'activity';
+  if (/gym|lift|weight|strength|fitness/.test(n)) return 'trending-up';
+  if (/yoga|meditat|mindful|breath|pilates/.test(n)) return 'sun';
+  if (/swim|surf|dive/.test(n)) return 'droplet';
+  if (/cycle|bike|cycling/.test(n)) return 'zap';
+  if (/danc|ballet|hip.?hop|salsa/.test(n)) return 'music-2';
+  if (/hike|climb|trek|camp|outdoor/.test(n)) return 'map-pin';
+  if (/cook|bak|chef|pastry|bread/.test(n)) return 'coffee';
+  if (/read|book/.test(n)) return 'book-open';
+  if (/writ|journal|blog|story|poem|novel/.test(n)) return 'edit-3';
+  if (/code|program|dev|web|software/.test(n)) return 'code';
+  if (/garden|plant|flower|nature/.test(n)) return 'feather';
+  if (/knit|sew|crochet|stitch|craft/.test(n)) return 'scissors';
+  if (/travel|explore|language|spanish|french|japanese/.test(n)) return 'globe';
+  if (/chess|puzzle|game/.test(n)) return 'grid';
+  if (/pottery|ceramic|sculpt/.test(n)) return 'circle';
+  return 'star';
+}
 
-const BADGE_GRADIENTS = [
-  ['#F0E4E8', '#E4D8DC'],
-  ['#E4E8E4', '#D8DCD8'],
-  ['#E8E4F0', '#DCD8E8'],
-  ['#F0E8E4', '#E4DCD8'],
-  ['#E4ECF0', '#D8E4E8'],
-  ['#EDE8EC', '#E4DDE2'],
+const ICON_BG_COLORS = [
+  '#F0E8EC', '#E8EEF0', '#EDF0E8', '#F0ECE8', '#E8ECF4', '#F0EEE8',
 ];
 
 export default function HobbiesScreen({ navigation }) {
@@ -116,8 +136,8 @@ export default function HobbiesScreen({ navigation }) {
         {hobbies.map((h, idx) => {
           const total = h.milestones?.length ?? 1;
           const done  = h.milestoneIndex ?? 0;
-          const emoji = HOBBY_EMOJIS[idx % HOBBY_EMOJIS.length];
-          const gradColors = BADGE_GRADIENTS[idx % BADGE_GRADIENTS.length];
+          const iconName = getHobbyIcon(h.name);
+          const iconBg   = ICON_BG_COLORS[idx % ICON_BG_COLORS.length];
           const pct = total > 0 ? Math.round((done / total) * 100) : 0;
           return (
             <TouchableOpacity
@@ -127,13 +147,8 @@ export default function HobbiesScreen({ navigation }) {
               activeOpacity={0.82}
             >
               <View style={s.hobbyCardTop}>
-                <View style={[
-                  s.emojiCircle,
-                  Platform.OS === 'web'
-                    ? { background: `linear-gradient(135deg, ${gradColors[0]}, ${gradColors[1]})` }
-                    : { backgroundColor: gradColors[0] },
-                ]}>
-                  <Text style={s.hobbyEmoji}>{emoji}</Text>
+                <View style={[s.iconCircle, { backgroundColor: iconBg }]}>
+                  <Icon name={iconName} size={18} color={C.moss} />
                 </View>
                 <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                 <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(h)}>
@@ -307,12 +322,11 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   hobbyCardTop: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  emojiCircle: {
-    width: 44, height: 44, borderRadius: 22,
+  iconCircle: {
+    width: 40, height: 40, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
-  hobbyEmoji: { fontSize: 22, lineHeight: 26 },
   hobbyName: { flex: 1, fontSize: 17, fontWeight: '700' },
 
   progressTrack: { height: 4, borderRadius: 2, marginBottom: 8, overflow: 'hidden' },

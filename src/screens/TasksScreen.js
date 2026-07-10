@@ -67,12 +67,12 @@ export default function TasksScreen({ navigation }) {
       isDone && ss.taskCardDone,
       reducedClutter && ss.taskCardSlim,
     ]}>
-      <TouchableOpacity
-        style={[ss.checkbox, { borderColor: isDone ? t.subtext : (sec?.cbColor ?? t.subtext) }]}
-        onPress={() => toggleTask(task.id)}
-        activeOpacity={0.7}
-      >
-        {task.done && <View style={[ss.checkFill, { backgroundColor: t.subtext }]} />}
+      <TouchableOpacity style={ss.checkBtn} onPress={() => toggleTask(task.id)} activeOpacity={0.7}>
+        <Icon
+          name={isDone ? 'check-circle' : 'circle'}
+          size={22}
+          color={isDone ? t.subtext : (sec?.cbColor ?? t.subtext)}
+        />
       </TouchableOpacity>
       <TouchableOpacity
         style={ss.taskBody}
@@ -154,7 +154,8 @@ export default function TasksScreen({ navigation }) {
           onPress={() => setShowAddTask(true)}
           activeOpacity={0.85}
         >
-          <Text style={ss.ideaFabText}>💡 Quick capture</Text>
+          <Icon name="plus" size={14} color={C.white} />
+          <Text style={ss.ideaFabText}>Quick capture</Text>
         </TouchableOpacity>
       )}
 
@@ -337,11 +338,7 @@ const ss = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
   ideaFabText: { fontSize: 13, fontWeight: '700', color: C.white },
-  checkbox: {
-    width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  checkFill: { width: 10, height: 10, borderRadius: 5 },
+  checkBtn: { padding: 2, flexShrink: 0 },
   taskBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
   taskTextDone: { textDecorationLine: 'line-through' },
