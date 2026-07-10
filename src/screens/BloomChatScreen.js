@@ -392,7 +392,7 @@ const s = StyleSheet.create({
   bloomBubble: {
     backgroundColor: C.white, borderRadius: 18, borderBottomLeftRadius: 5,
     padding: 16, borderWidth: 1, borderColor: C.border, maxWidth: '90%',
-    shadowColor: '#2A3A2C', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2,
+    shadowColor: '#2A2420', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2,
   },
   bloomText: { fontSize: 15, color: C.ink, lineHeight: 26 },
 

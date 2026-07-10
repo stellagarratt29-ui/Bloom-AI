@@ -324,7 +324,7 @@ const ss = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderRadius: 16, paddingVertical: 14, paddingHorizontal: 14,
     borderWidth: 1, marginBottom: 8,
-    shadowColor: '#2A3A2C', shadowOpacity: 0.09, shadowRadius: 10,
+    shadowColor: '#2A2420', shadowOpacity: 0.09, shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
   taskCardDone: { opacity: 0.55 },

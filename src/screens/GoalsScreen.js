@@ -231,7 +231,7 @@ const s = StyleSheet.create({
   goalCard: {
     borderRadius: 18, borderWidth: 1, borderLeftWidth: 4,
     padding: 18, marginBottom: 14,
-    shadowColor: '#2A3A2C', shadowOpacity: 0.09, shadowRadius: 12,
+    shadowColor: '#2A2420', shadowOpacity: 0.09, shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   goalHeader: {
