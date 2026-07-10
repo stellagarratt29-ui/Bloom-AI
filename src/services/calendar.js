@@ -9,7 +9,7 @@ import { callClaude, getApiKey } from './ai';
 //   Application type: Web application
 //   Authorized JS origin:   https://stellagarratt29-ui.github.io
 //   Authorized redirect URI: https://stellagarratt29-ui.github.io/Bloom-AI/
-const BUNDLED_CLIENT_ID = null; // e.g. '123456789012-abc.apps.googleusercontent.com'
+const BUNDLED_CLIENT_ID = '899186853808-gg1rnc9jic1til1js97u7bepbh5jdvrj.apps.googleusercontent.com';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CLIENT_ID_KEY    = '@bloom_gcal_client_id';
