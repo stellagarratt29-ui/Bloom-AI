@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction, detectCalendarAction } from '../services/ai';
 import { processCalendarRequest } from '../services/calendar';
+import { isCommuteQuery, processCommuteQuery, openInMaps, extractDestination } from '../services/location';
 
 function getGreeting(userName) {
   const h = new Date().getHours();
@@ -179,6 +180,30 @@ export default function BloomChatScreen() {
     setThinking(true);
 
     try {
+      // Commute / travel time path
+      if (isCommuteQuery(trimmed)) {
+        // "open maps to X" shortcut
+        const openMapsMatch = trimmed.match(/open\s+(?:maps?|google maps?|apple maps?)\s+(?:to|for)\s+(.+)/i);
+        if (openMapsMatch) {
+          const dest = openMapsMatch[1].trim();
+          openInMaps(dest);
+          const reply = `Opening Maps to ${dest} now.`;
+          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
+          historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+          setThinking(false);
+          scrollToEnd();
+          return;
+        }
+        const commuteReply = await processCommuteQuery(trimmed);
+        if (commuteReply) {
+          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: commuteReply }]);
+          historyRef.current = [...historyRef.current, { role: 'assistant', content: commuteReply }];
+          setThinking(false);
+          scrollToEnd();
+          return;
+        }
+      }
+
       // Calendar action path
       if (detectCalendarAction(trimmed)) {
         const calReply = await processCalendarRequest(trimmed);

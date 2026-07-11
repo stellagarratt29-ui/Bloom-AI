@@ -5,23 +5,36 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#FAF8F4"
+      "backgroundColor": "#FAFAFA"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.bloom.app"
+      "bundleIdentifier": "com.bloom.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Bloom uses your location to estimate commute times and tell you when to leave for events.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Bloom uses your location to estimate commute times and tell you when to leave for events."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#D6E8D4",
+        "backgroundColor": "#FAFAFA",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
-      "package": "com.bloom.app"
+      "package": "com.bloom.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Bloom uses your location to estimate commute times and tell you when to leave for events."
+        }
+      ]
+    ]
   }
 }

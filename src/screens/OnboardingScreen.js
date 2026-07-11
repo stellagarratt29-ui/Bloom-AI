@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { C } from '../constants/colors';
 import Icon from '../components/Icon';
+import { requestLocation, markLocationDenied } from '../services/location';
 
 const OCCUPATIONS = ['Student', 'Working', 'Both', 'Other'];
 const AGE_RANGES  = ['Under 16', '16–18', '19–24', '25–34', '35–49', '50+'];
@@ -87,14 +88,24 @@ export default function OnboardingScreen({ onFinish }) {
     dyslexiaMode: false,
   });
   const [ndTextSize,  setNdTextSize] = useState('normal');
-  const [saving, setSaving] = useState(false);
+  const [saving,       setSaving]      = useState(false);
+  const [locGranted,   setLocGranted]  = useState(false);
+  const [locRequesting, setLocRequesting] = useState(false);
 
   const next = () => setStep(s => s + 1);
 
   const goBack = () => {
-    // Step 5 (Ready) can be reached from step 3 (if no/skip) or step 4 (if yes)
-    if (step === 5) { setStep(ndChoice === 'yes' ? 4 : 3); return; }
+    // Step 6 (Ready) can be reached from step 4 (if no/skip) or step 5 (if yes)
+    if (step === 6) { setStep(ndChoice === 'yes' ? 5 : 4); return; }
     setStep(s => s - 1);
+  };
+
+  const handleAllowLocation = async () => {
+    setLocRequesting(true);
+    const coords = await requestLocation();
+    setLocGranted(!!coords);
+    setLocRequesting(false);
+    next();
   };
 
   const toggleHobby = (h) =>
@@ -168,8 +179,46 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Step 1: Age + Occupation ──────────────────────────────────────────────
+  // ── Step 0.5: Optional location ──────────────────────────────────────────
   if (step === 1) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <BackBtn onPress={goBack} />
+        <View style={s.center}>
+          <View style={[s.locIconWrap, { backgroundColor: C.clayPale }]}>
+            <Icon name="map-pin" size={32} color={C.clay} />
+          </View>
+          <Text style={s.stepTitle}>Allow location?</Text>
+          <Text style={s.stepSub}>
+            Bloom can tell you when to leave for events based on real travel time and traffic — but only if you want.
+          </Text>
+          <View style={s.locBullets}>
+            {['Leave-time reminders with traffic', 'Works with Apple Maps & Google Maps', 'Never shared or stored online'].map(t => (
+              <View key={t} style={s.locBulletRow}>
+                <Icon name="check" size={14} color={C.moss} />
+                <Text style={s.locBulletText}>{t}</Text>
+              </View>
+            ))}
+          </View>
+          {locRequesting
+            ? <ActivityIndicator color={C.moss} style={{ marginTop: 28 }} />
+            : (
+              <TouchableOpacity style={s.primaryBtn} onPress={handleAllowLocation}>
+                <Icon name="map-pin" size={16} color="#fff" />
+                <Text style={s.primaryBtnText}>Allow location</Text>
+              </TouchableOpacity>
+            )
+          }
+          <TouchableOpacity style={s.skipBtn} onPress={() => { markLocationDenied(); next(); }}>
+            <Text style={s.skipBtnText}>Not now</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Step 1: Age + Occupation ──────────────────────────────────────────────
+  if (step === 2) {
     return (
       <SafeAreaView style={s.safe}>
         <BackBtn onPress={goBack} />
@@ -228,8 +277,8 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Step 2: Optional hobbies ──────────────────────────────────────────────
-  if (step === 2) {
+  // ── Step 3: Optional hobbies ──────────────────────────────────────────────
+  if (step === 3) {
     return (
       <SafeAreaView style={s.safe}>
         <BackBtn onPress={goBack} />
@@ -298,8 +347,8 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Step 3: Neurodivergent support question ───────────────────────────────
-  if (step === 3) {
+  // ── Step 4: Neurodivergent support question ───────────────────────────────
+  if (step === 4) {
     return (
       <SafeAreaView style={s.safe}>
         <BackBtn onPress={goBack} />
@@ -338,7 +387,7 @@ export default function OnboardingScreen({ onFinish }) {
             onPress={() => {
               if (!ndChoice) return;
               if (ndChoice === 'yes') { next(); }
-              else { setStep(5); } // skip toggle screen
+              else { setStep(6); } // skip toggle screen
             }}
             disabled={!ndChoice}
           >
@@ -349,8 +398,8 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Step 4: ND toggle selection (only if "yes") ───────────────────────────
-  if (step === 4) {
+  // ── Step 5: ND toggle selection (only if "yes") ───────────────────────────
+  if (step === 5) {
     return (
       <SafeAreaView style={s.safe}>
         <BackBtn onPress={goBack} />
@@ -406,7 +455,7 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Step 5: Ready ─────────────────────────────────────────────────────────
+  // ── Step 6: Ready ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe}>
       <BackBtn onPress={goBack} />
@@ -434,6 +483,14 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: C.cream },
 
+  locIconWrap: {
+    width: 72, height: 72, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 20,
+  },
+  locBullets: { alignSelf: 'stretch', gap: 10, marginTop: 20, marginBottom: 4, paddingHorizontal: 8 },
+  locBulletRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  locBulletText: { fontSize: 14, color: '#555', flex: 1 },
   backBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 18, paddingTop: 14, paddingBottom: 4,
@@ -555,7 +612,8 @@ const s = StyleSheet.create({
   primaryBtn: {
     backgroundColor: C.moss, borderRadius: 14,
     paddingVertical: 16, paddingHorizontal: 32,
-    alignItems: 'center', width: '100%',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, width: '100%',
   },
   primaryBtnText: { color: C.white, fontWeight: '700', fontSize: 16 },
 
