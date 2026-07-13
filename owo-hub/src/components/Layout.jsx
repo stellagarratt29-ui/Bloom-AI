@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/visual-guide', label: 'Visual Guide', icon: 'palette' },
   { to: '/boss-arenas', label: 'Boss Arenas', icon: 'skull' },
   { to: '/development', label: 'Development', icon: 'hammer' },
+  { to: '/assignments', label: 'Assignments', icon: 'check' },
 ];
 
 export default function Layout() {

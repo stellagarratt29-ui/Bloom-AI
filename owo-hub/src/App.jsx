@@ -7,6 +7,7 @@ import LocationsPage from './pages/LocationsPage';
 import VisualGuidePage from './pages/VisualGuidePage';
 import BossArenasPage from './pages/BossArenasPage';
 import DevelopmentPage from './pages/DevelopmentPage';
+import AssignmentsPage from './pages/AssignmentsPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/visual-guide" element={<VisualGuidePage />} />
           <Route path="/boss-arenas" element={<BossArenasPage />} />
           <Route path="/development" element={<DevelopmentPage />} />
+          <Route path="/assignments" element={<AssignmentsPage />} />
         </Route>
       </Routes>
     </HashRouter>

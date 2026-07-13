@@ -11,6 +11,7 @@ const TILES = [
   { to: '/economy', label: 'Items Logged', key: 'items', seed: seedItems },
   { to: '/boss-arenas', label: 'Boss Arenas', key: 'bosses', seed: seedBosses },
   { to: '/development', label: 'Dev Tasks', key: 'devtasks', seed: seedDevTasks },
+  { to: '/assignments', label: 'Assignments', key: 'assignments', seed: [] },
 ];
 
 function Tile({ tile }) {
@@ -47,6 +48,7 @@ export default function Dashboard() {
           <Link to="/visual-guide"><span className="badge badge-accent">Visual Guide</span></Link>
           <Link to="/boss-arenas"><span className="badge badge-accent">Boss Arenas</span></Link>
           <Link to="/development"><span className="badge badge-accent">Development</span></Link>
+          <Link to="/assignments"><span className="badge badge-accent">Assignments</span></Link>
         </div>
       </div>
     </div>
