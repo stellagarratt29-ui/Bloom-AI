@@ -56,7 +56,7 @@ function Timeline() {
 }
 
 export default function DevelopmentPage() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('devtasks', seedDevTasks);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('devtasks', seedDevTasks);
   const [world, setWorld] = useState('All');
   const [person, setPerson] = useState('All');
 
@@ -102,6 +102,7 @@ export default function DevelopmentPage() {
         onAdd={addItem}
         onUpdate={updateItem}
         onDelete={deleteItem}
+        onDeleteMany={deleteMany}
         addLabel="Add Task"
         emptyLabel="No tasks here."
         newRecordDefaults={{

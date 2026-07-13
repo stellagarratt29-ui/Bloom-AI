@@ -12,7 +12,7 @@ import { WORLDS } from '../schema/constants';
 const TABS = ['Animal Loot Table', 'Item Loot Table', 'Class Unlock Prices', 'Game Passes & Monetization', 'XP Progression', 'Revenue Projections'];
 
 function AnimalLootTable() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('animals', seedAnimals);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('animals', seedAnimals);
   return (
     <CrudList
       schema={animalSchema}
@@ -20,6 +20,7 @@ function AnimalLootTable() {
       onAdd={addItem}
       onUpdate={updateItem}
       onDelete={deleteItem}
+      onDeleteMany={deleteMany}
       addLabel="Add Animal"
       emptyLabel="No animals logged yet."
       newRecordDefaults={{ world: WORLDS[0], difficulty: 'Low' }}
@@ -43,7 +44,7 @@ function AnimalLootTable() {
 }
 
 function ItemLootTable() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('items', seedItems);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('items', seedItems);
   return (
     <CrudList
       schema={itemSchema}
@@ -51,6 +52,7 @@ function ItemLootTable() {
       onAdd={addItem}
       onUpdate={updateItem}
       onDelete={deleteItem}
+      onDeleteMany={deleteMany}
       addLabel="Add Item"
       emptyLabel="No items logged yet."
       newRecordDefaults={{ rarity: 'Common' }}
@@ -101,7 +103,7 @@ function ClassUnlockPrices() {
 }
 
 function GamePasses() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('gamepasses', seedGamePasses);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('gamepasses', seedGamePasses);
   return (
     <CrudList
       schema={gamePassSchema}
@@ -109,6 +111,7 @@ function GamePasses() {
       onAdd={addItem}
       onUpdate={updateItem}
       onDelete={deleteItem}
+      onDeleteMany={deleteMany}
       addLabel="Add Game Pass"
       emptyLabel="No game passes yet."
       renderCard={(g) => (
@@ -124,7 +127,7 @@ function GamePasses() {
 }
 
 function XpProgression() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('xplevels', seedXpLevels);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('xplevels', seedXpLevels);
   const sorted = [...items].sort((a, b) => (a.level || 0) - (b.level || 0));
   return (
     <CrudList
@@ -133,6 +136,7 @@ function XpProgression() {
       onAdd={addItem}
       onUpdate={updateItem}
       onDelete={deleteItem}
+      onDeleteMany={deleteMany}
       addLabel="Add Level"
       emptyLabel="No levels defined yet."
       renderCard={(l) => (
@@ -150,7 +154,7 @@ function XpProgression() {
 }
 
 function RevenueProjections() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('revenue', seedRevenueScenarios);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('revenue', seedRevenueScenarios);
   return (
     <CrudList
       schema={revenueScenarioSchema}
@@ -158,6 +162,7 @@ function RevenueProjections() {
       onAdd={addItem}
       onUpdate={updateItem}
       onDelete={deleteItem}
+      onDeleteMany={deleteMany}
       addLabel="Add Scenario"
       emptyLabel="No revenue scenarios yet."
       renderCard={(r) => {

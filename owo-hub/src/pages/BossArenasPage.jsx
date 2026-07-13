@@ -4,7 +4,7 @@ import { seedBosses } from '../data/seed';
 import { useCollection } from '../lib/useCollection';
 
 export default function BossArenasPage() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('bosses', seedBosses);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('bosses', seedBosses);
 
   return (
     <div>
@@ -19,6 +19,7 @@ export default function BossArenasPage() {
         onAdd={addItem}
         onUpdate={updateItem}
         onDelete={deleteItem}
+        onDeleteMany={deleteMany}
         addLabel="Add Boss Arena"
         emptyLabel="No boss arenas yet."
         newRecordDefaults={{ mechanics: [], arenaSize: 'Large' }}

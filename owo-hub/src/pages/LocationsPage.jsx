@@ -8,7 +8,7 @@ import { WORLDS } from '../schema/constants';
 const EXPECTED_COUNTS = { Forest: 15, Jurassic: 11, Atlantis: 13, 'Mount Olympus': 12 };
 
 export default function LocationsPage() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('locations', seedLocations);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('locations', seedLocations);
   const [world, setWorld] = useState(WORLDS[0]);
 
   const filtered = items.filter((l) => l.world === world);
@@ -38,6 +38,7 @@ export default function LocationsPage() {
         onAdd={(record) => addItem({ ...record, world })}
         onUpdate={updateItem}
         onDelete={deleteItem}
+        onDeleteMany={deleteMany}
         addLabel="Add Location"
         emptyLabel={`No ${world} locations yet.`}
         newRecordDefaults={{ world, difficulty: 'Low', size: 'Medium', whatsThere: [], enemies: [], loot: [], resources: [] }}

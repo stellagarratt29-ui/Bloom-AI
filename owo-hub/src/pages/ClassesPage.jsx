@@ -6,7 +6,7 @@ import { useCollection } from '../lib/useCollection';
 import { WORLDS } from '../schema/constants';
 
 export default function ClassesPage() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('classes', seedClasses);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('classes', seedClasses);
   const [world, setWorld] = useState('All');
 
   const filtered = world === 'All' ? items : items.filter((c) => c.world === world);
@@ -36,6 +36,7 @@ export default function ClassesPage() {
         onAdd={addItem}
         onUpdate={updateItem}
         onDelete={deleteItem}
+        onDeleteMany={deleteMany}
         addLabel="Add Class"
         emptyLabel="No classes in this world yet."
         newRecordDefaults={{ world: world === 'All' ? WORLDS[0] : world, startingItems: [], weaponProgression: [] }}

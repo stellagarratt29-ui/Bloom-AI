@@ -11,6 +11,7 @@ export default function CrudList({
   onAdd,
   onUpdate,
   onDelete,
+  onDeleteMany,
   renderCard,
   emptyLabel = 'Nothing here yet.',
   addLabel = 'Add New',
@@ -18,6 +19,9 @@ export default function CrudList({
 }) {
   const [editing, setEditing] = useState(null); // { mode: 'add'|'edit', item }
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
 
   const closeForm = () => setEditing(null);
 
@@ -30,12 +34,51 @@ export default function CrudList({
     closeForm();
   };
 
+  const toggleSelecting = () => {
+    setSelecting((s) => !s);
+    setSelected(new Set());
+  };
+
+  const toggleSelected = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (onDeleteMany) {
+      onDeleteMany([...selected]);
+    } else {
+      selected.forEach((id) => onDelete(id));
+    }
+    setSelected(new Set());
+    setSelecting(false);
+    setConfirmBulk(false);
+  };
+
   return (
     <div>
       <div className="section-toolbar">
-        <button className="btn btn-primary" onClick={() => setEditing({ mode: 'add', item: newRecordDefaults })}>
-          + {addLabel}
-        </button>
+        {selecting ? (
+          <>
+            <span className="select-count">{selected.size} selected</span>
+            <button className="btn btn-ghost" onClick={toggleSelecting}>Cancel</button>
+            <button className="btn btn-danger" disabled={selected.size === 0} onClick={() => setConfirmBulk(true)}>
+              Delete Selected
+            </button>
+          </>
+        ) : (
+          <>
+            {items.length > 0 && (
+              <button className="btn btn-ghost" onClick={toggleSelecting}>Select</button>
+            )}
+            <button className="btn btn-primary" onClick={() => setEditing({ mode: 'add', item: newRecordDefaults })}>
+              + {addLabel}
+            </button>
+          </>
+        )}
       </div>
 
       {items.length === 0 ? (
@@ -44,11 +87,23 @@ export default function CrudList({
         <div className="card-grid">
           {items.map((item) => (
             <div key={item.id} className="item-card">
+              {selecting && (
+                <label className="select-checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(item.id)}
+                    onChange={() => toggleSelected(item.id)}
+                  />
+                  Select
+                </label>
+              )}
               {renderCard(item)}
-              <div className="item-card-actions">
-                <button className="btn btn-small" onClick={() => setEditing({ mode: 'edit', item })}>Edit</button>
-                <button className="btn btn-small btn-ghost" onClick={() => setPendingDelete(item)}>Delete</button>
-              </div>
+              {!selecting && (
+                <div className="item-card-actions">
+                  <button className="btn btn-small" onClick={() => setEditing({ mode: 'edit', item })}>Edit</button>
+                  <button className="btn btn-small btn-ghost" onClick={() => setPendingDelete(item)}>Delete</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -70,6 +125,14 @@ export default function CrudList({
         message={pendingDelete ? `"${pendingDelete[schema.titleKey] || 'This item'}" will be permanently removed.` : ''}
         onConfirm={() => { onDelete(pendingDelete.id); setPendingDelete(null); }}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulk}
+        title={`Delete ${selected.size} ${selected.size === 1 ? 'entry' : 'entries'}?`}
+        message="This can't be undone."
+        onConfirm={handleBulkDelete}
+        onCancel={() => setConfirmBulk(false)}
       />
     </div>
   );

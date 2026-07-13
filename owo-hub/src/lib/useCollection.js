@@ -25,5 +25,10 @@ export function useCollection(key, seed) {
     persist(items.filter((it) => it.id !== id));
   }, [items, persist]);
 
-  return { items, addItem, updateItem, deleteItem };
+  const deleteMany = useCallback((ids) => {
+    const idSet = new Set(ids);
+    persist(items.filter((it) => !idSet.has(it.id)));
+  }, [items, persist]);
+
+  return { items, addItem, updateItem, deleteItem, deleteMany };
 }

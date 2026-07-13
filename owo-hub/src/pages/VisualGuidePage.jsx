@@ -8,7 +8,7 @@ import { useRecord } from '../lib/useRecord';
 const TABS = ['Color Palettes', 'Reference Images', 'Typography & Design'];
 
 function ColorPalettes() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('palette', seedPalette);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('palette', seedPalette);
   const groups = [...new Set(items.map((c) => c.group))];
 
   return (
@@ -28,6 +28,7 @@ function ColorPalettes() {
             onAdd={addItem}
             onUpdate={updateItem}
             onDelete={deleteItem}
+            onDeleteMany={deleteMany}
           />
         </div>
       ))}
@@ -35,7 +36,7 @@ function ColorPalettes() {
   );
 }
 
-function ColorGroupList({ group, items, onAdd, onUpdate, onDelete }) {
+function ColorGroupList({ group, items, onAdd, onUpdate, onDelete, onDeleteMany }) {
   return (
     <CrudList
       schema={paletteColorSchema}
@@ -43,6 +44,7 @@ function ColorGroupList({ group, items, onAdd, onUpdate, onDelete }) {
       onAdd={(record) => onAdd({ ...record, group })}
       onUpdate={onUpdate}
       onDelete={onDelete}
+      onDeleteMany={onDeleteMany}
       addLabel="Add Color"
       newRecordDefaults={{ group, hex: '#000000' }}
       emptyLabel="No colors in this group."
@@ -60,7 +62,7 @@ function ColorGroupList({ group, items, onAdd, onUpdate, onDelete }) {
 }
 
 function ReferenceImages() {
-  const { items, addItem, updateItem, deleteItem } = useCollection('referenceImages', []);
+  const { items, addItem, updateItem, deleteItem, deleteMany } = useCollection('referenceImages', []);
   return (
     <CrudList
       schema={referenceImageSchema}
@@ -68,6 +70,7 @@ function ReferenceImages() {
       onAdd={addItem}
       onUpdate={updateItem}
       onDelete={deleteItem}
+      onDeleteMany={deleteMany}
       addLabel="Add Reference Image"
       emptyLabel="No reference images uploaded yet. Upload mood/atmosphere images for each world here."
       renderCard={(img) => (
