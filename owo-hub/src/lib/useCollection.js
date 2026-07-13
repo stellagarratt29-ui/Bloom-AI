@@ -1,34 +1,48 @@
-import { useCallback, useState } from 'react';
-import { loadJSON, saveJSON } from './storage';
-import { makeId } from './id';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { db } from './firebase';
 
-// Generic localStorage-backed list of records, shared by every CRUD section.
+// Firestore-backed list of records, shared by every CRUD section and synced
+// live across every device. On first-ever load (empty collection) it seeds
+// the starter data once so the hub isn't empty for the first person to open it.
 export function useCollection(key, seed) {
-  const [items, setItems] = useState(() => loadJSON(key, seed));
+  const [items, setItems] = useState([]);
+  const seededRef = useRef(false);
 
-  const persist = useCallback((next) => {
-    setItems(next);
-    saveJSON(key, next);
+  useEffect(() => {
+    const colRef = collection(db, key);
+    const unsub = onSnapshot(colRef, async (snap) => {
+      if (snap.empty && !seededRef.current && seed.length > 0) {
+        seededRef.current = true;
+        const batch = writeBatch(db);
+        seed.forEach(({ id, ...rest }) => batch.set(doc(colRef), rest));
+        await batch.commit();
+        return; // onSnapshot fires again once the seed write lands
+      }
+      setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  const addItem = useCallback((record) => {
-    const withId = { id: makeId(), ...record };
-    persist([withId, ...items]);
-    return withId;
-  }, [items, persist]);
+  const addItem = useCallback(async (record) => {
+    const ref = await addDoc(collection(db, key), record);
+    return { id: ref.id, ...record };
+  }, [key]);
 
   const updateItem = useCallback((id, patch) => {
-    persist(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
-  }, [items, persist]);
+    updateDoc(doc(db, key, id), patch);
+  }, [key]);
 
   const deleteItem = useCallback((id) => {
-    persist(items.filter((it) => it.id !== id));
-  }, [items, persist]);
+    deleteDoc(doc(db, key, id));
+  }, [key]);
 
-  const deleteMany = useCallback((ids) => {
-    const idSet = new Set(ids);
-    persist(items.filter((it) => !idSet.has(it.id)));
-  }, [items, persist]);
+  const deleteMany = useCallback(async (ids) => {
+    const batch = writeBatch(db);
+    ids.forEach((id) => batch.delete(doc(db, key, id)));
+    await batch.commit();
+  }, [key]);
 
   return { items, addItem, updateItem, deleteItem, deleteMany };
 }
