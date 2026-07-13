@@ -208,16 +208,16 @@ export const seedBosses = [
 ];
 
 export const seedDevTasks = [
-  { id: 'seed-dt-1', name: 'Terrain Base', world: 'Forest', priority: 1, estimatedTime: '5-6 hours', status: 'Not Started', description: 'Build the basic terrain blocks (grass, dirt, stone).', breakdown: ['Mountains in north', 'Flat areas in center', 'Rivers running through'] },
-  { id: 'seed-dt-2', name: 'Forest Locations', world: 'Forest', priority: 2, estimatedTime: '8-10 hours', status: 'Not Started', description: 'Build all 15 named locations.', breakdown: ['Forest Village (2h)', 'Bear Cave (2h)', 'Lumber Camp (1h)'] },
-  { id: 'seed-dt-3', name: 'Trees & Vegetation', world: 'Forest', priority: 3, estimatedTime: '3-4 hours', status: 'Not Started', description: 'Place trees, bushes, grass everywhere.', breakdown: [] },
-  { id: 'seed-dt-4', name: 'NPCs & Spawn Points', world: 'Forest', priority: 4, estimatedTime: '2-3 hours', status: 'Not Started', description: 'Place NPC characters, player spawn location.', breakdown: [] },
-  { id: 'seed-dt-5', name: 'Workbenches & Crafting Stations', world: 'Forest', priority: 5, estimatedTime: '2 hours', status: 'Not Started', description: 'Crafting benches, campfires, upgrade stations.', breakdown: [] },
-  { id: 'seed-dt-6', name: 'Loot Spawners & Chests', world: 'Forest', priority: 6, estimatedTime: '2-3 hours', status: 'Not Started', description: 'Place chests with loot, animal spawn points.', breakdown: [] },
-  { id: 'seed-dt-7', name: 'Weather System Scripts', world: 'Forest', priority: 7, estimatedTime: '3-4 hours', status: 'Not Started', description: 'Code the weather system (rain, fog, lightning, etc.).', breakdown: [] },
-  { id: 'seed-dt-8', name: 'Combat Scripts', world: 'Forest', priority: 8, estimatedTime: '5-6 hours', status: 'Not Started', description: 'Enemy AI, damage system, health management.', breakdown: [] },
-  { id: 'seed-dt-9', name: 'Bear Boss Arena & Scripts', world: 'Forest', priority: 9, estimatedTime: '4-5 hours', status: 'Not Started', description: 'Boss arena, Bear AI, boss mechanics.', breakdown: [] },
-  { id: 'seed-dt-10', name: 'Testing & Polish', world: 'Forest', priority: 10, estimatedTime: '4-6 hours', status: 'Not Started', description: 'Playtest, fix bugs, optimize performance.', breakdown: [] },
+  { id: 'seed-dt-1', name: 'Terrain Base', world: 'Forest', assignee: 'Unassigned', priority: 1, estimatedTime: '5-6 hours', status: 'Not Started', description: 'Build the basic terrain blocks (grass, dirt, stone).', breakdown: ['Mountains in north', 'Flat areas in center', 'Rivers running through'] },
+  { id: 'seed-dt-2', name: 'Forest Locations', world: 'Forest', assignee: 'Unassigned', priority: 2, estimatedTime: '8-10 hours', status: 'Not Started', description: 'Build all 15 named locations.', breakdown: ['Forest Village (2h)', 'Bear Cave (2h)', 'Lumber Camp (1h)'] },
+  { id: 'seed-dt-3', name: 'Trees & Vegetation', world: 'Forest', assignee: 'Unassigned', priority: 3, estimatedTime: '3-4 hours', status: 'Not Started', description: 'Place trees, bushes, grass everywhere.', breakdown: [] },
+  { id: 'seed-dt-4', name: 'NPCs & Spawn Points', world: 'Forest', assignee: 'Unassigned', priority: 4, estimatedTime: '2-3 hours', status: 'Not Started', description: 'Place NPC characters, player spawn location.', breakdown: [] },
+  { id: 'seed-dt-5', name: 'Workbenches & Crafting Stations', world: 'Forest', assignee: 'Unassigned', priority: 5, estimatedTime: '2 hours', status: 'Not Started', description: 'Crafting benches, campfires, upgrade stations.', breakdown: [] },
+  { id: 'seed-dt-6', name: 'Loot Spawners & Chests', world: 'Forest', assignee: 'Unassigned', priority: 6, estimatedTime: '2-3 hours', status: 'Not Started', description: 'Place chests with loot, animal spawn points.', breakdown: [] },
+  { id: 'seed-dt-7', name: 'Weather System Scripts', world: 'Forest', assignee: 'Unassigned', priority: 7, estimatedTime: '3-4 hours', status: 'Not Started', description: 'Code the weather system (rain, fog, lightning, etc.).', breakdown: [] },
+  { id: 'seed-dt-8', name: 'Combat Scripts', world: 'Forest', assignee: 'Unassigned', priority: 8, estimatedTime: '5-6 hours', status: 'Not Started', description: 'Enemy AI, damage system, health management.', breakdown: [] },
+  { id: 'seed-dt-9', name: 'Bear Boss Arena & Scripts', world: 'Forest', assignee: 'Unassigned', priority: 9, estimatedTime: '4-5 hours', status: 'Not Started', description: 'Boss arena, Bear AI, boss mechanics.', breakdown: [] },
+  { id: 'seed-dt-10', name: 'Testing & Polish', world: 'Forest', assignee: 'Unassigned', priority: 10, estimatedTime: '4-6 hours', status: 'Not Started', description: 'Playtest, fix bugs, optimize performance.', breakdown: [] },
 ];
 
 export const seedTimeline = {

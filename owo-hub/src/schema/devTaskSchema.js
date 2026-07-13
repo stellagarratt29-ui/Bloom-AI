@@ -1,10 +1,11 @@
-import { WORLDS, TASK_STATUSES } from './constants';
+import { WORLDS, TASK_STATUSES, TEAM_MEMBERS } from './constants';
 
 export const devTaskSchema = {
   titleKey: 'name',
   fields: [
     { key: 'name', label: 'Task Name', type: 'text' },
     { key: 'world', label: 'World / Area', type: 'select', options: WORLDS.concat(['General']) },
+    { key: 'assignee', label: 'Assigned To', type: 'select', options: ['Unassigned', ...TEAM_MEMBERS] },
     { key: 'priority', label: 'Priority (1 = first)', type: 'number' },
     { key: 'estimatedTime', label: 'Estimated Time', type: 'text', placeholder: 'e.g. 5-6 hours' },
     { key: 'status', label: 'Status', type: 'select', options: TASK_STATUSES },

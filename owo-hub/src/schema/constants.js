@@ -7,3 +7,5 @@ export const SIZES = ['Small', 'Medium', 'Large'];
 export const RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
 
 export const TASK_STATUSES = ['Not Started', 'In Progress', 'Done'];
+
+export const TEAM_MEMBERS = ['Miles', 'Julian', 'Stella', 'Aiden Medley', 'Tristan'];
