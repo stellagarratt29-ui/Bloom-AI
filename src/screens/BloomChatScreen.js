@@ -8,12 +8,14 @@ import {
 import Icon from '../components/Icon';
 import CheckInModal from '../components/CheckInModal';
 import VoiceMicButton from '../components/VoiceMicButton';
+import DowntimeSheet from './DowntimeSheet';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction, detectCalendarAction } from '../services/ai';
 import { processCalendarRequest } from '../services/calendar';
 import { isCommuteQuery, processCommuteQuery, openInMaps, extractDestination } from '../services/location';
+import { getStruggleWindows, isInStruggleWindow } from '../services/downtime';
 
 function getGreeting(userName) {
   const h = new Date().getHours();
@@ -158,12 +160,23 @@ export default function BloomChatScreen() {
   const [thinking, setThinking]   = useState(false);
   const [hasKey, setHasKey]       = useState(null);
   const [showCheckIn, setShowCheckIn] = useState(false);
-  const scrollRef  = useRef(null);
-  const historyRef = useRef([]);
+  const [showDowntime, setShowDowntime] = useState(false);
+  const scrollRef        = useRef(null);
+  const historyRef       = useRef([]);
+  const autoShownDowntime = useRef(false);
 
   useFocusEffect(useCallback(() => {
     getApiKey().then(k => setHasKey(!!k));
     if (!checkInDone) setShowCheckIn(true);
+    // Auto-surface downtime sheet once per focus if in a struggle window
+    if (!autoShownDowntime.current) {
+      getStruggleWindows().then(windows => {
+        if (isInStruggleWindow(windows)) {
+          autoShownDowntime.current = true;
+          setShowDowntime(true);
+        }
+      });
+    }
   }, [checkInDone]));
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
@@ -356,6 +369,16 @@ export default function BloomChatScreen() {
           )}
         </ScrollView>
 
+        {/* Downtime chip — subtle pill above the input bar */}
+        <TouchableOpacity
+          style={[s.downtimeChip, { backgroundColor: t.card, borderColor: t.border }]}
+          onPress={() => setShowDowntime(true)}
+          activeOpacity={0.75}
+        >
+          <Icon name="coffee" size={13} color={C.moss} />
+          <Text style={[s.downtimeChipText, { color: t.subtext }]}>Free moment?</Text>
+        </TouchableOpacity>
+
         <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
           {!!input.trim() && (
             <TouchableOpacity style={s.clearBtn} onPress={() => setInput('')}>
@@ -392,6 +415,11 @@ export default function BloomChatScreen() {
       <CheckInModal
         visible={showCheckIn}
         onDone={(data) => { saveCheckIn(data); setShowCheckIn(false); }}
+      />
+
+      <DowntimeSheet
+        visible={showDowntime}
+        onClose={() => setShowDowntime(false)}
       />
     </SafeAreaView>
   );
@@ -439,6 +467,13 @@ const s = StyleSheet.create({
     marginTop: 8, borderWidth: 1, borderColor: C.sageLight,
   },
   hintText: { fontSize: 14, color: C.ink, lineHeight: 22, textAlign: 'center' },
+
+  downtimeChip: {
+    alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderRadius: 20, borderWidth: 1, paddingVertical: 5, paddingHorizontal: 12,
+    marginBottom: 6,
+  },
+  downtimeChipText: { fontSize: 12, fontWeight: '500' },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
