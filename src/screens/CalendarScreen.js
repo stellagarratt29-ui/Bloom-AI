@@ -46,8 +46,8 @@ async function resolveLeaveTime(text, events) {
       return `${name} is on ${dateStr} at ${timeStr}. Allow location access in Settings and I can work out exactly when you need to leave.`;
     }
 
-    const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
-    if (MAPBOX_TOKEN && match.location) {
+    // Try to get travel time using the event's location field (no API key needed)
+    if (match.location) {
       const dest = await geocodeAddress(match.location);
       if (dest) {
         const travelMins = await getTravelTime(origin, dest);
@@ -55,13 +55,13 @@ async function resolveLeaveTime(text, events) {
           const leaveBy   = new Date(eventTime.getTime() - travelMins * 60000);
           const leaveStr  = leaveBy.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
           const travelStr = travelMins < 60 ? `${travelMins} min` : `${Math.floor(travelMins / 60)}h ${travelMins % 60}m`;
-          return `${name} is on ${dateStr} at ${timeStr}. Leave by ${leaveStr} — it's ${travelStr} from your location with current traffic.`;
+          return `${name} is on ${dateStr} at ${timeStr}. Leave by ${leaveStr} — it's about ${travelStr} from your location.`;
         }
       }
     }
 
-    // Location saved but no MapBox token or no event address
-    return `${name} is on ${dateStr} at ${timeStr}. I have your location but need a MapBox token set up for live travel time — for now, check Google Maps for the route from your saved location.`;
+    // No location on the event — tell them the time and suggest adding an address
+    return `${name} is on ${dateStr} at ${timeStr}. Add the venue address to the Google Calendar event and I'll tell you exactly when to leave.`;
   } catch {
     return `${name} is on ${dateStr} at ${timeStr}.`;
   }

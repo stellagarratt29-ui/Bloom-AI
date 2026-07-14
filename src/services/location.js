@@ -1,10 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Linking } from 'react-native';
 
-const LOC_KEY      = '@bloom_location';
-const DENIED_KEY   = '@bloom_location_denied';
-// MapBox public access token — user should replace with their own from mapbox.com (free)
-const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
+const LOC_KEY    = '@bloom_location';
+const DENIED_KEY = '@bloom_location_denied';
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 
@@ -63,35 +61,33 @@ export async function requestLocation() {
   } catch { return null; }
 }
 
-// ── MapBox Geocoding ─────────────────────────────────────────────────────────
+// ── Geocoding via Nominatim (OpenStreetMap — free, no key) ───────────────────
 
 export async function geocodeAddress(address) {
-  if (!MAPBOX_TOKEN || !address?.trim()) return null;
+  if (!address?.trim()) return null;
   try {
     const q   = encodeURIComponent(address.trim());
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?access_token=${MAPBOX_TOKEN}&limit=1`;
-    const res = await fetch(url);
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en', 'User-Agent': 'BloomAI/1.0' } });
     const data = await res.json();
-    const feature = data?.features?.[0];
-    if (!feature) return null;
-    const [lng, lat] = feature.center;
-    return { latitude: lat, longitude: lng, placeName: feature.place_name };
+    const place = data?.[0];
+    if (!place) return null;
+    return { latitude: parseFloat(place.lat), longitude: parseFloat(place.lon), placeName: place.display_name };
   } catch { return null; }
 }
 
-// ── MapBox Directions (traffic-aware) ────────────────────────────────────────
+// ── Routing via OSRM (free, no key, driving times) ───────────────────────────
 
 export async function getTravelTime(origin, destination) {
-  if (!MAPBOX_TOKEN) return null;
   if (!origin || !destination) return null;
   try {
     const coords = `${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}`;
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${encodeURIComponent(coords)}?access_token=${MAPBOX_TOKEN}&overview=false&annotations=duration`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=false`;
     const res  = await fetch(url);
     const data = await res.json();
-    const leg  = data?.routes?.[0]?.legs?.[0];
-    if (!leg) return null;
-    return Math.round(leg.duration / 60); // minutes
+    const route = data?.routes?.[0];
+    if (!route) return null;
+    return Math.round(route.duration / 60); // minutes
   } catch { return null; }
 }
 
@@ -172,46 +168,39 @@ export async function processCommuteQuery(text) {
   const origin = await getSavedLocation();
   const { bufferMins, arrivalHour, arrivalMin } = extractArrivalInfo(text);
 
-  // Try MapBox if token is set
-  if (MAPBOX_TOKEN && origin) {
-    const dest = await geocodeAddress(destination);
-    if (dest) {
-      const travelMins = await getTravelTime(origin, dest);
-      if (travelMins !== null) {
-        const totalMins   = travelMins + bufferMins;
-        const now         = new Date();
-        let leaveBy       = null;
+  if (!origin) {
+    return `I don't have your location yet — allow it in Settings so I can estimate travel times.`;
+  }
 
-        if (arrivalHour !== null) {
-          const arrival = new Date();
-          arrival.setHours(arrivalHour, arrivalMin, 0, 0);
-          if (arrival < now) arrival.setDate(arrival.getDate() + 1);
-          leaveBy = new Date(arrival.getTime() - totalMins * 60000);
-        }
+  const dest = await geocodeAddress(destination);
+  if (dest) {
+    const travelMins = await getTravelTime(origin, dest);
+    if (travelMins !== null) {
+      const totalMins = travelMins + bufferMins;
+      const now       = new Date();
+      let leaveBy     = null;
 
-        const travelStr = travelMins < 60
-          ? `${travelMins} min`
-          : `${Math.floor(travelMins / 60)}h ${travelMins % 60}m`;
-
-        if (leaveBy) {
-          const leaveStr = leaveBy.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-          return bufferMins > 0
-            ? `Leave by ${leaveStr} — it's ${travelStr} to ${destination} right now${bufferMins ? `, plus ${bufferMins} minutes early` : ''}.`
-            : `Leave by ${leaveStr} — it's about ${travelStr} to ${destination} with current traffic.`;
-        }
-
-        return `It's about ${travelStr} to ${destination} right now with traffic.`;
+      if (arrivalHour !== null) {
+        const arrival = new Date();
+        arrival.setHours(arrivalHour, arrivalMin, 0, 0);
+        if (arrival < now) arrival.setDate(arrival.getDate() + 1);
+        leaveBy = new Date(arrival.getTime() - totalMins * 60000);
       }
+
+      const travelStr = travelMins < 60
+        ? `${travelMins} min`
+        : `${Math.floor(travelMins / 60)}h ${travelMins % 60}m`;
+
+      if (leaveBy) {
+        const leaveStr = leaveBy.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        return bufferMins > 0
+          ? `Leave by ${leaveStr} — it's ${travelStr} to ${destination}${bufferMins ? `, plus ${bufferMins} min early` : ''}.`
+          : `Leave by ${leaveStr} — it's about ${travelStr} to ${destination}.`;
+      }
+
+      return `It's about ${travelStr} to ${destination}.`;
     }
   }
 
-  // Fallback: no token or no location — offer to open Maps
-  const hasLocation = !!origin;
-  if (!hasLocation) {
-    return `I don't have your location yet — allow it in Settings so I can estimate travel times. Or I can open Maps for you: just say "open Maps to ${destination}".`;
-  }
-  if (!MAPBOX_TOKEN) {
-    return `I can open Maps to ${destination} for you — just say "open maps to ${destination}" and I'll launch it with directions from your location.`;
-  }
-  return null;
+  return `I can open Maps to ${destination} for you — just say "open maps to ${destination}".`;
 }
