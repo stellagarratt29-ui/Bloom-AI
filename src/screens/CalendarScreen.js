@@ -15,6 +15,57 @@ import {
   clearCalendarToken,
   getCalendarClientId,
 } from '../services/calendar';
+import { callClaude, getApiKey } from '../services/ai';
+import { getSavedLocation, geocodeAddress, getTravelTime } from '../services/location';
+
+// ── Leave-time resolver ──────────────────────────────────────────────────────
+// Handles "what time should I leave for X" using the loaded events list.
+async function resolveLeaveTime(text, events) {
+  const m =
+    text.match(/(?:what time|when)[\w\s,']*?(?:leave|head|go|set off)[\w\s]*?(?:for|to)\s+(.+?)(?:\s+(?:today|td|tomorrow|now)|[?.!,]|$)/i) ||
+    text.match(/leave[\w\s]*?for\s+(.+?)(?:\s+(?:today|td|tomorrow|now)|[?.!,]|$)/i);
+
+  const keyword = (m?.[1] ?? '').trim().toLowerCase().replace(/\b(today|td|tomorrow|now)\b/gi, '').trim();
+  if (!keyword) return null;
+
+  // Match keyword against event titles (strip "Name: " prefixes like "stella: ")
+  const match = events.find(e => {
+    const title = (e.summary ?? '').toLowerCase().replace(/^[^:]+:\s*/, '');
+    return title.includes(keyword) || keyword.includes(title);
+  });
+  if (!match?.start?.dateTime) return null;
+
+  const eventTime  = new Date(match.start.dateTime);
+  const dateStr    = eventTime.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  const timeStr    = eventTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const name       = match.summary;
+
+  try {
+    const origin = await getSavedLocation();
+    if (!origin) {
+      return `${name} is on ${dateStr} at ${timeStr}. Allow location access in Settings and I can work out exactly when you need to leave.`;
+    }
+
+    const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
+    if (MAPBOX_TOKEN && match.location) {
+      const dest = await geocodeAddress(match.location);
+      if (dest) {
+        const travelMins = await getTravelTime(origin, dest);
+        if (travelMins !== null) {
+          const leaveBy   = new Date(eventTime.getTime() - travelMins * 60000);
+          const leaveStr  = leaveBy.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          const travelStr = travelMins < 60 ? `${travelMins} min` : `${Math.floor(travelMins / 60)}h ${travelMins % 60}m`;
+          return `${name} is on ${dateStr} at ${timeStr}. Leave by ${leaveStr} — it's ${travelStr} from your location with current traffic.`;
+        }
+      }
+    }
+
+    // Location saved but no MapBox token or no event address
+    return `${name} is on ${dateStr} at ${timeStr}. I have your location but need a MapBox token set up for live travel time — for now, check Google Maps for the route from your saved location.`;
+  } catch {
+    return `${name} is on ${dateStr} at ${timeStr}.`;
+  }
+}
 
 export default function CalendarScreen() {
   const { colors: t } = useTheme();
@@ -94,10 +145,47 @@ export default function CalendarScreen() {
     setThinking(true);
     scrollToEnd();
     try {
+      // 1. Leave-time query — match to a real calendar event + travel time
+      if (connected && events.length > 0) {
+        const leaveReply = await resolveLeaveTime(trimmed, events);
+        if (leaveReply) {
+          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: leaveReply }]);
+          return;
+        }
+      }
+
+      // 2. Calendar actions (create / list / query / update / delete)
       const reply = await processCalendarRequest(trimmed);
+      if (reply) {
+        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
+        return;
+      }
+
+      // 3. Fallback: answer with AI using real events as context
+      if (connected && events.length > 0) {
+        const aiKey = await getApiKey();
+        if (aiKey) {
+          const evSummary = events.map(e => {
+            const dt = e.start.dateTime
+              ? new Date(e.start.dateTime).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+              : e.start.date;
+            return `${dt}: ${e.summary}${e.location ? ' at ' + e.location : ''}`;
+          }).join('\n');
+          const aiReply = await callClaude({
+            system: `You are Bloom, a personal productivity assistant. Today is ${new Date().toDateString()}. The user's upcoming calendar events:\n${evSummary}\n\nAnswer their question using their actual events. Be specific. Plain text only — no markdown, no bullet points. 1-3 sentences.`,
+            messages: [{ role: 'user', content: trimmed }],
+            maxTokens: 200,
+          });
+          if (aiReply) {
+            setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: aiReply }]);
+            return;
+          }
+        }
+      }
+
       setMessages(prev => [...prev, {
         id: Date.now() + 1, from: 'bloom',
-        text: reply ?? "I can help you plan — what are you working with?",
+        text: "I can help you plan — what are you working with?",
       }]);
     } catch {
       setMessages(prev => [...prev, {
