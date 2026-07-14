@@ -17,12 +17,23 @@ function getHighLabel(occupation) {
 
 const SECTION_BASE = [
   { key: 'high',   pillBg: C.pillPinkBg, pillText: C.pillPinkText, cbColor: C.pillPinkText },
-  { key: 'medium', label: 'Tasks',       pillBg: C.pillLavBg,  pillText: C.pillLavText,  cbColor: C.pillLavText  },
-  { key: 'low',    label: 'Fun & Leisure', pillBg: C.pillSkyBg, pillText: C.pillSkyText,  cbColor: C.pillSkyText  },
+  { key: 'medium', label: 'Tasks',         pillBg: C.pillLavBg,  pillText: C.pillLavText,  cbColor: C.pillLavText  },
+  { key: 'low',    label: 'Fun & Leisure', pillBg: C.pillSkyBg,  pillText: C.pillSkyText,  cbColor: C.pillSkyText  },
 ];
 
+function relativeTime(ts) {
+  const age = Date.now() - ts;
+  if (age < 60 * 60 * 1000)  return 'Just now';
+  if (age < 24 * 60 * 60 * 1000) return 'Today';
+  if (age < 48 * 60 * 60 * 1000) return 'Yesterday';
+  return '2 days ago';
+}
+
 export default function TasksScreen({ navigation }) {
-  const { tasks, toggleTask, deleteTask, updateTask, addTask, ndToggles, userOccupation } = useApp();
+  const {
+    tasks, deleteTask, updateTask, addTask, ndToggles, userOccupation,
+    finishedTasks, finishTask, clearFinishedTask,
+  } = useApp();
   const SECTIONS = SECTION_BASE.map(s => s.key === 'high' ? { ...s, label: getHighLabel(userOccupation) } : s);
   const { colors: t } = useTheme();
   const reducedClutter = !!ndToggles?.reducedClutter;
@@ -36,6 +47,7 @@ export default function TasksScreen({ navigation }) {
   const [showAddTask,   setShowAddTask]   = useState(false);
   const [newTaskText,   setNewTaskText]   = useState('');
   const [newTaskPrio,   setNewTaskPrio]   = useState('medium');
+  const [showFinished,  setShowFinished]  = useState(true);
 
   const openEdit = (task) => {
     setEditTarget(task);
@@ -58,30 +70,28 @@ export default function TasksScreen({ navigation }) {
   };
 
   const activeTasks = tasks.filter(tk => !tk.done);
-  const doneTasks   = tasks.filter(tk => tk.done);
 
-  const TaskCard = ({ task, sec, isDone }) => (
+  const TaskCard = ({ task, sec }) => (
     <View style={[
       ss.taskCard,
       { backgroundColor: t.card, borderColor: t.border },
-      isDone && ss.taskCardDone,
       reducedClutter && ss.taskCardSlim,
     ]}>
-      <TouchableOpacity style={ss.checkBtn} onPress={() => toggleTask(task.id)} activeOpacity={0.7}>
-        <Icon
-          name={isDone ? 'check-circle' : 'circle'}
-          size={22}
-          color={isDone ? t.subtext : (sec?.cbColor ?? t.subtext)}
-        />
+      <TouchableOpacity
+        style={ss.doneBtn}
+        onPress={() => finishTask(task.id)}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
+      >
+        <Icon name="circle" size={22} color={sec?.cbColor ?? t.subtext} />
       </TouchableOpacity>
       <TouchableOpacity
         style={ss.taskBody}
-        onPress={() => !task.done && navigation.navigate('TaskGuide', { task })}
+        onPress={() => navigation.navigate('TaskGuide', { task })}
         activeOpacity={0.72}
       >
         <Text
-          style={[ss.taskText, { color: isDone ? t.subtext : t.text }, isDone && ss.taskTextDone,
-            reducedClutter && { fontSize: 14 }]}
+          style={[ss.taskText, { color: t.text }, reducedClutter && { fontSize: 14 }]}
           numberOfLines={reducedClutter ? 1 : 2}
         >
           {task.text}
@@ -89,6 +99,17 @@ export default function TasksScreen({ navigation }) {
       </TouchableOpacity>
       <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
         <Icon name="more-vertical" size={18} color={t.subtext} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const FinishedCard = ({ item }) => (
+    <View style={[ss.finishedCard, { backgroundColor: t.card, borderColor: t.border }]}>
+      <Icon name="check-circle" size={17} color={C.moss} />
+      <Text style={[ss.finishedText, { color: t.subtext }]} numberOfLines={1}>{item.text}</Text>
+      <Text style={[ss.finishedAge, { color: t.subtext }]}>{relativeTime(item.finishedAt)}</Text>
+      <TouchableOpacity onPress={() => clearFinishedTask(item.id)} style={ss.finishedX} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Icon name="x" size={14} color={t.subtext} />
       </TouchableOpacity>
     </View>
   );
@@ -106,7 +127,7 @@ export default function TasksScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
-        {tasks.length === 0 ? (
+        {activeTasks.length === 0 && finishedTasks.length === 0 ? (
           <View style={ss.empty}>
             <Icon name="check-circle" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
             <Text style={[ss.emptyHead, { color: t.text }]}>All clear</Text>
@@ -125,19 +146,32 @@ export default function TasksScreen({ navigation }) {
                     <Text style={[ss.sectionLabel, { color: sec.pillText }]}>{sec.label.toUpperCase()}</Text>
                   </View>
                   {items.map(task => (
-                    <TaskCard key={task.id} task={task} sec={sec} isDone={false} />
+                    <TaskCard key={task.id} task={task} sec={sec} />
                   ))}
                 </View>
               );
             })}
 
-            {doneTasks.length > 0 && (
+            {finishedTasks.length > 0 && (
               <View style={ss.group}>
-                <View style={[ss.sectionPill, { backgroundColor: t.border }]}>
-                  <Text style={[ss.sectionLabel, { color: t.subtext }]}>DONE</Text>
-                </View>
-                {doneTasks.map(task => (
-                  <TaskCard key={task.id} task={task} sec={null} isDone={true} />
+                <TouchableOpacity
+                  style={ss.finishedHeader}
+                  onPress={() => setShowFinished(v => !v)}
+                  activeOpacity={0.75}
+                >
+                  <View style={[ss.sectionPill, { backgroundColor: t.border }]}>
+                    <Text style={[ss.sectionLabel, { color: t.subtext }]}>
+                      FINISHED ({finishedTasks.length})
+                    </Text>
+                  </View>
+                  <Icon
+                    name={showFinished ? 'chevron-up' : 'chevron-down'}
+                    size={15}
+                    color={t.subtext}
+                  />
+                </TouchableOpacity>
+                {showFinished && finishedTasks.map(item => (
+                  <FinishedCard key={item.id} item={item} />
                 ))}
               </View>
             )}
@@ -147,7 +181,6 @@ export default function TasksScreen({ navigation }) {
         <View style={{ height: 48 }} />
       </ScrollView>
 
-      {/* Idea capture FAB (shown when ideaCapture toggle is on) */}
       {ideaCapture && (
         <TouchableOpacity
           style={[ss.ideaFab, { backgroundColor: C.clay }]}
@@ -168,6 +201,10 @@ export default function TasksScreen({ navigation }) {
             <TouchableOpacity style={ss.menuItem} onPress={() => { openEdit(menuTarget); setMenuTarget(null); }}>
               <Icon name="edit-2" size={18} color={t.text} />
               <Text style={[ss.menuItemText, { color: t.text }]}>Edit task</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={ss.menuItem} onPress={() => { finishTask(menuTarget.id); setMenuTarget(null); }}>
+              <Icon name="check-circle" size={18} color={C.moss} />
+              <Text style={[ss.menuItemText, { color: C.moss }]}>Mark as done</Text>
             </TouchableOpacity>
             <TouchableOpacity style={ss.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
               <Icon name="trash-2" size={18} color={C.pinkDark} />
@@ -328,8 +365,25 @@ const ss = StyleSheet.create({
     shadowColor: '#2A2420', shadowOpacity: 0.09, shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
-  taskCardDone: { opacity: 0.55 },
   taskCardSlim: { paddingVertical: 10, marginBottom: 10 },
+  doneBtn: { padding: 2, flexShrink: 0 },
+  taskBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
+  menuBtn: { padding: 6 },
+
+  // Finished section
+  finishedHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8,
+  },
+  finishedCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 9,
+    borderRadius: 13, paddingVertical: 11, paddingHorizontal: 13,
+    borderWidth: 1, marginBottom: 6, opacity: 0.7,
+  },
+  finishedText: { flex: 1, fontSize: 13, fontWeight: '500' },
+  finishedAge:  { fontSize: 11, fontWeight: '500', flexShrink: 0 },
+  finishedX:    { padding: 2, marginLeft: 2 },
+
   ideaFab: {
     position: 'absolute', bottom: 20, right: 18,
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -338,11 +392,6 @@ const ss = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
   ideaFabText: { fontSize: 13, fontWeight: '700', color: C.white },
-  checkBtn: { padding: 2, flexShrink: 0 },
-  taskBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
-  taskTextDone: { textDecorationLine: 'line-through' },
-  menuBtn: { padding: 6 },
 
   menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   menuSheet: {

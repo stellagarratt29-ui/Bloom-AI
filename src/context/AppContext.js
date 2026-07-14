@@ -56,6 +56,7 @@ export function AppProvider({ children }) {
   const [loaded, setLoaded]             = useState(false);
   const [hasOnboarded, setHasOnboarded] = useState(false);
   const [tasks, setTasks]               = useState([]);
+  const [finishedTasks, setFinishedTasks] = useState([]);
   const [hobbies, setHobbies]           = useState([]);
   const [goals, setGoals]               = useState([]);
   const [userName, setUserName]         = useState('');
@@ -103,7 +104,18 @@ export function AppProvider({ children }) {
           try {
             const s = JSON.parse(raw);
             if (s.hasOnboarded)    setHasOnboarded(true);
-            if (s.tasks)           setTasks(s.tasks);
+            if (s.tasks) {
+              const active = s.tasks.filter(t => !t.done);
+              setTasks(active);
+              // Migrate legacy done tasks to finishedTasks on first load
+              if (!s.finishedTasks && s.tasks.some(t => t.done)) {
+                setFinishedTasks(s.tasks.filter(t => t.done).map(t => ({
+                  id: t.id, text: t.text, priority: t.priority,
+                  finishedAt: t.completedAt ?? Date.now(),
+                })));
+              }
+            }
+            if (s.finishedTasks)   setFinishedTasks(s.finishedTasks);
             if (s.hobbies)         setHobbies(s.hobbies.map(migrateHobby));
             if (s.goals)           setGoals(s.goals);
             if (s.userName)        setUserName(s.userName);
@@ -129,12 +141,12 @@ export function AppProvider({ children }) {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
         hasOnboarded, tasks, hobbies, goals,
         userName, userAge, userOccupation, lastDumpDate,
-        ndSupport, ndToggles, tutorialSeen,
+        ndSupport, ndToggles, tutorialSeen, finishedTasks,
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, tasks, hobbies, goals,
       userName, userAge, userOccupation, lastDumpDate,
-      ndSupport, ndToggles, tutorialSeen]);
+      ndSupport, ndToggles, tutorialSeen, finishedTasks]);
 
   // Tasks
   const addTask = useCallback((text, priority = 'medium', category) => {
@@ -153,6 +165,28 @@ export function AppProvider({ children }) {
 
   const deleteTask = useCallback((id) => setTasks(prev => prev.filter(t => t.id !== id)), []);
   const clearDoneTasks = useCallback(() => setTasks(prev => prev.filter(t => !t.done)), []);
+
+  const FINISHED_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // 3 days
+  const FINISHED_MAX     = 5;
+
+  const finishTask = useCallback((id) => {
+    setTasks(prev => {
+      const task = prev.find(t => t.id === id);
+      if (!task) return prev;
+      const now   = Date.now();
+      const entry = { id: task.id, text: task.text, priority: task.priority, finishedAt: now };
+      setFinishedTasks(finished =>
+        [entry, ...finished]
+          .filter(f => now - f.finishedAt < FINISHED_MAX_AGE)
+          .slice(0, FINISHED_MAX)
+      );
+      return prev.filter(t => t.id !== id);
+    });
+  }, []);
+
+  const clearFinishedTask = useCallback((id) => {
+    setFinishedTasks(prev => prev.filter(f => f.id !== id));
+  }, []);
 
   const updateTask = useCallback((id, changes) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
@@ -270,6 +304,7 @@ export function AppProvider({ children }) {
       hasOnboarded, finishOnboarding, resetOnboarding,
       processBrainDump,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks, updateTask,
+      finishedTasks, finishTask, clearFinishedTask,
       hobbies, addHobby, completeMilestone, removeHobby, updateHobby,
       goals, addGoal, advanceGoalAction, deleteGoal, updateGoal,
       userName, setUserName,
