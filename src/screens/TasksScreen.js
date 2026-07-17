@@ -32,7 +32,7 @@ function relativeTime(ts) {
 export default function TasksScreen({ navigation }) {
   const {
     tasks, deleteTask, updateTask, addTask, ndToggles, userOccupation,
-    finishedTasks, finishTask, clearFinishedTask,
+    finishedTasks, finishTask, clearFinishedTask, points,
   } = useApp();
   const SECTIONS = SECTION_BASE.map(s => s.key === 'high' ? { ...s, label: getHighLabel(userOccupation) } : s);
   const { colors: t } = useTheme();
@@ -119,6 +119,11 @@ export default function TasksScreen({ navigation }) {
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
         <Text style={[ss.title, { color: C.clay }]}>Tasks</Text>
         <View style={ss.headerRight}>
+          {points > 0 && (
+            <View style={[ss.pointsBadge, { backgroundColor: C.pillLavBg }]}>
+              <Text style={[ss.pointsText, { color: C.pillLavText }]}>{points} pts</Text>
+            </View>
+          )}
           <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.clay }]} onPress={() => setShowAddTask(true)}>
             <Icon name="plus" size={14} color={C.white} />
             <Text style={ss.addTaskBtnText}>Add</Text>
@@ -347,6 +352,8 @@ const ss = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
   },
   addTaskBtnText: { fontSize: 13, fontWeight: '700', color: C.white },
+  pointsBadge: { borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
+  pointsText:  { fontSize: 12, fontWeight: '800' },
 
   scroll: { paddingHorizontal: 18, paddingTop: 18 },
 

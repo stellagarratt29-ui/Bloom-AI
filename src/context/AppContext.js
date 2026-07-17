@@ -57,6 +57,7 @@ export function AppProvider({ children }) {
   const [hasOnboarded, setHasOnboarded] = useState(false);
   const [tasks, setTasks]               = useState([]);
   const [finishedTasks, setFinishedTasks] = useState([]);
+  const [points, setPoints]             = useState(0);
   const [hobbies, setHobbies]           = useState([]);
   const [goals, setGoals]               = useState([]);
   const [userName, setUserName]         = useState('');
@@ -116,6 +117,7 @@ export function AppProvider({ children }) {
               }
             }
             if (s.finishedTasks)   setFinishedTasks(s.finishedTasks);
+            if (s.points)          setPoints(s.points);
             if (s.hobbies)         setHobbies(s.hobbies.map(migrateHobby));
             if (s.goals)           setGoals(s.goals);
             if (s.userName)        setUserName(s.userName);
@@ -141,12 +143,12 @@ export function AppProvider({ children }) {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
         hasOnboarded, tasks, hobbies, goals,
         userName, userAge, userOccupation, lastDumpDate,
-        ndSupport, ndToggles, tutorialSeen, finishedTasks,
+        ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, tasks, hobbies, goals,
       userName, userAge, userOccupation, lastDumpDate,
-      ndSupport, ndToggles, tutorialSeen, finishedTasks]);
+      ndSupport, ndToggles, tutorialSeen, finishedTasks, points]);
 
   // Tasks
   const addTask = useCallback((text, priority = 'medium', category) => {
@@ -180,6 +182,7 @@ export function AppProvider({ children }) {
           .filter(f => now - f.finishedAt < FINISHED_MAX_AGE)
           .slice(0, FINISHED_MAX)
       );
+      setPoints(p => p + 5);
       return prev.filter(t => t.id !== id);
     });
   }, []);
@@ -304,7 +307,7 @@ export function AppProvider({ children }) {
       hasOnboarded, finishOnboarding, resetOnboarding,
       processBrainDump,
       tasks, addTask, toggleTask, deleteTask, clearDoneTasks, updateTask,
-      finishedTasks, finishTask, clearFinishedTask,
+      finishedTasks, finishTask, clearFinishedTask, points,
       hobbies, addHobby, completeMilestone, removeHobby, updateHobby,
       goals, addGoal, advanceGoalAction, deleteGoal, updateGoal,
       userName, setUserName,

@@ -26,7 +26,14 @@
       "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Bloom",
+      "shortName": "Bloom",
+      "description": "Your personal productivity companion. Brain-dump your day and Bloom sorts it into a clear, doable plan.",
+      "themeColor": "#7C9473",
+      "backgroundColor": "#FBF7EF",
+      "display": "standalone",
+      "startUrl": "."
     },
     "plugins": [
       [
