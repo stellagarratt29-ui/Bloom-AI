@@ -18,33 +18,33 @@ const HOBBY_SUGGESTIONS = [
 const ND_TOGGLES_DEF = [
   {
     key: 'autoBreakTasks',
-    label: 'Break tasks into smaller steps automatically',
-    sub: 'Even simple-sounding tasks get split into 2–3 tiny steps so nothing feels overwhelming.',
+    label: 'Break tasks into smaller steps',
+    sub: 'Simple tasks auto-split into 2–3 tiny steps so nothing feels overwhelming.',
   },
   {
     key: 'ideaCapture',
-    label: 'Capture ideas without losing focus',
-    sub: 'A quick-capture button stays visible so you can note mid-task ideas instantly without switching context.',
+    label: 'Prominent idea capture',
+    sub: 'Quick-capture button stays visible so mid-task ideas never get lost.',
   },
   {
     key: 'timeBuffers',
     label: 'Extra time buffers',
-    sub: 'Bloom pads time estimates more generously by default so you always have room to breathe.',
+    sub: 'Time estimates padded more generously so you always have breathing room.',
   },
   {
     key: 'reducedClutter',
-    label: 'Reduce visual clutter',
-    sub: 'A simpler, quieter view for Tasks and Goals with more whitespace and less text per item.',
+    label: 'Reduced visual clutter',
+    sub: 'Simpler, quieter view for Tasks and Goals with more whitespace.',
   },
   {
     key: 'gentlerLanguage',
     label: 'Gentler language for missed tasks',
-    sub: 'Extra-soft copy when something doesn\'t get done — never "you didn\'t finish," always "that\'s okay, here\'s what\'s next."',
+    sub: 'Extra-soft copy when something doesn\'t get done — never guilt, always forward.',
   },
   {
     key: 'dyslexiaMode',
     label: 'Dyslexia-friendly text',
-    sub: 'More spacing between letters and words, cleaner font, and a text size you choose.',
+    sub: 'More letter/word spacing, cleaner font, and larger text options.',
   },
 ];
 
@@ -54,48 +54,46 @@ const TEXT_SIZE_OPTIONS = [
   { key: 'xl',     label: 'Extra large' },
 ];
 
-function Dots({ current, total }) {
+// Thin progress line — shows from step 2 onward
+function ProgressLine({ step }) {
+  if (step < 2) return null;
+  const pct = Math.min(((step - 1) / 5) * 100, 100);
   return (
-    <View style={s.dots}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={[s.dot, i === current && s.dotActive, i < current && s.dotDone]} />
-      ))}
+    <View style={s.progressTrack}>
+      <View style={[s.progressFill, { width: `${pct}%` }]} />
     </View>
   );
 }
 
 function BackBtn({ onPress }) {
   return (
-    <TouchableOpacity style={s.backBtn} onPress={onPress} activeOpacity={0.7} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-      <Icon name="chevron-left" size={18} color={C.clay} />
-      <Text style={s.backBtnText}>Back</Text>
+    <TouchableOpacity style={s.backBtn} onPress={onPress} activeOpacity={0.6} hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}>
+      <Icon name="arrow-left" size={20} color={C.ink} />
     </TouchableOpacity>
   );
 }
 
 export default function OnboardingScreen({ onFinish }) {
-  const [step,        setStep]       = useState(0);
-  const [name,        setName]       = useState('');
-  const [ageRange,    setAgeRange]   = useState('');
+  const [step,              setStep]             = useState(0);
+  const [name,              setName]             = useState('');
+  const [ageRange,          setAgeRange]         = useState('');
   const [occupation,        setOccupation]       = useState('');
   const [customOccupation,  setCustomOccupation] = useState('');
   const [selHobbies,        setSelHobbies]       = useState([]);
   const [customHobbyText,   setCustomHobbyText]  = useState('');
-  const [ndChoice,    setNdChoice]   = useState(null); // 'yes' | 'no' | 'skip'
-  const [ndToggles,   setNdToggles]  = useState({
+  const [ndChoice,          setNdChoice]         = useState(null);
+  const [ndToggles,         setNdToggles]        = useState({
     autoBreakTasks: false, ideaCapture: false,
     timeBuffers: false, reducedClutter: false, gentlerLanguage: false,
     dyslexiaMode: false,
   });
-  const [ndTextSize,  setNdTextSize] = useState('normal');
-  const [saving,       setSaving]      = useState(false);
-  const [locGranted,   setLocGranted]  = useState(false);
+  const [ndTextSize,    setNdTextSize]    = useState('normal');
+  const [saving,        setSaving]        = useState(false);
+  const [locGranted,    setLocGranted]    = useState(false);
   const [locRequesting, setLocRequesting] = useState(false);
 
-  const next = () => setStep(s => s + 1);
-
+  const next   = () => setStep(s => s + 1);
   const goBack = () => {
-    // Step 6 (Ready) can be reached from step 4 (if no/skip) or step 5 (if yes)
     if (step === 6) { setStep(ndChoice === 'yes' ? 5 : 4); return; }
     setStep(s => s - 1);
   };
@@ -127,50 +125,53 @@ export default function OnboardingScreen({ onFinish }) {
     setSaving(true);
     try {
       const finalOccupation = occupation === 'Other' && customOccupation.trim()
-        ? customOccupation.trim()
-        : occupation;
+        ? customOccupation.trim() : occupation;
       const finalNdToggles = ndChoice === 'yes'
         ? { ...ndToggles, textSize: ndToggles.dyslexiaMode ? ndTextSize : 'normal' }
         : null;
-      onFinish(
-        name.trim(), ageRange, finalOccupation,
-        null, null, selHobbies,
-        ndChoice, finalNdToggles,
-      );
+      onFinish(name.trim(), ageRange, finalOccupation, null, null, selHobbies, ndChoice, finalNdToggles);
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Step 0: Welcome + Name ────────────────────────────────────────────────
+  // ── Step 0: Welcome ───────────────────────────────────────────────────────
   if (step === 0) {
     return (
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={s.center}>
             <Text style={s.wordmark}>Bloom</Text>
-            <Text style={s.tagline}>Gentle guidance.{'\n'}Real progress.</Text>
-            <Text style={s.body}>
-              Every morning, tell Bloom what's on your mind — tasks, worries, goals, anything. It sorts it into a clear plan.
+            <Text style={s.tagline}>Your mind, sorted.</Text>
+            <Text style={s.welcomeBody}>
+              Tell Bloom what's on your mind — tasks, worries, goals, anything. It turns it into a clear, doable plan.
             </Text>
-            <Text style={s.stepQ}>What should we call you?</Text>
-            <TextInput
-              style={s.textInput}
-              placeholder="Your first name…"
-              placeholderTextColor={C.muted}
-              value={name}
-              onChangeText={setName}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={next}
-              autoCapitalize="words"
-            />
-            <TouchableOpacity style={s.primaryBtn} onPress={next} disabled={!name.trim()}>
-              <Text style={s.primaryBtnText}>Continue →</Text>
+
+            <View style={s.inputWrap}>
+              <TextInput
+                style={s.nameInput}
+                placeholder="What should we call you?"
+                placeholderTextColor={C.muted}
+                value={name}
+                onChangeText={setName}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={next}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[s.pill, !name.trim() && s.pillOff]}
+              onPress={next}
+              activeOpacity={0.85}
+            >
+              <Text style={s.pillText}>{name.trim() ? `Nice to meet you, ${name.trim().split(' ')[0]}` : 'Get started'}</Text>
             </TouchableOpacity>
+
             {!name.trim() && (
-              <TouchableOpacity style={s.skipBtn} onPress={next}>
-                <Text style={s.skipBtnText}>Skip</Text>
+              <TouchableOpacity style={s.ghostBtn} onPress={next}>
+                <Text style={s.ghostBtnText}>Skip</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -179,139 +180,137 @@ export default function OnboardingScreen({ onFinish }) {
     );
   }
 
-  // ── Step 0.5: Optional location ──────────────────────────────────────────
+  // ── Step 1: Location ──────────────────────────────────────────────────────
   if (step === 1) {
     return (
       <SafeAreaView style={s.safe}>
+        <ProgressLine step={step} />
         <BackBtn onPress={goBack} />
         <View style={s.center}>
-          <View style={[s.locIconWrap, { backgroundColor: C.clayPale }]}>
-            <Icon name="map-pin" size={32} color={C.clay} />
+          <View style={s.locIconWrap}>
+            <Icon name="map-pin" size={24} color={C.clay} />
           </View>
-          <Text style={s.stepTitle}>Allow location?</Text>
+          <Text style={s.stepTitle}>Know when to leave</Text>
           <Text style={s.stepSub}>
-            Bloom can tell you when to leave for events based on real travel time and traffic — but only if you want.
+            Bloom can tell you exactly when to head out for events, based on real travel time. Totally optional.
           </Text>
-          <View style={s.locBullets}>
-            {['Leave-time reminders with traffic', 'Works with Apple Maps & Google Maps', 'Never shared or stored online'].map(t => (
-              <View key={t} style={s.locBulletRow}>
-                <Icon name="check" size={14} color={C.moss} />
-                <Text style={s.locBulletText}>{t}</Text>
+          <View style={s.bulletList}>
+            {['Leave-time alerts based on traffic', 'Works with your calendar events', 'Never shared or stored'].map(t => (
+              <View key={t} style={s.bulletRow}>
+                <View style={s.bulletDot} />
+                <Text style={s.bulletText}>{t}</Text>
               </View>
             ))}
           </View>
           {locRequesting
-            ? <ActivityIndicator color={C.moss} style={{ marginTop: 28 }} />
+            ? <ActivityIndicator color={C.moss} style={{ marginTop: 32 }} />
             : (
-              <TouchableOpacity style={s.primaryBtn} onPress={handleAllowLocation}>
-                <Icon name="map-pin" size={16} color="#fff" />
-                <Text style={s.primaryBtnText}>Allow location</Text>
+              <TouchableOpacity style={[s.pill, { marginTop: 36 }]} onPress={handleAllowLocation} activeOpacity={0.85}>
+                <Text style={s.pillText}>Allow location</Text>
               </TouchableOpacity>
             )
           }
-          <TouchableOpacity style={s.skipBtn} onPress={() => { markLocationDenied(); next(); }}>
-            <Text style={s.skipBtnText}>Not now</Text>
+          <TouchableOpacity style={s.ghostBtn} onPress={() => { markLocationDenied(); next(); }}>
+            <Text style={s.ghostBtnText}>Not now</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── Step 1: Age + Occupation ──────────────────────────────────────────────
+  // ── Step 2: Age + Occupation ──────────────────────────────────────────────
   if (step === 2) {
     return (
       <SafeAreaView style={s.safe}>
+        <ProgressLine step={step} />
         <BackBtn onPress={goBack} />
-        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
-          <Dots current={0} total={4} />
+        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <Text style={s.stepTitle}>A bit about you</Text>
-          <Text style={s.stepSub}>Helps Bloom keep suggestions relevant. Optional.</Text>
+          <Text style={s.stepSub}>Helps Bloom keep things relevant. Totally optional.</Text>
 
-          <Text style={s.fieldLabel}>AGE RANGE</Text>
-          <View style={s.chipRow}>
+          <Text style={s.sectionLabel}>How old are you?</Text>
+          <View style={s.pillGrid}>
             {AGE_RANGES.map(a => (
               <TouchableOpacity
                 key={a}
-                style={[s.chip, ageRange === a && s.chipActive]}
+                style={[s.selectChip, ageRange === a && s.selectChipActive]}
                 onPress={() => setAgeRange(a === ageRange ? '' : a)}
               >
-                <Text style={[s.chipText, ageRange === a && s.chipTextActive]}>{a}</Text>
+                <Text style={[s.selectChipText, ageRange === a && s.selectChipTextActive]}>{a}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={[s.fieldLabel, { marginTop: 20 }]}>OCCUPATION</Text>
-          <View style={s.chipRow}>
+          <Text style={[s.sectionLabel, { marginTop: 28 }]}>What do you do?</Text>
+          <View style={s.pillGrid}>
             {OCCUPATIONS.map(o => (
               <TouchableOpacity
                 key={o}
-                style={[s.chip, occupation === o && s.chipActive]}
+                style={[s.selectChip, occupation === o && s.selectChipActive]}
                 onPress={() => setOccupation(o === occupation ? '' : o)}
               >
-                <Text style={[s.chipText, occupation === o && s.chipTextActive]}>{o}</Text>
+                <Text style={[s.selectChipText, occupation === o && s.selectChipTextActive]}>{o}</Text>
               </TouchableOpacity>
             ))}
           </View>
           {occupation === 'Other' && (
-            <TextInput
-              style={[s.textInput, { marginTop: 10, marginBottom: 0 }]}
-              placeholder="e.g. Mum, dentist, nurse, freelancer…"
-              placeholderTextColor={C.muted}
-              value={customOccupation}
-              onChangeText={setCustomOccupation}
-              autoCapitalize="words"
-              returnKeyType="done"
-            />
+            <View style={[s.inputWrap, { marginTop: 12 }]}>
+              <TextInput
+                style={s.nameInput}
+                placeholder="e.g. Mum, nurse, freelancer…"
+                placeholderTextColor={C.muted}
+                value={customOccupation}
+                onChangeText={setCustomOccupation}
+                autoCapitalize="words"
+                returnKeyType="done"
+              />
+            </View>
           )}
 
-          <View style={[s.btnRow, { marginTop: 32 }]}>
-            <TouchableOpacity style={[s.primaryBtn, s.btnRowMain]} onPress={next}>
-              <Text style={s.primaryBtnText}>Continue →</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.skipBtn} onPress={next}>
-              <Text style={s.skipBtnText}>Skip</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={[s.pill, { marginTop: 36 }]} onPress={next} activeOpacity={0.85}>
+            <Text style={s.pillText}>Continue</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.ghostBtn} onPress={next}>
+            <Text style={s.ghostBtnText}>Skip</Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  // ── Step 3: Optional hobbies ──────────────────────────────────────────────
+  // ── Step 3: Hobbies ───────────────────────────────────────────────────────
   if (step === 3) {
     return (
       <SafeAreaView style={s.safe}>
+        <ProgressLine step={step} />
         <BackBtn onPress={goBack} />
-        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
-          <Dots current={1} total={4} />
-          <Text style={s.stepTitle}>Any hobbies to start with?</Text>
-          <Text style={s.stepSub}>Pick up to 3 — or skip. You can always add more in Grow.</Text>
+        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Text style={s.stepTitle}>Any hobbies?</Text>
+          <Text style={s.stepSub}>Pick up to 5 — Bloom will build you a real curriculum for each one. You can add more later.</Text>
 
-          <View style={s.hobbyGrid}>
+          <View style={s.pillGrid}>
             {HOBBY_SUGGESTIONS.map(h => (
               <TouchableOpacity
                 key={h}
-                style={[s.hobbyChip, selHobbies.includes(h) && s.hobbyChipActive]}
+                style={[s.selectChip, selHobbies.includes(h) && s.selectChipPink]}
                 onPress={() => toggleHobby(h)}
               >
-                <Text style={[s.hobbyChipText, selHobbies.includes(h) && s.hobbyChipTextActive]}>{h}</Text>
+                {selHobbies.includes(h) && <Icon name="check" size={12} color={C.clay} style={{ marginRight: 4 }} />}
+                <Text style={[s.selectChipText, selHobbies.includes(h) && s.selectChipTextPink]}>{h}</Text>
               </TouchableOpacity>
             ))}
             {selHobbies.filter(h => !HOBBY_SUGGESTIONS.includes(h)).map(h => (
-              <TouchableOpacity
-                key={h}
-                style={[s.hobbyChip, s.hobbyChipActive]}
-                onPress={() => toggleHobby(h)}
-              >
-                <Text style={[s.hobbyChipText, s.hobbyChipTextActive]}>{h}</Text>
+              <TouchableOpacity key={h} style={[s.selectChip, s.selectChipPink]} onPress={() => toggleHobby(h)}>
+                <Icon name="check" size={12} color={C.clay} style={{ marginRight: 4 }} />
+                <Text style={[s.selectChipText, s.selectChipTextPink]}>{h}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <View style={s.customHobbyRow}>
+          <View style={[s.inputWrap, { marginTop: 16 }]}>
             <TextInput
-              style={s.customHobbyInput}
-              placeholder="Type your own hobby…"
+              style={[s.nameInput, { paddingRight: 80 }]}
+              placeholder="Type your own…"
               placeholderTextColor={C.muted}
               value={customHobbyText}
               onChangeText={setCustomHobbyText}
@@ -319,96 +318,87 @@ export default function OnboardingScreen({ onFinish }) {
               returnKeyType="done"
               autoCapitalize="words"
             />
-            <TouchableOpacity
-              style={[s.customHobbyAdd, !customHobbyText.trim() && { opacity: 0.35 }]}
-              onPress={addCustomHobby}
-              disabled={!customHobbyText.trim()}
-            >
-              <Text style={s.customHobbyAddText}>Add</Text>
-            </TouchableOpacity>
+            {!!customHobbyText.trim() && (
+              <TouchableOpacity style={s.addInline} onPress={addCustomHobby}>
+                <Text style={s.addInlineText}>Add</Text>
+              </TouchableOpacity>
+            )}
           </View>
-
-          <View style={s.btnRow}>
-            <TouchableOpacity
-              style={[s.primaryBtn, s.btnRowMain, selHobbies.length === 0 && { opacity: 0.4 }]}
-              onPress={next}
-              disabled={selHobbies.length === 0}
-            >
-              <Text style={s.primaryBtnText}>
-                {selHobbies.length > 0 ? `Add ${selHobbies.length} ${selHobbies.length === 1 ? 'hobby' : 'hobbies'} →` : 'Add hobbies →'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.skipBtn} onPress={next}>
-              <Text style={s.skipBtnText}>Skip</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Step 4: Neurodivergent support question ───────────────────────────────
-  if (step === 4) {
-    return (
-      <SafeAreaView style={s.safe}>
-        <BackBtn onPress={goBack} />
-        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
-          <Dots current={2} total={4} />
-          <View style={s.ndIconWrap}>
-            <Text style={s.ndIcon}>🌿</Text>
-          </View>
-          <Text style={s.stepTitle}>One more thing</Text>
-          <Text style={s.ndQuestion}>
-            Does your brain work in a way that sometimes needs a little extra support? (ADHD, autism, anxiety, or anything else — totally optional, just helps me help you better.)
-          </Text>
-
-          {[
-            { id: 'yes',  label: 'Yes, a little extra support would help' },
-            { id: 'no',   label: 'No, the default works well for me' },
-            { id: 'skip', label: 'Prefer not to say' },
-          ].map(opt => (
-            <TouchableOpacity
-              key={opt.id}
-              style={[s.ndOption, ndChoice === opt.id && s.ndOptionActive]}
-              onPress={() => setNdChoice(opt.id)}
-              activeOpacity={0.7}
-            >
-              <View style={[s.ndRadio, ndChoice === opt.id && s.ndRadioActive]}>
-                {ndChoice === opt.id && <View style={s.ndRadioFill} />}
-              </View>
-              <Text style={[s.ndOptionText, ndChoice === opt.id && s.ndOptionTextActive]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
 
           <TouchableOpacity
-            style={[s.primaryBtn, { marginTop: 28 }, !ndChoice && { opacity: 0.4 }]}
-            onPress={() => {
-              if (!ndChoice) return;
-              if (ndChoice === 'yes') { next(); }
-              else { setStep(6); } // skip toggle screen
-            }}
-            disabled={!ndChoice}
+            style={[s.pill, { marginTop: 28 }, selHobbies.length === 0 && s.pillOff]}
+            onPress={next}
+            activeOpacity={0.85}
           >
-            <Text style={s.primaryBtnText}>Continue →</Text>
+            <Text style={s.pillText}>
+              {selHobbies.length > 0 ? `Add ${selHobbies.length} ${selHobbies.length === 1 ? 'hobby' : 'hobbies'}` : 'Continue'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.ghostBtn} onPress={next}>
+            <Text style={s.ghostBtnText}>Skip</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  // ── Step 5: ND toggle selection (only if "yes") ───────────────────────────
+  // ── Step 4: ND support ────────────────────────────────────────────────────
+  if (step === 4) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <ProgressLine step={step} />
+        <BackBtn onPress={goBack} />
+        <ScrollView contentContainerStyle={s.scrollCenter} showsVerticalScrollIndicator={false}>
+          <Text style={s.stepTitle}>One more thing</Text>
+          <Text style={s.stepSub}>
+            Does your brain sometimes need a little extra support? (ADHD, autism, anxiety — anything. Totally optional, helps me help you.)
+          </Text>
+
+          {[
+            { id: 'yes',  label: 'Yes — a little extra support helps' },
+            { id: 'no',   label: 'No, the defaults work well for me' },
+            { id: 'skip', label: 'Prefer not to say' },
+          ].map(opt => (
+            <TouchableOpacity
+              key={opt.id}
+              style={[s.optionCard, ndChoice === opt.id && s.optionCardActive]}
+              onPress={() => setNdChoice(opt.id)}
+              activeOpacity={0.7}
+            >
+              <View style={[s.optionRadio, ndChoice === opt.id && s.optionRadioActive]}>
+                {ndChoice === opt.id && <View style={s.optionRadioFill} />}
+              </View>
+              <Text style={[s.optionText, ndChoice === opt.id && s.optionTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            style={[s.pill, { marginTop: 28 }, !ndChoice && s.pillOff]}
+            onPress={() => {
+              if (!ndChoice) return;
+              ndChoice === 'yes' ? next() : setStep(6);
+            }}
+            disabled={!ndChoice}
+            activeOpacity={0.85}
+          >
+            <Text style={s.pillText}>Continue</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Step 5: ND toggles ────────────────────────────────────────────────────
   if (step === 5) {
     return (
       <SafeAreaView style={s.safe}>
+        <ProgressLine step={step} />
         <BackBtn onPress={goBack} />
-        <ScrollView contentContainerStyle={[s.scrollCenter, { paddingTop: 32 }]} showsVerticalScrollIndicator={false}>
-          <Dots current={3} total={4} />
+        <ScrollView contentContainerStyle={[s.scrollCenter, { paddingTop: 24 }]} showsVerticalScrollIndicator={false}>
           <Text style={s.stepTitle}>Choose what helps</Text>
-          <Text style={s.stepSub}>
-            All off by default — turn on whatever feels useful. You can change these anytime in Settings.
-          </Text>
+          <Text style={s.stepSub}>All off by default. Turn on whatever feels useful — change anytime in Settings.</Text>
 
           {ND_TOGGLES_DEF.map(({ key, label, sub }) => (
             <TouchableOpacity
@@ -432,23 +422,23 @@ export default function OnboardingScreen({ onFinish }) {
 
           {ndToggles.dyslexiaMode && (
             <View style={s.textSizeBox}>
-              <Text style={s.textSizeLabel}>TEXT SIZE</Text>
-              <View style={s.chipRow}>
+              <Text style={s.textSizeLabel}>Text size</Text>
+              <View style={s.pillGrid}>
                 {TEXT_SIZE_OPTIONS.map(opt => (
                   <TouchableOpacity
                     key={opt.key}
-                    style={[s.chip, ndTextSize === opt.key && s.chipActive]}
+                    style={[s.selectChip, ndTextSize === opt.key && s.selectChipActive]}
                     onPress={() => setNdTextSize(opt.key)}
                   >
-                    <Text style={[s.chipText, ndTextSize === opt.key && s.chipTextActive]}>{opt.label}</Text>
+                    <Text style={[s.selectChipText, ndTextSize === opt.key && s.selectChipTextActive]}>{opt.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
           )}
 
-          <TouchableOpacity style={[s.primaryBtn, { marginTop: 24 }]} onPress={next}>
-            <Text style={s.primaryBtnText}>Continue →</Text>
+          <TouchableOpacity style={[s.pill, { marginTop: 24 }]} onPress={next} activeOpacity={0.85}>
+            <Text style={s.pillText}>Continue</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -458,165 +448,182 @@ export default function OnboardingScreen({ onFinish }) {
   // ── Step 6: Ready ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe}>
+      <ProgressLine step={6} />
       <BackBtn onPress={goBack} />
       <View style={s.center}>
-        <Dots current={3} total={4} />
+        <Text style={s.wordmarkSmall}>Bloom</Text>
         <Text style={s.readyTitle}>
-          {name.trim() ? `You're all set, ${name.trim()}.` : "You're all set."}
+          {name.trim() ? `You're all set,\n${name.trim().split(' ')[0]}.` : "You're all set."}
         </Text>
-        <Text style={s.body}>
-          Start by telling Bloom everything on your mind — tasks, worries, goals, plans. It'll turn it into a clear, doable list. Tap any task for step-by-step help.
+        <Text style={s.welcomeBody}>
+          Start by telling Bloom everything on your mind — tasks, worries, plans, goals. It'll sort it into a clear list. Tap any task for step-by-step help.
         </Text>
         <TouchableOpacity
-          style={[s.primaryBtn, saving && { opacity: 0.6 }]}
+          style={[s.pill, { marginTop: 36 }, saving && { opacity: 0.6 }]}
           onPress={finish}
           disabled={saving}
+          activeOpacity={0.85}
         >
-          {saving ? <ActivityIndicator color={C.white} /> : <Text style={s.primaryBtnText}>Open Bloom →</Text>}
+          {saving
+            ? <ActivityIndicator color={C.white} />
+            : <Text style={s.pillText}>Open Bloom</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
+const SHADOW = {
+  shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 16,
+  shadowOffset: { width: 0, height: 4 }, elevation: 3,
+};
+
 const s = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: C.cream },
 
-  locIconWrap: {
-    width: 72, height: 72, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 20,
-  },
-  locBullets: { alignSelf: 'stretch', gap: 10, marginTop: 20, marginBottom: 4, paddingHorizontal: 8 },
-  locBulletRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  locBulletText: { fontSize: 14, color: '#555', flex: 1 },
+  progressTrack: { height: 2, backgroundColor: C.border, position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
+  progressFill:  { height: 2, backgroundColor: C.moss },
+
   backBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 18, paddingTop: 14, paddingBottom: 4,
+    paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8,
     alignSelf: 'flex-start',
   },
-  backBtnText: { fontSize: 15, fontWeight: '600', color: C.clay },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  scrollCenter: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 40 },
 
-  dots: { flexDirection: 'row', gap: 6, marginBottom: 36 },
-  dot:      { width: 7, height: 7, borderRadius: 4, backgroundColor: C.border },
-  dotActive:{ backgroundColor: C.moss, width: 22 },
-  dotDone:  { backgroundColor: C.sageMid },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  scrollCenter: {
+    flexGrow: 1, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 28, paddingVertical: 40,
+  },
 
+  // Wordmark
   wordmark: {
-    fontSize: 52, fontWeight: '800', color: C.clay, letterSpacing: -1, marginBottom: 12,
+    fontSize: 72, fontWeight: '800', color: C.clay, letterSpacing: -2,
+    marginBottom: 8, textAlign: 'center',
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  tagline: { fontSize: 24, fontWeight: '700', color: C.ink, textAlign: 'center', lineHeight: 32, marginBottom: 16 },
-  body:    { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
+  wordmarkSmall: {
+    fontSize: 40, fontWeight: '800', color: C.clay, letterSpacing: -1,
+    marginBottom: 20, textAlign: 'center',
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+  },
+  tagline: {
+    fontSize: 22, fontWeight: '300', color: C.ink, textAlign: 'center',
+    letterSpacing: 0.2, marginBottom: 20,
+  },
+  welcomeBody: {
+    fontSize: 15, color: C.muted, textAlign: 'center',
+    lineHeight: 25, marginBottom: 36, maxWidth: 300,
+  },
 
-  stepQ:   { fontSize: 18, fontWeight: '700', color: C.ink, marginBottom: 14, alignSelf: 'flex-start' },
   stepTitle: {
-    fontSize: 26, fontWeight: '800', color: C.ink, textAlign: 'center', lineHeight: 34,
-    marginBottom: 8,
+    fontSize: 28, fontWeight: '800', color: C.ink, textAlign: 'center', lineHeight: 36,
+    marginBottom: 10,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  stepSub: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
+  stepSub: {
+    fontSize: 14, color: C.muted, textAlign: 'center',
+    lineHeight: 22, marginBottom: 32, maxWidth: 300,
+  },
   readyTitle: {
-    fontSize: 26, fontWeight: '800', color: C.ink, textAlign: 'center', lineHeight: 34,
-    marginBottom: 20,
+    fontSize: 30, fontWeight: '800', color: C.ink, textAlign: 'center', lineHeight: 40,
+    marginBottom: 16,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
+  sectionLabel: {
+    fontSize: 13, fontWeight: '600', color: C.ink, alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
 
-  textInput: {
+  // Input
+  inputWrap: { width: '100%', position: 'relative', marginBottom: 4 },
+  nameInput: {
     width: '100%', backgroundColor: C.white,
-    borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 14, paddingVertical: 15, paddingHorizontal: 18,
-    fontSize: 17, color: C.ink, marginBottom: 22,
+    borderRadius: 18, paddingVertical: 18, paddingHorizontal: 22,
+    fontSize: 16, color: C.ink,
+    ...SHADOW,
   },
+  addInline: {
+    position: 'absolute', right: 12, top: '50%',
+    marginTop: -16, paddingVertical: 8, paddingHorizontal: 14,
+    backgroundColor: C.clay, borderRadius: 10,
+  },
+  addInlineText: { color: C.white, fontWeight: '700', fontSize: 13 },
 
-  fieldLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, alignSelf: 'flex-start', marginBottom: 10 },
+  // Pill button
+  pill: {
+    backgroundColor: C.moss, borderRadius: 50,
+    paddingVertical: 18, paddingHorizontal: 32,
+    width: '100%', alignItems: 'center', justifyContent: 'center',
+    marginBottom: 4,
+    ...SHADOW,
+  },
+  pillOff:  { opacity: 0.45 },
+  pillText: { color: C.white, fontWeight: '700', fontSize: 16, letterSpacing: 0.2 },
 
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%' },
-  chip: {
-    paddingVertical: 9, paddingHorizontal: 16, borderRadius: 20,
-    borderWidth: 1.5, borderColor: C.border, backgroundColor: C.white,
-  },
-  chipActive: { borderColor: C.moss, backgroundColor: C.sagePale },
-  chipText: { fontSize: 14, fontWeight: '600', color: C.muted },
-  chipTextActive: { color: C.ink },
+  ghostBtn:     { paddingVertical: 16, paddingHorizontal: 20 },
+  ghostBtnText: { fontSize: 14, color: C.muted, fontWeight: '500' },
 
-  hobbyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%', justifyContent: 'center', marginBottom: 16 },
-  customHobbyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', marginBottom: 4 },
-  customHobbyInput: {
-    flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 14, paddingVertical: 11, paddingHorizontal: 16,
-    fontSize: 15, color: C.ink,
+  // Select chips (age, occupation, hobbies)
+  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%', justifyContent: 'flex-start' },
+  selectChip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 10, paddingHorizontal: 18, borderRadius: 50,
+    backgroundColor: C.white, ...SHADOW,
   },
-  customHobbyAdd: {
-    backgroundColor: C.clay, borderRadius: 14,
-    paddingVertical: 11, paddingHorizontal: 18,
-  },
-  customHobbyAddText: { color: C.white, fontWeight: '700', fontSize: 14 },
-  hobbyChip: {
-    paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20,
-    borderWidth: 1.5, borderColor: C.border, backgroundColor: C.white,
-  },
-  hobbyChipActive: { borderColor: C.clay, backgroundColor: C.clayPale },
-  hobbyChipText: { fontSize: 14, fontWeight: '600', color: C.muted },
-  hobbyChipTextActive: { color: C.clay },
+  selectChipActive:     { backgroundColor: C.sagePale, shadowOpacity: 0.03 },
+  selectChipPink:       { backgroundColor: C.clayPale, shadowOpacity: 0.03 },
+  selectChipText:       { fontSize: 14, fontWeight: '500', color: C.muted },
+  selectChipTextActive: { color: C.mossDark, fontWeight: '600' },
+  selectChipTextPink:   { color: C.clay, fontWeight: '600' },
 
-  // ND question
-  ndIconWrap: { marginBottom: 16, alignItems: 'center' },
-  ndIcon: { fontSize: 40 },
-  ndQuestion: {
-    fontSize: 15, color: C.ink, textAlign: 'center', lineHeight: 24,
-    marginBottom: 28, paddingHorizontal: 4,
+  // Location bullets
+  locIconWrap: {
+    width: 60, height: 60, borderRadius: 30,
+    backgroundColor: C.clayPale, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 24, ...SHADOW,
   },
-  ndOption: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    width: '100%', borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16,
+  bulletList: { alignSelf: 'stretch', gap: 12, marginBottom: 4, paddingHorizontal: 4 },
+  bulletRow:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  bulletDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: C.moss, flexShrink: 0 },
+  bulletText: { fontSize: 14, color: C.ink, flex: 1, lineHeight: 22 },
+
+  // ND option cards
+  optionCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    width: '100%', borderRadius: 18,
+    paddingVertical: 16, paddingHorizontal: 18,
     marginBottom: 10, backgroundColor: C.white,
+    ...SHADOW,
   },
-  ndOptionActive: { borderColor: C.moss, backgroundColor: C.sagePale },
-  ndRadio: {
-    width: 20, height: 20, borderRadius: 10,
+  optionCardActive: { backgroundColor: C.sagePale, shadowOpacity: 0.03 },
+  optionRadio: {
+    width: 22, height: 22, borderRadius: 11,
     borderWidth: 2, borderColor: C.border,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  ndRadioActive: { borderColor: C.moss },
-  ndRadioFill: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.moss },
-  ndOptionText: { fontSize: 14, fontWeight: '500', color: C.muted, flex: 1 },
-  ndOptionTextActive: { color: C.ink, fontWeight: '600' },
+  optionRadioActive: { borderColor: C.moss },
+  optionRadioFill:   { width: 10, height: 10, borderRadius: 5, backgroundColor: C.moss },
+  optionText:        { fontSize: 14, fontWeight: '500', color: C.muted, flex: 1 },
+  optionTextActive:  { color: C.ink, fontWeight: '600' },
+
+  // ND toggle cards
+  toggleCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    width: '100%', borderRadius: 18,
+    paddingVertical: 14, paddingHorizontal: 16,
+    marginBottom: 10, backgroundColor: C.white,
+    ...SHADOW,
+  },
+  toggleCardActive: { backgroundColor: C.sagePale, shadowOpacity: 0.03 },
+  toggleCardLeft:   { flex: 1 },
+  toggleLabel:      { fontSize: 14, fontWeight: '600', color: C.muted, marginBottom: 3 },
+  toggleLabelActive:{ color: C.ink },
+  toggleSub:        { fontSize: 12, color: C.muted, lineHeight: 18 },
 
   textSizeBox: {
     width: '100%', backgroundColor: C.sagePale,
-    borderRadius: 14, padding: 16, marginBottom: 10,
+    borderRadius: 18, padding: 18, marginBottom: 10,
   },
-  textSizeLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 1.4, marginBottom: 10 },
-
-  // ND toggles
-  toggleCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    width: '100%', borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16,
-    marginBottom: 10, backgroundColor: C.white,
-  },
-  toggleCardActive: { borderColor: C.moss, backgroundColor: C.sagePale },
-  toggleCardLeft: { flex: 1 },
-  toggleLabel: { fontSize: 14, fontWeight: '600', color: C.muted, marginBottom: 3 },
-  toggleLabelActive: { color: C.ink },
-  toggleSub:   { fontSize: 12, color: C.muted, lineHeight: 18 },
-
-  btnRow: { flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%', marginTop: 20 },
-  btnRowMain: { flex: 1, width: undefined },
-
-  primaryBtn: {
-    backgroundColor: C.moss, borderRadius: 14,
-    paddingVertical: 16, paddingHorizontal: 32,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, width: '100%',
-  },
-  primaryBtnText: { color: C.white, fontWeight: '700', fontSize: 16 },
-
-  skipBtn: { paddingVertical: 14, paddingHorizontal: 16 },
-  skipBtnText: { fontSize: 15, fontWeight: '600', color: C.muted },
+  textSizeLabel: { fontSize: 13, fontWeight: '600', color: C.ink, marginBottom: 12 },
 });
