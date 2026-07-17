@@ -12,7 +12,7 @@ import { callClaude, getApiKey } from '../services/ai';
 
 export default function TaskGuideScreen({ route, navigation }) {
   const { task } = route.params ?? {};
-  const { toggleTask } = useApp();
+  const { finishTask } = useApp();
 
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
@@ -102,7 +102,7 @@ Rules:
 
   const handleMarkDone = () => {
     if (task && !taskDone) {
-      toggleTask(task.id);
+      finishTask(task.id);
       setTaskDone(true);
     }
     navigation.goBack();

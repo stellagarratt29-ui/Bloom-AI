@@ -476,6 +476,7 @@ const s = StyleSheet.create({
   },
   chipActive: { borderColor: C.moss, backgroundColor: C.sagePale },
   chipText: { fontSize: 13, fontWeight: '600' },
+  chipTextActive: { color: C.moss },
 
   editActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   cancelBtn: {

@@ -30,16 +30,13 @@ function getHobbyIcon(name) {
 }
 
 export default function YearReviewScreen({ navigation }) {
-  const { tasks, hobbies, goals } = useApp();
+  const { hobbies, goals, points } = useApp();
   const { colors: t } = useTheme();
 
   const year = new Date().getFullYear();
-  const yearStart = new Date(year, 0, 1).getTime();
 
-  const doneTasks = tasks.filter(tk => tk.done);
-  const thisYearTasks = tasks.filter(tk => tk.done && (tk.completedAt ?? 0) >= yearStart);
-  const taskCount = thisYearTasks.length > 0 ? thisYearTasks.length : doneTasks.length;
-  const countLabel = thisYearTasks.length > 0 ? `${year}` : 'total';
+  const taskCount = Math.round(points / 5);
+  const countLabel = 'total';
 
   const [reflection, setReflection] = useState(null);
   const [loading, setLoading]       = useState(true);
@@ -77,7 +74,7 @@ export default function YearReviewScreen({ navigation }) {
         {/* Task count */}
         <View style={[s.statCard, { backgroundColor: t.card, borderColor: t.border }]}>
           <Text style={[s.statNum, { color: C.clay }]}>{taskCount}</Text>
-          <Text style={[s.statLabel, { color: t.subtext }]}>tasks completed{countLabel !== `${year}` ? ' (all time)' : ` in ${year}`}</Text>
+          <Text style={[s.statLabel, { color: t.subtext }]}>tasks completed (all time)</Text>
         </View>
 
         {/* Hobbies */}
