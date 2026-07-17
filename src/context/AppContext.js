@@ -79,6 +79,22 @@ export function AppProvider({ children }) {
   const [ndSupport, setNdSupport]   = useState(null); // null | 'yes' | 'no' | 'skip'
   const [ndToggles, setNdToggles]   = useState(DEFAULT_ND_TOGGLES);
 
+  // Screen time
+  const [screenTimeLogs, setScreenTimeLogs]   = useState([]); // [{date:'YYYY-MM-DD', minutes}]
+  const [screenTimeGoal, setScreenTimeGoalState] = useState(120); // minutes, default 2h
+
+  const logScreenTime = useCallback((minutes) => {
+    const today = todayStr();
+    setScreenTimeLogs(prev => {
+      const filtered = prev.filter(l => l.date !== today);
+      return [{ date: today, minutes }, ...filtered].slice(0, 30);
+    });
+  }, []);
+
+  const setScreenTimeGoal = useCallback((minutes) => {
+    setScreenTimeGoalState(minutes);
+  }, []);
+
   // Tutorial
   const [tutorialSeen, setTutorialSeen]           = useState(false);
   const [showTutorialReplay, setShowTutorialReplay] = useState(false);
@@ -124,8 +140,10 @@ export function AppProvider({ children }) {
             if (s.userAge)         setUserAge(s.userAge);
             if (s.userOccupation)  setUserOccupation(s.userOccupation);
             if (s.lastDumpDate)    setLastDumpDate(s.lastDumpDate);
-            if (s.ndSupport)       setNdSupport(s.ndSupport);
-            if (s.ndToggles)       setNdToggles({ ...DEFAULT_ND_TOGGLES, ...s.ndToggles });
+            if (s.ndSupport)         setNdSupport(s.ndSupport);
+            if (s.ndToggles)         setNdToggles({ ...DEFAULT_ND_TOGGLES, ...s.ndToggles });
+            if (s.screenTimeLogs)    setScreenTimeLogs(s.screenTimeLogs);
+            if (s.screenTimeGoal)    setScreenTimeGoalState(s.screenTimeGoal);
             // Existing users who were already onboarded skip the tutorial
             setTutorialSeen(s.tutorialSeen ?? !!s.hasOnboarded);
           } catch (_) {}
@@ -144,11 +162,13 @@ export function AppProvider({ children }) {
         hasOnboarded, tasks, hobbies, goals,
         userName, userAge, userOccupation, lastDumpDate,
         ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
+        screenTimeLogs, screenTimeGoal,
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, tasks, hobbies, goals,
       userName, userAge, userOccupation, lastDumpDate,
-      ndSupport, ndToggles, tutorialSeen, finishedTasks, points]);
+      ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
+      screenTimeLogs, screenTimeGoal]);
 
   // Tasks
   const addTask = useCallback((text, priority = 'medium', category) => {
@@ -320,6 +340,7 @@ export function AppProvider({ children }) {
       tutorialSeen, setTutorialSeen,
       showTutorialReplay, openTutorial, closeTutorial,
       checkIn, checkInDone, saveCheckIn,
+      screenTimeLogs, screenTimeGoal, logScreenTime, setScreenTimeGoal,
     }}>
       {children}
     </AppContext.Provider>
