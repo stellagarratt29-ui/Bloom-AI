@@ -82,6 +82,7 @@ export function AppProvider({ children }) {
   // Screen time
   const [screenTimeLogs, setScreenTimeLogs]   = useState([]); // [{date:'YYYY-MM-DD', minutes}]
   const [screenTimeGoal, setScreenTimeGoalState] = useState(120); // minutes, default 2h
+  const [bloomTimeLogs, setBloomTimeLogs]     = useState([]); // auto-tracked time in Bloom
 
   const logScreenTime = useCallback((minutes) => {
     const today = todayStr();
@@ -93,6 +94,17 @@ export function AppProvider({ children }) {
 
   const setScreenTimeGoal = useCallback((minutes) => {
     setScreenTimeGoalState(minutes);
+  }, []);
+
+  const addBloomTime = useCallback((minutes) => {
+    if (minutes <= 0) return;
+    const today = todayStr();
+    setBloomTimeLogs(prev => {
+      const existing = prev.find(l => l.date === today);
+      const newMins = Math.round(((existing?.minutes ?? 0) + minutes) * 10) / 10;
+      const filtered = prev.filter(l => l.date !== today);
+      return [{ date: today, minutes: newMins }, ...filtered].slice(0, 30);
+    });
   }, []);
 
   // Tutorial
@@ -144,6 +156,7 @@ export function AppProvider({ children }) {
             if (s.ndToggles)         setNdToggles({ ...DEFAULT_ND_TOGGLES, ...s.ndToggles });
             if (s.screenTimeLogs)    setScreenTimeLogs(s.screenTimeLogs);
             if (s.screenTimeGoal)    setScreenTimeGoalState(s.screenTimeGoal);
+            if (s.bloomTimeLogs)     setBloomTimeLogs(s.bloomTimeLogs);
             // Existing users who were already onboarded skip the tutorial
             setTutorialSeen(s.tutorialSeen ?? !!s.hasOnboarded);
           } catch (_) {}
@@ -154,6 +167,7 @@ export function AppProvider({ children }) {
   }, []);
 
   const saveTimer = useRef(null);
+  const sessionStartRef = useRef(null);
   useEffect(() => {
     if (!loaded) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -162,13 +176,38 @@ export function AppProvider({ children }) {
         hasOnboarded, tasks, hobbies, goals,
         userName, userAge, userOccupation, lastDumpDate,
         ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
-        screenTimeLogs, screenTimeGoal,
+        screenTimeLogs, screenTimeGoal, bloomTimeLogs,
       })).catch(() => {});
     }, 600);
   }, [loaded, hasOnboarded, tasks, hobbies, goals,
       userName, userAge, userOccupation, lastDumpDate,
       ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
-      screenTimeLogs, screenTimeGoal]);
+      screenTimeLogs, screenTimeGoal, bloomTimeLogs]);
+
+  // Auto-track time in Bloom via Page Visibility API (web only)
+  useEffect(() => {
+    if (!loaded) return;
+    if (typeof document === 'undefined') return;
+    const flush = () => {
+      if (sessionStartRef.current !== null) {
+        const elapsed = (Date.now() - sessionStartRef.current) / 60000;
+        sessionStartRef.current = null;
+        if (elapsed >= 0.05) addBloomTime(elapsed);
+      }
+    };
+    const onVisibility = () => {
+      if (document.hidden) flush();
+      else sessionStartRef.current = Date.now();
+    };
+    if (!document.hidden) sessionStartRef.current = Date.now();
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('beforeunload', flush);
+    return () => {
+      flush();
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('beforeunload', flush);
+    };
+  }, [loaded, addBloomTime]);
 
   // Tasks
   const addTask = useCallback((text, priority = 'medium', category) => {
@@ -341,6 +380,7 @@ export function AppProvider({ children }) {
       showTutorialReplay, openTutorial, closeTutorial,
       checkIn, checkInDone, saveCheckIn,
       screenTimeLogs, screenTimeGoal, logScreenTime, setScreenTimeGoal,
+      bloomTimeLogs, addBloomTime,
     }}>
       {children}
     </AppContext.Provider>

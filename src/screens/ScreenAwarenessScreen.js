@@ -57,10 +57,12 @@ function last7Days() {
 }
 
 export default function ScreenAwarenessScreen({ navigation }) {
-  const { hobbies, screenTimeLogs, screenTimeGoal, logScreenTime, setScreenTimeGoal } = useApp();
+  const { hobbies, screenTimeLogs, screenTimeGoal, logScreenTime, setScreenTimeGoal, bloomTimeLogs } = useApp();
   const { colors: t } = useTheme();
 
   const today = todayStr();
+  const bloomToday     = bloomTimeLogs.find(l => l.date === today);
+  const bloomTodayMins = bloomToday ? Math.round(bloomToday.minutes) : null;
   const todayLog  = screenTimeLogs.find(l => l.date === today);
   const todayMins = todayLog?.minutes ?? null;
 
@@ -143,13 +145,32 @@ export default function ScreenAwarenessScreen({ navigation }) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={[s.title, { color: C.lavDark }]}>Screen{'\n'}Time</Text>
-        <Text style={[s.sub, { color: t.subtext }]}>Log your daily phone use and track your habits.</Text>
+        <Text style={[s.sub, { color: t.subtext }]}>Bloom tracks your time here automatically. Log your total phone screen time to see the full picture.</Text>
+
+        {/* In Bloom auto-tracking card */}
+        <View style={[s.bloomCard, { backgroundColor: t.card, borderColor: C.lavDark }]}>
+          <View style={s.bloomCardHeader}>
+            <View style={[s.autoBadge, { backgroundColor: C.lavWash }]}>
+              <View style={[s.autoDot, { backgroundColor: C.lavDark }]} />
+              <Text style={[s.autoBadgeText, { color: C.lavDark }]}>auto</Text>
+            </View>
+            <Text style={[s.bloomCardLabel, { color: t.subtext }]}>IN BLOOM TODAY</Text>
+          </View>
+          <Text style={[s.bloomCardTime, { color: C.lavDark }]}>
+            {bloomTodayMins !== null ? fmtMins(bloomTodayMins) : '–'}
+          </Text>
+          <Text style={[s.bloomCardHint, { color: t.subtext }]}>
+            {bloomTodayMins !== null
+              ? `Updated as you use Bloom — ${bloomTodayMins < 10 ? 'just getting started' : 'tracking your session'}`
+              : 'Tracking starts automatically when you open Bloom'}
+          </Text>
+        </View>
 
         {/* Today card */}
         <View style={[s.todayCard, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={s.todayHeader}>
             <View>
-              <Text style={[s.todayLabel, { color: t.subtext }]}>TODAY</Text>
+              <Text style={[s.todayLabel, { color: t.subtext }]}>TOTAL PHONE TIME</Text>
               <Text style={[s.todayTime, { color: overGoal ? C.clay : C.lavDark }]}>
                 {todayMins !== null ? fmtMins(todayMins) : '–'}
               </Text>
@@ -319,7 +340,7 @@ export default function ScreenAwarenessScreen({ navigation }) {
               </View>
             </View>
             <Text style={[s.modalHint, { color: t.subtext }]}>
-              Check Screen Time (iOS Settings) or Digital Wellbeing (Android Settings) for your number.
+              iPhone: Settings → Screen Time → see "All Activity". Android: Settings → Digital Wellbeing. Enter your total from today.
             </Text>
             <View style={s.modalActions}>
               <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setShowLog(false)}>
@@ -393,6 +414,19 @@ const s = StyleSheet.create({
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   sub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
+
+  bloomCard: {
+    borderRadius: 18, borderWidth: 1.5, padding: 18, marginBottom: 14,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 }, elevation: 2,
+  },
+  bloomCardHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  autoBadge:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  autoDot:          { width: 6, height: 6, borderRadius: 3 },
+  autoBadgeText:    { fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
+  bloomCardLabel:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.2 },
+  bloomCardTime:    { fontSize: 44, fontWeight: '800', lineHeight: 52, marginBottom: 4 },
+  bloomCardHint:    { fontSize: 12, lineHeight: 18 },
 
   todayCard: {
     borderRadius: 18, borderWidth: 1, padding: 20, marginBottom: 14,

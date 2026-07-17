@@ -7,7 +7,6 @@ import Icon from '../components/Icon';
 import { C, BG_THEMES } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { getApiKey, saveApiKey } from '../services/ai';
 
 const OCCUPATIONS = ['Student', 'Working', 'Both', 'Other'];
 const AGE_RANGES  = ['Under 16', '16–18', '19–24', '25–34', '35–49', '50+'];
@@ -96,32 +95,6 @@ export default function SettingsScreen() {
   const [draftOcc,    setDraftOcc]    = useState(userOccupation);
   const [showReset,   setShowReset]   = useState(false);
 
-  const [currentKey,  setCurrentKey]  = useState(null);
-  const [draftKey,    setDraftKey]    = useState('');
-  const [editingKey,  setEditingKey]  = useState(false);
-  const [keySaved,    setKeySaved]    = useState(false);
-
-  useEffect(() => {
-    getApiKey().then(k => { setCurrentKey(k); });
-  }, []);
-
-  const handleSaveKey = async () => {
-    await saveApiKey(draftKey);
-    const updated = await getApiKey();
-    setCurrentKey(updated);
-    setEditingKey(false);
-    setDraftKey('');
-    setKeySaved(true);
-    setTimeout(() => setKeySaved(false), 2500);
-  };
-
-  const handleRemoveKey = async () => {
-    await saveApiKey('');
-    setCurrentKey(null);
-    setEditingKey(false);
-    setDraftKey('');
-  };
-
   const saveProfile = () => {
     setUserName(draftName.trim());
     setUserAge(draftAge);
@@ -198,79 +171,13 @@ export default function SettingsScreen() {
         <SectionTitle t={t}>AI Connection</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={s.apiBlock}>
-            {/* Status row */}
             <View style={s.apiStatusRow}>
-              <View style={[s.apiDot, { backgroundColor: currentKey ? C.moss : C.clay }]} />
-              <Text style={[s.apiStatusText, { color: t.text }]}>
-                {currentKey ? 'AI connected' : 'No API key — using limited fallback'}
-              </Text>
+              <View style={[s.apiDot, { backgroundColor: C.moss }]} />
+              <Text style={[s.apiStatusText, { color: t.text }]}>AI connected</Text>
             </View>
-
-            {!editingKey ? (
-              <>
-                <Text style={[s.apiSub, { color: t.subtext }]}>
-                  {currentKey
-                    ? 'Bloom is using real AI for chat, task sorting, and guidance.'
-                    : 'Without a key, Bloom uses basic pattern matching. Tasks extracted from stream-of-consciousness messages may be incomplete.'}
-                </Text>
-                <View style={s.apiButtonRow}>
-                  <TouchableOpacity
-                    style={[s.apiBtn, { backgroundColor: C.moss }]}
-                    onPress={() => { setDraftKey(''); setEditingKey(true); }}
-                  >
-                    <Text style={s.apiBtnText}>{currentKey ? 'Change key' : 'Add API key'}</Text>
-                  </TouchableOpacity>
-                  {currentKey && (
-                    <TouchableOpacity
-                      style={[s.apiBtn, { backgroundColor: t.bg, borderWidth: 1, borderColor: t.border }]}
-                      onPress={handleRemoveKey}
-                    >
-                      <Text style={[s.apiBtnText, { color: '#B83A55' }]}>Remove</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                {keySaved && (
-                  <Text style={[s.apiSaved, { color: C.moss }]}>Key saved — AI features unlocked.</Text>
-                )}
-                {!currentKey && (
-                  <Text style={[s.apiHint, { color: t.subtext }]}>
-                    Get a free key at groq.com — sign up with email, go to API Keys, click "Create API Key", copy and paste it here. No card needed.
-                  </Text>
-                )}
-              </>
-            ) : (
-              <>
-                <Text style={[s.apiSub, { color: t.subtext }]}>
-                  Paste your Groq API key below. It's stored only on this device.
-                </Text>
-                <TextInput
-                  style={[s.apiInput, { backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
-                  value={draftKey}
-                  onChangeText={setDraftKey}
-                  placeholder="gsk_..."
-                  placeholderTextColor={t.subtext}
-                  autoFocus
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  secureTextEntry={false}
-                />
-                <View style={s.apiButtonRow}>
-                  <TouchableOpacity
-                    style={[s.apiBtn, { backgroundColor: C.moss }, !draftKey.trim() && { opacity: 0.4 }]}
-                    onPress={handleSaveKey}
-                    disabled={!draftKey.trim()}
-                  >
-                    <Text style={s.apiBtnText}>Save key</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[s.apiBtn, { backgroundColor: t.bg, borderWidth: 1, borderColor: t.border }]}
-                    onPress={() => setEditingKey(false)}
-                  >
-                    <Text style={[s.apiBtnText, { color: t.subtext }]}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+            <Text style={[s.apiSub, { color: t.subtext }]}>
+              Bloom uses AI for chat, task sorting, hobby milestones, and guidance. No setup needed.
+            </Text>
           </View>
         </View>
 
