@@ -1,37 +1,36 @@
 {
   "expo": {
-    "name": "Bloom",
+    "name": "Bloom AI",
     "slug": "bloom-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#FAFAFA"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.bloom.app",
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Bloom uses your location to estimate commute times and tell you when to leave for events.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Bloom uses your location to estimate commute times and tell you when to leave for events."
-      }
+      "bundleIdentifier": "com.stellagarratt29.bloomai",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FAFAFA",
-        "foregroundImage": "./assets/adaptive-icon.png"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FAFAFA"
       },
-      "package": "com.bloom.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "package": "com.stellagarratt29.bloomai",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "name": "Bloom",
+      "name": "Bloom AI",
       "shortName": "Bloom",
       "description": "Your personal productivity companion. Brain-dump your day and Bloom sorts it into a clear, doable plan.",
-      "themeColor": "#7C9473",
-      "backgroundColor": "#FBF7EF",
+      "themeColor": "#C07A90",
+      "backgroundColor": "#FAFAFA",
       "display": "standalone",
       "startUrl": "."
     },
@@ -39,9 +38,14 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Bloom uses your location to estimate commute times and tell you when to leave for events."
+          "locationWhenInUsePermission": "Bloom uses your location to calculate travel time to your upcoming calendar events."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "replace-with-your-eas-project-id"
+      }
+    }
   }
 }
