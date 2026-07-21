@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   SafeAreaView, StyleSheet, Platform, ActivityIndicator,
@@ -37,6 +37,32 @@ export default function YearReviewScreen({ navigation }) {
 
   const taskCount = Math.round(points / 5);
   const countLabel = 'total';
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = useCallback(() => {
+    const hobbyLines = hobbies.map(h => {
+      const reached = h.milestoneIndex ?? 0;
+      const total   = h.milestones?.length ?? 1;
+      return `• ${h.name}: ${reached}/${total} milestones`;
+    }).join('\n');
+    const goalLines = goals.map(g => `• ${g.text}`).join('\n');
+    const text = [
+      `My ${year} Bloom review`,
+      `${taskCount} tasks completed`,
+      hobbyLines && `\nHobbies:\n${hobbyLines}`,
+      goalLines  && `\nGoals:\n${goalLines}`,
+      reflection && `\n"${reflection}"`,
+    ].filter(Boolean).join('\n');
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ title: `My ${year} in Bloom`, text }).catch(() => {});
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {});
+    }
+  }, [year, taskCount, hobbies, goals, reflection]);
 
   const [reflection, setReflection] = useState(null);
   const [loading, setLoading]       = useState(true);
@@ -57,7 +83,9 @@ export default function YearReviewScreen({ navigation }) {
           <Icon name="arrow-left" size={22} color={t.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: C.clay }]}>{year} in review</Text>
-        <View style={{ width: 30 }} />
+        <TouchableOpacity onPress={handleShare} style={s.shareBtn}>
+          <Icon name={copied ? 'check' : 'share-2'} size={20} color={copied ? C.moss : t.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -159,7 +187,8 @@ const s = StyleSheet.create({
     paddingHorizontal: 18, paddingTop: 18, paddingBottom: 14,
     borderBottomWidth: 1,
   },
-  backBtn:     { padding: 4 },
+  backBtn:  { padding: 4 },
+  shareBtn: { padding: 4 },
   headerTitle: {
     fontSize: 20, fontWeight: '800',
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,

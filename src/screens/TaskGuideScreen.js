@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   SafeAreaView, StyleSheet, ScrollView,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Vibration,
 } from 'react-native';
 import Icon from '../components/Icon';
 import VoiceMicButton from '../components/VoiceMicButton';
+import Confetti from '../components/Confetti';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { callClaude, getApiKey } from '../services/ai';
@@ -17,7 +18,8 @@ export default function TaskGuideScreen({ route, navigation }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
   const [thinking, setThinking] = useState(false);
-  const [taskDone, setTaskDone] = useState(task?.done ?? false);
+  const [taskDone, setTaskDone]     = useState(task?.done ?? false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const scrollRef  = useRef(null);
   const historyRef = useRef([]);
 
@@ -104,8 +106,13 @@ Rules:
     if (task && !taskDone) {
       finishTask(task.id);
       setTaskDone(true);
+      setShowConfetti(true);
+      if (Platform.OS !== 'web') Vibration.vibrate(40);
+      // Navigate after confetti plays
+      setTimeout(() => navigation.goBack(), 1800);
+    } else {
+      navigation.goBack();
     }
-    navigation.goBack();
   };
 
   const PRIORITY_COLOR = { high: '#C0392B', medium: C.moss, low: C.muted };
@@ -113,6 +120,14 @@ Rules:
 
   return (
     <SafeAreaView style={s.safe}>
+      {showConfetti && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View style={s.doneOverlay}>
+            <Text style={s.doneEmoji}>+5 pts</Text>
+          </View>
+          <Confetti onDone={() => setShowConfetti(false)} />
+        </View>
+      )}
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
         <View style={s.header}>
@@ -267,6 +282,19 @@ function getTaskGuideFallback(text) {
 const s = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: C.cream },
+
+  doneOverlay: {
+    position: 'absolute', top: '40%', left: 0, right: 0,
+    alignItems: 'center', zIndex: 10,
+  },
+  doneEmoji: {
+    fontSize: 32, fontWeight: '800', color: C.moss,
+    backgroundColor: C.white,
+    paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 }, elevation: 4,
+  },
 
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

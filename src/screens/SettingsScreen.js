@@ -7,6 +7,11 @@ import Icon from '../components/Icon';
 import { C, BG_THEMES } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import {
+  requestNotificationPermission,
+  getNotificationTime,
+  setNotificationTime,
+} from '../hooks/useNotifications';
 
 const OCCUPATIONS = ['Student', 'Working', 'Both', 'Other'];
 const AGE_RANGES  = ['Under 16', '16–18', '19–24', '25–34', '35–49', '50+'];
@@ -94,6 +99,33 @@ export default function SettingsScreen() {
   const [draftAge,    setDraftAge]    = useState(userAge);
   const [draftOcc,    setDraftOcc]    = useState(userOccupation);
   const [showReset,   setShowReset]   = useState(false);
+
+  const [notifPermission, setNotifPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
+  const [notifHour, setNotifHour] = useState('8');
+  const [notifMin,  setNotifMin]  = useState('00');
+  const [notifSaved, setNotifSaved] = useState(false);
+
+  useEffect(() => {
+    getNotificationTime().then(({ hour, min }) => {
+      setNotifHour(String(hour));
+      setNotifMin(String(min).padStart(2, '0'));
+    });
+  }, []);
+
+  const handleEnableNotif = async () => {
+    const granted = await requestNotificationPermission();
+    setNotifPermission(granted ? 'granted' : 'denied');
+  };
+
+  const handleSaveNotifTime = async () => {
+    const h = Math.min(23, Math.max(0, parseInt(notifHour) || 8));
+    const m = Math.min(59, Math.max(0, parseInt(notifMin)  || 0));
+    await setNotificationTime(h, m);
+    setNotifSaved(true);
+    setTimeout(() => setNotifSaved(false), 2000);
+  };
 
   const saveProfile = () => {
     setUserName(draftName.trim());
@@ -293,6 +325,67 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+        {/* Notifications */}
+        {Platform.OS === 'web' && (
+          <>
+            <SectionTitle t={t}>Morning Reminder</SectionTitle>
+            <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
+              <View style={{ padding: 18, gap: 12 }}>
+                {notifPermission !== 'granted' ? (
+                  <>
+                    <Text style={[s.ndSub, { color: t.subtext }]}>
+                      Get a gentle reminder each morning to open Bloom and plan your day.
+                    </Text>
+                    {notifPermission === 'denied' ? (
+                      <Text style={[s.ndSub, { color: C.clay }]}>
+                        Notifications are blocked in your browser settings. Enable them there first.
+                      </Text>
+                    ) : (
+                      <TouchableOpacity
+                        style={[s.saveBtn, { flex: 0, paddingHorizontal: 20, marginTop: 4 }]}
+                        onPress={handleEnableNotif}
+                      >
+                        <Text style={s.saveBtnText}>Enable morning reminder</Text>
+                      </TouchableOpacity>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <View style={s.apiStatusRow}>
+                      <View style={[s.apiDot, { backgroundColor: C.moss }]} />
+                      <Text style={[s.apiStatusText, { color: t.text }]}>Reminders enabled</Text>
+                    </View>
+                    <Text style={[s.ndSub, { color: t.subtext }]}>Bloom will remind you to plan your day at:</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <TextInput
+                        style={[s.editInput, { width: 64, textAlign: 'center', marginBottom: 0, backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+                        value={notifHour}
+                        onChangeText={setNotifHour}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                      <Text style={[s.rowLabel, { color: t.text }]}>:</Text>
+                      <TextInput
+                        style={[s.editInput, { width: 64, textAlign: 'center', marginBottom: 0, backgroundColor: t.bg, borderColor: t.border, color: t.text }]}
+                        value={notifMin}
+                        onChangeText={setNotifMin}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                      <TouchableOpacity style={[s.saveBtn, { flex: 0, paddingHorizontal: 16, paddingVertical: 10 }]} onPress={handleSaveNotifTime}>
+                        <Text style={s.saveBtnText}>{notifSaved ? 'Saved ✓' : 'Save'}</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[s.ndSub, { color: t.subtext, fontStyle: 'italic' }]}>
+                      Note: the browser tab needs to be open for this reminder to fire.
+                    </Text>
+                  </>
+                )}
+              </View>
+            </View>
+          </>
+        )}
 
         {/* About */}
         <SectionTitle t={t}>About</SectionTitle>

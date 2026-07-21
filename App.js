@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -18,8 +18,10 @@ import { AppProvider, useApp } from './src/context/AppContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { C } from './src/constants/colors';
 import DyslexiaStyleInjector from './src/components/DyslexiaStyleInjector';
+import { useNotifications } from './src/hooks/useNotifications';
 
 import OnboardingScreen      from './src/screens/OnboardingScreen';
+import LandingScreen        from './src/screens/LandingScreen';
 import TutorialScreen        from './src/screens/TutorialScreen';
 import BloomChatScreen       from './src/screens/BloomChatScreen';
 import TaskGuideScreen       from './src/screens/TaskGuideScreen';
@@ -229,6 +231,7 @@ function SplashScreen() {
 
 function RootNavigator() {
   const { loaded, hasOnboarded, finishOnboarding } = useApp();
+  useNotifications(hasOnboarded);
   const navRef = useRef(null);
 
   // Once the navigator is mounted, check if we're returning from a Google OAuth redirect
@@ -243,7 +246,10 @@ function RootNavigator() {
     }
   }, []);
 
+  const [landingSeen, setLandingSeen] = useState(false);
+
   if (!loaded) return <SplashScreen />;
+  if (!hasOnboarded && !landingSeen) return <LandingScreen onGetStarted={() => setLandingSeen(true)} />;
   if (!hasOnboarded) return <OnboardingScreen onFinish={finishOnboarding} />;
   return (
     <NavigationContainer ref={navRef} onReady={handleNavReady}>
