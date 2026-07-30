@@ -2,14 +2,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { callClaude, getApiKey } from './ai';
 
+// expo-auth-session for native OAuth (not available on web)
+let AuthSession = null;
+if (Platform.OS !== 'web') {
+  try { AuthSession = require('expo-auth-session'); } catch {}
+}
+
 // ── GOOGLE CREDENTIALS ───────────────────────────────────────────────────────
-// Set BUNDLED_CLIENT_ID to your real Google OAuth Client ID to skip the
-// in-app setup step. Otherwise, the user enters it once in the Calendar tab.
-// Get one from: console.cloud.google.com → APIs & Services → Credentials
-//   Application type: Web application
-//   Authorized JS origin:   https://stellagarratt29-ui.github.io
-//   Authorized redirect URI: https://stellagarratt29-ui.github.io/Bloom-AI/
+// Web client ID (for GitHub Pages web app)
 const BUNDLED_CLIENT_ID = '899186853808-gg1rnc9jic1til1js97u7bepbh5jdvrj.apps.googleusercontent.com';
+// iOS client ID — create one at console.cloud.google.com → Credentials
+//   Application type: iOS, Bundle ID: com.stellagarratt29.bloomai
+// Leave blank until you have an Apple Developer account and have registered the app
+const IOS_CLIENT_ID = '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CLIENT_ID_KEY    = '@bloom_gcal_client_id';
@@ -62,39 +67,88 @@ export async function isCalendarConnected() {
   return !!(await getCalendarToken());
 }
 
-// --- OAuth (Google implicit flow for web SPA) ---
+// --- OAuth ---
 
-function getRedirectUri() {
+function getWebRedirectUri() {
   if (typeof window === 'undefined') return '';
   const { origin, pathname } = window.location;
   return origin + pathname.replace(/\/?$/, '/');
 }
 
-export async function startCalendarOAuth(clientIdOverride) {
-  if (Platform.OS !== 'web') throw new Error('Calendar requires the web version of Bloom.');
-
-  const clientId = clientIdOverride?.trim() || BUNDLED_CLIENT_ID || await getCalendarClientId();
-  if (!clientId) throw new Error('NO_CLIENT_ID');
-
-  // Save if this is a user-supplied override
-  if (clientIdOverride?.trim() && clientIdOverride.trim() !== BUNDLED_CLIENT_ID) {
-    await saveCalendarClientId(clientIdOverride.trim());
-  }
-
-  // Remember to return to Calendar tab after the redirect completes
+// Web: implicit token flow via page redirect
+function startWebOAuth(clientId) {
   if (typeof window !== 'undefined' && window.sessionStorage) {
     window.sessionStorage.setItem('bloomOAuthReturn', 'CalendarTab');
   }
-
   const params = new URLSearchParams({
     client_id:              clientId,
-    redirect_uri:           getRedirectUri(),
+    redirect_uri:           getWebRedirectUri(),
     response_type:          'token',
     scope:                  SCOPES,
     include_granted_scopes: 'true',
     prompt:                 'select_account',
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+// Native: authorization code + PKCE via expo-auth-session
+async function startNativeOAuth(clientId) {
+  if (!AuthSession) throw new Error('expo-auth-session not available');
+
+  const discovery = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint:         'https://oauth2.googleapis.com/token',
+  };
+
+  const redirectUri = AuthSession.makeRedirectUri({ native: 'bloomai://oauth' });
+
+  const request = await AuthSession.loadAsync(
+    {
+      clientId,
+      redirectUri,
+      responseType: AuthSession.ResponseType.Code,
+      scopes:       SCOPES.split(' '),
+      usePKCE:      true,
+    },
+    discovery,
+  );
+
+  const result = await request.promptAsync(discovery);
+
+  if (result.type !== 'success') {
+    throw new Error(result.type === 'cancel' ? 'Cancelled' : 'Auth failed');
+  }
+
+  // Exchange code for token
+  const tokenResponse = await AuthSession.exchangeCodeAsync(
+    {
+      clientId,
+      code:         result.params.code,
+      redirectUri,
+      codeVerifier: request.codeVerifier,
+    },
+    discovery,
+  );
+
+  const expiry = Date.now() + (tokenResponse.expiresIn ?? 3600) * 1000;
+  await saveCalendarToken(tokenResponse.accessToken, expiry);
+}
+
+export async function startCalendarOAuth(clientIdOverride) {
+  const clientId = clientIdOverride?.trim() ||
+    (Platform.OS === 'web' ? BUNDLED_CLIENT_ID : IOS_CLIENT_ID) ||
+    await getCalendarClientId();
+
+  if (!clientId) throw new Error('NO_CLIENT_ID');
+
+  if (clientIdOverride?.trim() && clientIdOverride.trim() !== BUNDLED_CLIENT_ID) {
+    await saveCalendarClientId(clientIdOverride.trim());
+  }
+
+  if (Platform.OS !== 'web') {
+    return startNativeOAuth(clientId);
+  }
+  startWebOAuth(clientId);
 }
 
 // Call once at app startup — extracts access token from the URL hash if

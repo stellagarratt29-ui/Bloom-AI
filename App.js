@@ -12,6 +12,17 @@ import Icon from './src/components/Icon';
 if (Platform.OS !== 'web') {
   require('react-native-gesture-handler');
   require('react-native-screens').enableScreens();
+  // Configure how notifications appear when the app is in the foreground
+  try {
+    const Notifs = require('expo-notifications');
+    Notifs.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge:  false,
+      }),
+    });
+  } catch {}
 }
 
 import { AppProvider, useApp } from './src/context/AppContext';
