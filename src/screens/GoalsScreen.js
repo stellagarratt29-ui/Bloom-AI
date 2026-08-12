@@ -49,8 +49,8 @@ export default function GoalsScreen({ navigation }) {
 
         <View style={s.titleRow}>
           <Text style={[s.title, { color: C.pinkDark }]}>Goals</Text>
-          <TouchableOpacity onPress={() => setShowAdd(v => !v)}>
-            <Text style={[s.addBtn, { color: C.moss }]}>+ Add goal</Text>
+          <TouchableOpacity onPress={() => setShowAdd(v => !v)} style={s.addBtn}>
+            <Text style={{ color: C.white, fontWeight: '700', fontSize: 13 }}>+ Add goal</Text>
           </TouchableOpacity>
         </View>
         <Text style={[s.sub, { color: t.subtext }]}>Big things you're working toward.</Text>
@@ -83,11 +83,19 @@ export default function GoalsScreen({ navigation }) {
 
         {goals.length === 0 && !showAdd ? (
           <View style={s.empty}>
-            <Icon name="target" size={44} color={C.sageLight} style={{ marginBottom: 14 }} />
+            <View style={[s.emptyIconWrap, { backgroundColor: C.sagePale }]}>
+              <Icon name="target" size={32} color={C.moss} />
+            </View>
             <Text style={[s.emptyHead, { color: t.text }]}>No goals yet</Text>
             <Text style={[s.emptyText, { color: t.subtext }]}>
-              Add something big — "Start a business", "Get fit", "Write a book". Bloom will generate a real step-by-step plan, one action at a time.
+              Add something big — "Start a business", "Get fit", "Write a book". Bloom builds a real step-by-step plan, one action at a time.
             </Text>
+            <TouchableOpacity
+              style={[s.emptyBtn, { backgroundColor: C.moss }]}
+              onPress={() => setShowAdd(true)}
+            >
+              <Text style={s.emptyBtnText}>Add your first goal</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           goals.map((g, idx) => {
@@ -200,13 +208,18 @@ const s = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 2 },
   title: {
-    fontSize: 30, fontWeight: '800',
+    fontSize: 38, fontWeight: '800', letterSpacing: -1,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  addBtn: { fontSize: 14, fontWeight: '700' },
-  sub: { fontSize: 14, lineHeight: 22, marginBottom: 20 },
+  addBtn: {
+    fontSize: 13, fontWeight: '700',
+    backgroundColor: C.moss, color: C.white,
+    paddingVertical: 7, paddingHorizontal: 14, borderRadius: 20,
+    overflow: 'hidden',
+  },
+  sub: { fontSize: 14, lineHeight: 22, marginBottom: 22 },
 
   addCard: {
     borderRadius: 16, borderWidth: 1.5,
@@ -224,9 +237,15 @@ const s = StyleSheet.create({
   saveBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
   creatingNote: { fontSize: 12, textAlign: 'center' },
 
-  empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
-  emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
+  empty: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 16 },
+  emptyIconWrap: {
+    width: 72, height: 72, borderRadius: 24,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 18,
+  },
+  emptyHead: { fontSize: 20, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3 },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 280, marginBottom: 24 },
+  emptyBtn: { paddingVertical: 13, paddingHorizontal: 28, borderRadius: 24 },
+  emptyBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
 
   goalCard: {
     borderRadius: 18, borderWidth: 1, borderLeftWidth: 4,

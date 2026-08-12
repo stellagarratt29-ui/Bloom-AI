@@ -91,33 +91,16 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function TabIcon({ iconName, label, focused }) {
-  const { colors } = useTheme();
-  return (
-    <View style={{ alignItems: 'center', paddingTop: 2 }}>
-      <View style={[
-        { borderRadius: 12, paddingHorizontal: 13, paddingVertical: 4, marginBottom: 1 },
-        focused && { backgroundColor: C.sagePale },
-      ]}>
-        <Icon name={iconName} size={18} color={focused ? C.moss : colors.subtext} />
-      </View>
-      <Text style={{ fontSize: 9, fontWeight: focused ? '700' : '500', color: focused ? C.moss : colors.subtext }}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 function CustomTabBar({ state, navigation }) {
   const layout = useLayout();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   if (layout === 'desktop') {
     return (
       <View style={[deskS.sidebar, { backgroundColor: colors.card, borderRightColor: colors.border }]}>
         <View style={deskS.logoWrap}>
-          <Text style={[deskS.logoText, { color: C.clay }]}>Bloom</Text>
-          <Text style={[deskS.logoSub, { color: colors.subtext }]}>Gentle progress.</Text>
+          <Text style={[deskS.logoText, { color: C.moss }]}>Bloom</Text>
+          <Text style={[deskS.logoSub, { color: colors.subtext }]}>Your gentle guide.</Text>
         </View>
         {TAB_ITEMS.map((item, index) => {
           const focused = state.index === index;
@@ -128,8 +111,10 @@ function CustomTabBar({ state, navigation }) {
               onPress={() => navigation.navigate(item.name)}
               activeOpacity={0.7}
             >
-              <Icon name={item.icon} size={18} color={focused ? C.moss : colors.subtext} />
-              <Text style={[deskS.navLabel, { color: colors.subtext }, focused && { fontWeight: '700', color: C.moss }]}>{item.label}</Text>
+              <Icon name={item.icon} size={17} color={focused ? C.moss : colors.subtext} />
+              <Text style={[deskS.navLabel, { color: colors.subtext }, focused && { fontWeight: '700', color: C.moss }]}>
+                {item.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -137,8 +122,16 @@ function CustomTabBar({ state, navigation }) {
     );
   }
 
+  // Mobile tab bar — frosted glass pill design
+  const barBg = isDark ? 'rgba(32,28,30,0.92)' : 'rgba(255,255,255,0.92)';
+
   return (
-    <View style={[mobileTabS.bar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+    <View style={[
+      mobileTabS.bar,
+      Platform.OS === 'web'
+        ? { backgroundColor: barBg, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderTopColor: colors.border }
+        : { backgroundColor: colors.card, borderTopColor: colors.border },
+    ]}>
       {TAB_ITEMS.map((item, index) => {
         const focused = state.index === index;
         return (
@@ -146,8 +139,20 @@ function CustomTabBar({ state, navigation }) {
             key={item.name}
             style={mobileTabS.item}
             onPress={() => navigation.navigate(item.name)}
+            activeOpacity={0.7}
           >
-            <TabIcon iconName={item.icon} label={item.label} focused={focused} />
+            {focused ? (
+              // Active: filled pill with icon + label
+              <View style={[mobileTabS.pill, { backgroundColor: C.moss }]}>
+                <Icon name={item.icon} size={16} color="#FFFFFF" />
+                <Text style={mobileTabS.pillLabel}>{item.label}</Text>
+              </View>
+            ) : (
+              // Inactive: icon only, no label
+              <View style={mobileTabS.iconWrap}>
+                <Icon name={item.icon} size={20} color={colors.subtext} />
+              </View>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -159,19 +164,61 @@ const deskS = StyleSheet.create({
   sidebar: {
     width: SIDEBAR_W,
     borderRightWidth: 1,
-    paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16,
+    paddingTop: 48, paddingBottom: 24, paddingHorizontal: 14,
   },
-  logoWrap: { marginBottom: 40, paddingHorizontal: 8 },
-  logoText: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined },
-  logoSub:  { fontSize: 11, marginTop: 2 },
-  navItem:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, marginBottom: 2 },
+  logoWrap: { marginBottom: 36, paddingHorizontal: 10 },
+  logoText: {
+    fontSize: 22, fontWeight: '800', letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+  },
+  logoSub:  { fontSize: 11, marginTop: 3 },
+  navItem:  {
+    flexDirection: 'row', alignItems: 'center', gap: 11,
+    paddingVertical: 11, paddingHorizontal: 12,
+    borderRadius: 12, marginBottom: 2,
+  },
   navLabel: { fontSize: 14, fontWeight: '500' },
 });
 
 const mobileTabS = StyleSheet.create({
-  bar:  { borderTopWidth: 1, height: 64, paddingBottom: 4, flexDirection: 'row' },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', outlineStyle: 'none' },
+  bar: {
+    borderTopWidth: 0.5,
+    height: 72,
+    paddingHorizontal: 6,
+    paddingBottom: 6,
+    paddingTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    // Subtle top shadow
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+  },
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    outlineStyle: 'none',
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 13,
+    borderRadius: 20,
+  },
+  pillLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.1,
+  },
+  iconWrap: {
+    padding: 6,
+    borderRadius: 10,
+  },
 });
 
 function ChatStack() {
