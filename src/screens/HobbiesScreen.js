@@ -304,7 +304,7 @@ const s = StyleSheet.create({
 
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 4 },
   title: {
-    fontSize: 30, fontWeight: '800',
+    fontSize: 38, fontWeight: '800', letterSpacing: -1,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   yearBtn: { paddingBottom: 4 },

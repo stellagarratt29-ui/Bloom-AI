@@ -147,7 +147,8 @@ export default function SettingsScreen() {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={[s.title, { color: C.ink }]}>Settings</Text>
+        <Text style={[s.title]}>Settings</Text>
+        <Text style={[s.titleSub, { color: t.subtext }]}>Your preferences and profile.</Text>
 
         {/* Profile */}
         <SectionTitle t={t}>Profile</SectionTitle>
@@ -444,9 +445,12 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 30, fontWeight: '800', marginBottom: 24,
+    fontSize: 38, fontWeight: '800', letterSpacing: -1, marginBottom: 4,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+    color: C.pinkDark,
   },
+
+  titleSub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
 
   sectionTitle: {
     fontSize: 11, fontWeight: '700', letterSpacing: 1.4,

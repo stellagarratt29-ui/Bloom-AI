@@ -410,7 +410,7 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 30, fontWeight: '800', lineHeight: 38, marginBottom: 6,
+    fontSize: 38, fontWeight: '800', lineHeight: 46, letterSpacing: -1, marginBottom: 6,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   sub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },

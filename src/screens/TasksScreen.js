@@ -117,14 +117,14 @@ export default function TasksScreen({ navigation }) {
   return (
     <SafeAreaView style={[ss.safe, { backgroundColor: t.bg }]}>
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-        <Text style={[ss.title, { color: C.clay }]}>Tasks</Text>
+        <Text style={[ss.title, { color: C.pinkDark }]}>Tasks</Text>
         <View style={ss.headerRight}>
           {points > 0 && (
             <View style={[ss.pointsBadge, { backgroundColor: C.pillLavBg }]}>
               <Text style={[ss.pointsText, { color: C.pillLavText }]}>{points} pts</Text>
             </View>
           )}
-          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.clay }]} onPress={() => setShowAddTask(true)}>
+          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.moss }]} onPress={() => setShowAddTask(true)}>
             <Icon name="plus" size={14} color={C.white} />
             <Text style={ss.addTaskBtnText}>Add</Text>
           </TouchableOpacity>
@@ -339,11 +339,11 @@ const ss = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 18, paddingBottom: 14,
+    paddingHorizontal: 22, paddingTop: 20, paddingBottom: 16,
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: 30, fontWeight: '800',
+    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },

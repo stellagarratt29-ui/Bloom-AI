@@ -431,11 +431,11 @@ const s = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 18, paddingBottom: 14,
+    paddingHorizontal: 22, paddingTop: 20, paddingBottom: 16,
     backgroundColor: C.cream, borderBottomWidth: 1, borderBottomColor: C.border,
   },
   headerTitle: {
-    fontSize: 30, fontWeight: '700', color: C.clay, letterSpacing: -0.5,
+    fontSize: 34, fontWeight: '800', color: C.pinkDark, letterSpacing: -0.8,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   scroll: { flex: 1 },
@@ -514,4 +514,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
   },
   moodChipText: { fontSize: 14, fontWeight: '600' },
+
+  checkInBtn: {
+    borderWidth: 1.5, borderRadius: 20,
+    paddingVertical: 6, paddingHorizontal: 14,
+  },
+  checkInBtnText: { fontSize: 12, fontWeight: '600' },
 });

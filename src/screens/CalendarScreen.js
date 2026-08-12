@@ -386,7 +386,7 @@ const s = StyleSheet.create({
   setupScroll: { paddingHorizontal: 20, paddingTop: 22 },
 
   title: {
-    fontSize: 28, fontWeight: '800', marginBottom: 20,
+    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
 
