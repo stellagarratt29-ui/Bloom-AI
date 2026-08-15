@@ -303,13 +303,13 @@ export default function BloomChatScreen() {
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-          <Text style={s.headerTitle}>Bloom</Text>
+          <Text style={[s.headerTitle, { color: t.pinkDark }]}>Bloom</Text>
           <TouchableOpacity
             onPress={() => setShowCheckIn(true)}
-            style={[s.checkInBtn, { backgroundColor: checkIn ? '#D4EDD4' : t.card, borderColor: checkIn ? C.moss : t.border }]}
+            style={[s.checkInBtn, { backgroundColor: checkIn ? t.sagePale : t.card, borderColor: checkIn ? t.moss : t.border }]}
             activeOpacity={0.7}
           >
-            <Text style={[s.checkInBtnText, { color: checkIn ? C.moss : t.subtext }]}>
+            <Text style={[s.checkInBtnText, { color: checkIn ? t.moss : t.subtext }]}>
               {checkIn ? `${checkIn.mood} · ${checkIn.sleep} sleep` : 'Check in'}
             </Text>
           </TouchableOpacity>
@@ -344,14 +344,14 @@ export default function BloomChatScreen() {
           {thinking && (
             <View style={s.bloomRow}>
               <View style={[s.bloomBubble, { paddingVertical: 18 }]}>
-                <ActivityIndicator size="small" color={C.moss} />
+                <ActivityIndicator size="small" color={t.moss} />
               </View>
             </View>
           )}
 
           {hasKey === false && (
             <View style={[s.keyBanner, { backgroundColor: C.sagePale, borderColor: C.sageLight }]}>
-              <Icon name="zap" size={14} color={C.moss} style={{ flexShrink: 0 }} />
+              <Icon name="zap" size={14} color={t.moss} style={{ flexShrink: 0 }} />
               <Text style={[s.keyBannerText, { color: C.ink }]}>
                 Add a free AI key in{' '}
                 <Text style={{ fontWeight: '700' }}>Settings</Text>
@@ -375,7 +375,7 @@ export default function BloomChatScreen() {
           onPress={() => setShowDowntime(true)}
           activeOpacity={0.75}
         >
-          <Icon name="coffee" size={13} color={C.moss} />
+          <Icon name="coffee" size={13} color={t.moss} />
           <Text style={[s.downtimeChipText, { color: t.subtext }]}>Free moment?</Text>
         </TouchableOpacity>
 
@@ -435,7 +435,7 @@ const s = StyleSheet.create({
     backgroundColor: C.cream, borderBottomWidth: 1, borderBottomColor: C.border,
   },
   headerTitle: {
-    fontSize: 34, fontWeight: '800', color: C.pinkDark, letterSpacing: -0.8,
+    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   scroll: { flex: 1 },

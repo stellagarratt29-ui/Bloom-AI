@@ -48,8 +48,8 @@ export default function GoalsScreen({ navigation }) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <View style={s.titleRow}>
-          <Text style={[s.title, { color: C.pinkDark }]}>Goals</Text>
-          <TouchableOpacity onPress={() => setShowAdd(v => !v)} style={s.addBtn}>
+          <Text style={[s.title, { color: t.pinkDark }]}>Goals</Text>
+          <TouchableOpacity onPress={() => setShowAdd(v => !v)} style={[s.addBtn, { backgroundColor: t.moss }]}>
             <Text style={{ color: C.white, fontWeight: '700', fontSize: 13 }}>+ Add goal</Text>
           </TouchableOpacity>
         </View>
@@ -69,7 +69,7 @@ export default function GoalsScreen({ navigation }) {
               editable={!creating}
             />
             <TouchableOpacity
-              style={[s.saveBtn, (!newGoal.trim() || creating) && s.saveBtnOff]}
+              style={[s.saveBtn, { backgroundColor: t.moss }, (!newGoal.trim() || creating) && s.saveBtnOff]}
               onPress={handleAdd}
               disabled={!newGoal.trim() || creating}
             >
@@ -83,15 +83,15 @@ export default function GoalsScreen({ navigation }) {
 
         {goals.length === 0 && !showAdd ? (
           <View style={s.empty}>
-            <View style={[s.emptyIconWrap, { backgroundColor: C.sagePale }]}>
-              <Icon name="target" size={32} color={C.moss} />
+            <View style={[s.emptyIconWrap, { backgroundColor: t.sagePale }]}>
+              <Icon name="target" size={32} color={t.moss} />
             </View>
             <Text style={[s.emptyHead, { color: t.text }]}>No goals yet</Text>
             <Text style={[s.emptyText, { color: t.subtext }]}>
               Add something big — "Start a business", "Get fit", "Write a book". Bloom builds a real step-by-step plan, one action at a time.
             </Text>
             <TouchableOpacity
-              style={[s.emptyBtn, { backgroundColor: C.moss }]}
+              style={[s.emptyBtn, { backgroundColor: t.moss }]}
               onPress={() => setShowAdd(true)}
             >
               <Text style={s.emptyBtnText}>Add your first goal</Text>
@@ -147,8 +147,8 @@ export default function GoalsScreen({ navigation }) {
               <Text style={[s.menuItemText, { color: t.text }]}>Edit goal</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
-              <Icon name="trash-2" size={18} color={C.pinkDark} />
-              <Text style={[s.menuItemText, { color: C.pinkDark }]}>Remove goal</Text>
+              <Icon name="trash-2" size={18} color={t.pinkDark} />
+              <Text style={[s.menuItemText, { color: t.pinkDark }]}>Remove goal</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[s.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>
               <Text style={[s.menuItemText, { color: t.subtext }]}>Cancel</Text>
@@ -175,7 +175,7 @@ export default function GoalsScreen({ navigation }) {
               <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setEditTarget(null)}>
                 <Text style={[s.modalCancelText, { color: t.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.modalSave} onPress={saveEdit}>
+              <TouchableOpacity style={[s.modalSave, { backgroundColor: t.moss }]} onPress={saveEdit}>
                 <Text style={s.modalSaveText}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -193,7 +193,7 @@ export default function GoalsScreen({ navigation }) {
               <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setDeleteConfirm(null)}>
                 <Text style={[s.modalCancelText, { color: t.subtext }]}>Keep</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[s.modalSave, { backgroundColor: C.pinkDark }]} onPress={() => { deleteGoal(deleteConfirm.id); setDeleteConfirm(null); }}>
+              <TouchableOpacity style={[s.modalSave, { backgroundColor: t.pinkDark }]} onPress={() => { deleteGoal(deleteConfirm.id); setDeleteConfirm(null); }}>
                 <Text style={s.modalSaveText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -215,7 +215,7 @@ const s = StyleSheet.create({
   },
   addBtn: {
     fontSize: 13, fontWeight: '700',
-    backgroundColor: C.moss, color: C.white,
+    color: C.white,
     paddingVertical: 7, paddingHorizontal: 14, borderRadius: 20,
     overflow: 'hidden',
   },
@@ -230,7 +230,7 @@ const s = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 14, fontSize: 15,
   },
   saveBtn: {
-    backgroundColor: C.moss, paddingVertical: 13,
+    paddingVertical: 13,
     paddingHorizontal: 18, borderRadius: 12, alignItems: 'center',
   },
   saveBtnOff: { opacity: 0.35 },
@@ -304,7 +304,7 @@ const s = StyleSheet.create({
   modalCancelText: { fontSize: 14, fontWeight: '600' },
   modalSave: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
-    backgroundColor: C.moss, alignItems: 'center',
+    alignItems: 'center',
   },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
 });

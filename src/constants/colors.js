@@ -63,13 +63,121 @@ export const C = {
   overlay:   'rgba(28,21,23,0.22)',
 };
 
-// Background themes — all warm, barely any color
+// Background themes — kept for any legacy references
 export const BG_THEMES = {
-  cream:    '#FAF7F4',   // warm linen white (default)
-  lavender: '#F6F2F8',   // barely warm mauve
-  mint:     '#F2F5F2',   // barely warm sage
-  sky:      '#F0F3F6',   // barely warm steel
-  pink:     '#FBF0F2',   // barely blush rose
+  cream:    '#FAF7F4',
+  lavender: '#F6F2F8',
+  mint:     '#F2F5F2',
+  sky:      '#F0F3F6',
+  pink:     '#FBF0F2',
+};
+
+// ─────────────────────────────────────────────────────
+//  AESTHETIC PRESETS — full palette per aesthetic
+// ─────────────────────────────────────────────────────
+export const AESTHETICS = {
+  bloom: {
+    name: 'Bloom',
+    emoji: '🌸',
+    description: 'Warm blush rose',
+    isDark: false,
+    bg:            '#FAF7F4',
+    card:          '#FFFFFF',
+    accent:        '#C4838E',
+    accentDark:    '#A86870',
+    accentPale:    '#FDF0F2',
+    accentLight:   '#F0D8DC',
+    ink:           '#1C1517',
+    subtext:       '#9C8A8C',
+    border:        '#EDE6E7',
+    chatBubble:    '#C4838E',
+    calloutAccent: '#E8BCC2',
+  },
+  matcha: {
+    name: 'Matcha',
+    emoji: '🍵',
+    description: 'Earthy sage green',
+    isDark: false,
+    bg:            '#F3F6F0',
+    card:          '#FFFFFF',
+    accent:        '#6E9468',
+    accentDark:    '#527050',
+    accentPale:    '#ECF4EA',
+    accentLight:   '#C8E0C4',
+    ink:           '#182018',
+    subtext:       '#68806A',
+    border:        '#D4E4D0',
+    chatBubble:    '#6E9468',
+    calloutAccent: '#A8CCA4',
+  },
+  ocean: {
+    name: 'Ocean',
+    emoji: '🌊',
+    description: 'Calm coastal blue',
+    isDark: false,
+    bg:            '#EDF4F8',
+    card:          '#FFFFFF',
+    accent:        '#4E87A4',
+    accentDark:    '#35708A',
+    accentPale:    '#E0EFF6',
+    accentLight:   '#B4D4E8',
+    ink:           '#102030',
+    subtext:       '#5C8098',
+    border:        '#C8DEE8',
+    chatBubble:    '#4E87A4',
+    calloutAccent: '#94C4DC',
+  },
+  lavender: {
+    name: 'Lavender',
+    emoji: '💜',
+    description: 'Dreamy soft purple',
+    isDark: false,
+    bg:            '#F4F1FB',
+    card:          '#FFFFFF',
+    accent:        '#8A6CC8',
+    accentDark:    '#6E54B0',
+    accentPale:    '#EDE8FA',
+    accentLight:   '#CEC4F0',
+    ink:           '#1A1430',
+    subtext:       '#826898',
+    border:        '#DDD4F0',
+    chatBubble:    '#8A6CC8',
+    calloutAccent: '#C4B0EE',
+  },
+  peach: {
+    name: 'Peach',
+    emoji: '🍑',
+    description: 'Sunny warm peach',
+    isDark: false,
+    bg:            '#FAF1E8',
+    card:          '#FFFFFF',
+    accent:        '#CC7850',
+    accentDark:    '#B06038',
+    accentPale:    '#FAE8DC',
+    accentLight:   '#F0C8A8',
+    ink:           '#2A1808',
+    subtext:       '#946858',
+    border:        '#ECDDD0',
+    chatBubble:    '#CC7850',
+    calloutAccent: '#F0B898',
+  },
+  midnight: {
+    name: 'Midnight',
+    emoji: '🌙',
+    description: 'Deep dark violet',
+    isDark: true,
+    bg:            '#13121E',
+    card:          '#1E1C2C',
+    accent:        '#9B84E0',
+    accentDark:    '#7B64C0',
+    accentPale:    '#2A2840',
+    accentLight:   '#3C3858',
+    ink:           '#F0EEF8',
+    subtext:       '#8880A0',
+    border:        '#2E2C44',
+    chatBubble:    '#9B84E0',
+    calloutAccent: '#C8B8F8',
+  },
 };
 
 // Goal card accents — warm, soft

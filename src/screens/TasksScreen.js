@@ -105,7 +105,7 @@ export default function TasksScreen({ navigation }) {
 
   const FinishedCard = ({ item }) => (
     <View style={[ss.finishedCard, { backgroundColor: t.card, borderColor: t.border }]}>
-      <Icon name="check-circle" size={17} color={C.moss} />
+      <Icon name="check-circle" size={17} color={t.moss} />
       <Text style={[ss.finishedText, { color: t.subtext }]} numberOfLines={1}>{item.text}</Text>
       <Text style={[ss.finishedAge, { color: t.subtext }]}>{relativeTime(item.finishedAt)}</Text>
       <TouchableOpacity onPress={() => clearFinishedTask(item.id)} style={ss.finishedX} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -117,14 +117,14 @@ export default function TasksScreen({ navigation }) {
   return (
     <SafeAreaView style={[ss.safe, { backgroundColor: t.bg }]}>
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-        <Text style={[ss.title, { color: C.pinkDark }]}>Tasks</Text>
+        <Text style={[ss.title, { color: t.pinkDark }]}>Tasks</Text>
         <View style={ss.headerRight}>
           {points > 0 && (
-            <View style={[ss.pointsBadge, { backgroundColor: C.pillLavBg }]}>
-              <Text style={[ss.pointsText, { color: C.pillLavText }]}>{points} pts</Text>
+            <View style={[ss.pointsBadge, { backgroundColor: t.sagePale }]}>
+              <Text style={[ss.pointsText, { color: t.moss }]}>{points} pts</Text>
             </View>
           )}
-          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: C.moss }]} onPress={() => setShowAddTask(true)}>
+          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: t.moss }]} onPress={() => setShowAddTask(true)}>
             <Icon name="plus" size={14} color={C.white} />
             <Text style={ss.addTaskBtnText}>Add</Text>
           </TouchableOpacity>
@@ -188,7 +188,7 @@ export default function TasksScreen({ navigation }) {
 
       {ideaCapture && (
         <TouchableOpacity
-          style={[ss.ideaFab, { backgroundColor: C.clay }]}
+          style={[ss.ideaFab, { backgroundColor: t.clay }]}
           onPress={() => setShowAddTask(true)}
           activeOpacity={0.85}
         >
@@ -208,12 +208,12 @@ export default function TasksScreen({ navigation }) {
               <Text style={[ss.menuItemText, { color: t.text }]}>Edit task</Text>
             </TouchableOpacity>
             <TouchableOpacity style={ss.menuItem} onPress={() => { finishTask(menuTarget.id); setMenuTarget(null); }}>
-              <Icon name="check-circle" size={18} color={C.moss} />
-              <Text style={[ss.menuItemText, { color: C.moss }]}>Mark as done</Text>
+              <Icon name="check-circle" size={18} color={t.moss} />
+              <Text style={[ss.menuItemText, { color: t.moss }]}>Mark as done</Text>
             </TouchableOpacity>
             <TouchableOpacity style={ss.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
-              <Icon name="trash-2" size={18} color={C.pinkDark} />
-              <Text style={[ss.menuItemText, { color: C.pinkDark }]}>Delete task</Text>
+              <Icon name="trash-2" size={18} color={t.pinkDark} />
+              <Text style={[ss.menuItemText, { color: t.pinkDark }]}>Delete task</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[ss.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>
               <Text style={[ss.menuItemText, { color: t.subtext }]}>Cancel</Text>
@@ -260,7 +260,7 @@ export default function TasksScreen({ navigation }) {
                 <Text style={[ss.modalCancelText, { color: t.subtext }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[ss.modalSave, !newTaskText.trim() && { opacity: 0.4 }]}
+                style={[ss.modalSave, { backgroundColor: t.moss }, !newTaskText.trim() && { opacity: 0.4 }]}
                 onPress={doAddTask}
                 disabled={!newTaskText.trim()}
               >
@@ -305,7 +305,7 @@ export default function TasksScreen({ navigation }) {
               <TouchableOpacity style={[ss.modalCancel, { borderColor: t.border }]} onPress={() => setEditTarget(null)}>
                 <Text style={[ss.modalCancelText, { color: t.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={ss.modalSave} onPress={saveEdit}>
+              <TouchableOpacity style={[ss.modalSave, { backgroundColor: t.moss }]} onPress={saveEdit}>
                 <Text style={ss.modalSaveText}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -323,7 +323,7 @@ export default function TasksScreen({ navigation }) {
               <TouchableOpacity style={[ss.modalCancel, { borderColor: t.border }]} onPress={() => setDeleteConfirm(null)}>
                 <Text style={[ss.modalCancelText, { color: t.subtext }]}>Keep</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[ss.modalSave, { backgroundColor: C.pinkDark }]} onPress={() => { deleteTask(deleteConfirm.id); setDeleteConfirm(null); }}>
+              <TouchableOpacity style={[ss.modalSave, { backgroundColor: t.pinkDark }]} onPress={() => { deleteTask(deleteConfirm.id); setDeleteConfirm(null); }}>
                 <Text style={ss.modalSaveText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -441,7 +441,7 @@ const ss = StyleSheet.create({
   modalCancelText: { fontSize: 14, fontWeight: '600' },
   modalSave: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
-    backgroundColor: C.moss, alignItems: 'center',
+    alignItems: 'center',
   },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
 });

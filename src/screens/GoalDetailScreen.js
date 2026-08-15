@@ -8,11 +8,13 @@ import Icon from '../components/Icon';
 import VoiceMicButton from '../components/VoiceMicButton';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { callClaude, getApiKey, generateGoalAction } from '../services/ai';
 
 export default function GoalDetailScreen({ route, navigation }) {
   const { goal: initialGoal } = route.params ?? {};
   const { goals, advanceGoalAction } = useApp();
+  const { colors: t } = useTheme();
 
   const goal = goals.find(g => g.id === initialGoal?.id) ?? initialGoal;
 
@@ -104,19 +106,19 @@ export default function GoalDetailScreen({ route, navigation }) {
   const doneCount = goal?.completedActions?.length ?? 0;
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        <View style={s.header}>
+        <View style={[s.header, { backgroundColor: t.card, borderBottomColor: t.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Icon name="arrow-left" size={22} color={C.ink} />
+            <Icon name="arrow-left" size={22} color={t.text} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
-            <Text style={s.headerGoal} numberOfLines={1}>{goal?.text ?? 'Goal'}</Text>
-            <Text style={s.headerAction} numberOfLines={2}>{goal?.currentAction}</Text>
+            <Text style={[s.headerGoal, { color: t.moss }]} numberOfLines={1}>{goal?.text ?? 'Goal'}</Text>
+            <Text style={[s.headerAction, { color: t.text }]} numberOfLines={2}>{goal?.currentAction}</Text>
           </View>
           <TouchableOpacity
-            style={[s.doneBtn, advancing && { opacity: 0.6 }]}
+            style={[s.doneBtn, { backgroundColor: t.moss }, advancing && { opacity: 0.6 }]}
             onPress={handleMarkDone}
             disabled={advancing}
           >
@@ -132,9 +134,9 @@ export default function GoalDetailScreen({ route, navigation }) {
         </View>
 
         {doneCount > 0 && (
-          <View style={s.progressBanner}>
-            <Icon name="trending-up" size={13} color={C.moss} />
-            <Text style={s.progressText}>{doneCount} action{doneCount !== 1 ? 's' : ''} completed toward this goal</Text>
+          <View style={[s.progressBanner, { backgroundColor: t.sagePale, borderBottomColor: t.sageLight }]}>
+            <Icon name="trending-up" size={13} color={t.moss} />
+            <Text style={[s.progressText, { color: t.text }]}>{doneCount} action{doneCount !== 1 ? 's' : ''} completed toward this goal</Text>
           </View>
         )}
 
@@ -147,19 +149,19 @@ export default function GoalDetailScreen({ route, navigation }) {
         >
           {thinking && messages.length === 0 && (
             <View style={s.loadingWrap}>
-              <ActivityIndicator color={C.moss} size="small" />
-              <Text style={s.loadingText}>Working out your next step…</Text>
+              <ActivityIndicator color={t.moss} size="small" />
+              <Text style={[s.loadingText, { color: t.subtext }]}>Working out your next step…</Text>
             </View>
           )}
 
           {messages.map(m => (
             m.from === 'bloom' ? (
-              <View key={m.id} style={s.bloomBubble}>
-                <Text style={s.bloomText}>{m.text}</Text>
+              <View key={m.id} style={[s.bloomBubble, { backgroundColor: t.card, borderColor: t.border }]}>
+                <Text style={[s.bloomText, { color: t.text }]}>{m.text}</Text>
               </View>
             ) : (
               <View key={m.id} style={s.userRow}>
-                <View style={s.userBubble}>
+                <View style={[s.userBubble, { backgroundColor: t.chatBubble }]}>
                   <Text style={s.userText}>{m.text}</Text>
                 </View>
               </View>
@@ -167,23 +169,23 @@ export default function GoalDetailScreen({ route, navigation }) {
           ))}
 
           {thinking && messages.length > 0 && (
-            <View style={[s.bloomBubble, { paddingVertical: 16 }]}>
-              <ActivityIndicator color={C.moss} size="small" />
+            <View style={[s.bloomBubble, { paddingVertical: 16, backgroundColor: t.card, borderColor: t.border }]}>
+              <ActivityIndicator color={t.moss} size="small" />
             </View>
           )}
         </ScrollView>
 
-        <View style={s.inputBar}>
+        <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
           {!!input.trim() && (
             <TouchableOpacity style={s.clearBtn} onPress={() => setInput('')}>
-              <Icon name="x" size={16} color={C.muted} />
+              <Icon name="x" size={16} color={t.subtext} />
             </TouchableOpacity>
           )}
           <VoiceMicButton onTranscript={(txt) => setInput(prev => prev ? prev + ' ' + txt : txt)} />
           <TextInput
-            style={s.input}
+            style={[s.input, { backgroundColor: t.input, borderColor: t.border, color: t.text }]}
             placeholder="Ask Bloom about this step…"
-            placeholderTextColor={C.muted}
+            placeholderTextColor={t.subtext}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
@@ -191,7 +193,7 @@ export default function GoalDetailScreen({ route, navigation }) {
             editable={!thinking}
           />
           <TouchableOpacity
-            style={[s.sendBtn, (!input.trim() || thinking) && s.sendBtnOff]}
+            style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >

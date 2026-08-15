@@ -4,7 +4,7 @@ import {
   SafeAreaView, StyleSheet, Platform, TextInput, Switch,
 } from 'react-native';
 import Icon from '../components/Icon';
-import { C, BG_THEMES } from '../constants/colors';
+import { C, AESTHETICS } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import {
@@ -16,13 +16,7 @@ import {
 const OCCUPATIONS = ['Student', 'Working', 'Both', 'Other'];
 const AGE_RANGES  = ['Under 16', '16–18', '19–24', '25–34', '35–49', '50+'];
 
-const BG_SWATCHES = [
-  { key: 'cream',    label: 'Petal',  color: '#ECC4D4' },
-  { key: 'lavender', label: 'Lilac',  color: '#C0A8E0' },
-  { key: 'mint',     label: 'Sage',   color: '#A4C4B0' },
-  { key: 'sky',      label: 'Sky',    color: '#A8BCDC' },
-  { key: 'pink',     label: 'Blush',  color: '#ECA8BE' },
-];
+const AESTHETIC_LIST = Object.entries(AESTHETICS).map(([key, ae]) => ({ key, ...ae }));
 
 const ND_TOGGLES_DEF = [
   {
@@ -92,7 +86,7 @@ export default function SettingsScreen() {
     ndSupport, ndToggles, updateNdToggles,
     openTutorial,
   } = useApp();
-  const { bgTheme, setBgTheme, isDark, setDarkMode, colors: t } = useTheme();
+  const { aesthetic, setAesthetic, isDark, setDarkMode, colors: t } = useTheme();
 
   const [editProfile, setEditProfile] = useState(false);
   const [draftName,   setDraftName]   = useState(userName);
@@ -147,7 +141,7 @@ export default function SettingsScreen() {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={[s.title]}>Settings</Text>
+        <Text style={[s.title, { color: t.pinkDark }]}>Settings</Text>
         <Text style={[s.titleSub, { color: t.subtext }]}>Your preferences and profile.</Text>
 
         {/* Profile */}
@@ -176,10 +170,10 @@ export default function SettingsScreen() {
                 {AGE_RANGES.map(a => (
                   <TouchableOpacity
                     key={a}
-                    style={[s.chip, { borderColor: t.border, backgroundColor: t.bg }, draftAge === a && s.chipActive]}
+                    style={[s.chip, { borderColor: t.border, backgroundColor: t.bg }, draftAge === a && { borderColor: t.moss, backgroundColor: t.sagePale }]}
                     onPress={() => setDraftAge(a === draftAge ? '' : a)}
                   >
-                    <Text style={[s.chipText, { color: t.subtext }, draftAge === a && { color: C.moss }]}>{a}</Text>
+                    <Text style={[s.chipText, { color: t.subtext }, draftAge === a && { color: t.moss }]}>{a}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -189,10 +183,10 @@ export default function SettingsScreen() {
                 {OCCUPATIONS.map(o => (
                   <TouchableOpacity
                     key={o}
-                    style={[s.chip, { borderColor: t.border, backgroundColor: t.bg }, draftOcc === o && s.chipActive]}
+                    style={[s.chip, { borderColor: t.border, backgroundColor: t.bg }, draftOcc === o && { borderColor: t.moss, backgroundColor: t.sagePale }]}
                     onPress={() => setDraftOcc(o === draftOcc ? '' : o)}
                   >
-                    <Text style={[s.chipText, { color: t.subtext }, draftOcc === o && { color: C.moss }]}>{o}</Text>
+                    <Text style={[s.chipText, { color: t.subtext }, draftOcc === o && { color: t.moss }]}>{o}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -201,7 +195,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity style={[s.cancelBtn, { borderColor: t.border }]} onPress={() => setEditProfile(false)}>
                   <Text style={[s.cancelBtnText, { color: t.subtext }]}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.saveBtn} onPress={saveProfile}>
+                <TouchableOpacity style={[s.saveBtn, { backgroundColor: t.moss }]} onPress={saveProfile}>
                   <Text style={s.saveBtnText}>Save</Text>
                 </TouchableOpacity>
               </View>
@@ -214,7 +208,7 @@ export default function SettingsScreen() {
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={s.apiBlock}>
             <View style={s.apiStatusRow}>
-              <View style={[s.apiDot, { backgroundColor: C.moss }]} />
+              <View style={[s.apiDot, { backgroundColor: t.moss }]} />
               <Text style={[s.apiStatusText, { color: t.text }]}>AI connected</Text>
             </View>
             <Text style={[s.apiSub, { color: t.subtext }]}>
@@ -244,7 +238,7 @@ export default function SettingsScreen() {
                   <Switch
                     value={!!ndToggles?.[key]}
                     onValueChange={v => updateNdToggles({ [key]: v })}
-                    trackColor={{ false: C.border, true: C.moss }}
+                    trackColor={{ false: t.border, true: t.moss }}
                     thumbColor={C.white}
                   />
                 </View>
@@ -261,12 +255,12 @@ export default function SettingsScreen() {
                       <TouchableOpacity
                         key={opt.key}
                         style={[
-                          s.chip, { flex: 1, alignItems: 'center', justifyContent: 'center' },
-                          active && s.chipActive,
+                          s.chip, { flex: 1, alignItems: 'center', justifyContent: 'center', borderColor: t.border },
+                          active && { borderColor: t.moss, backgroundColor: t.sagePale },
                         ]}
                         onPress={() => updateNdToggles({ textSize: opt.key })}
                       >
-                        <Text style={[s.chipText, active && s.chipTextActive]}>{opt.label}</Text>
+                        <Text style={[s.chipText, { color: t.subtext }, active && { color: t.moss }]}>{opt.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -276,26 +270,74 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Background */}
-        <SectionTitle t={t}>Background</SectionTitle>
-        <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
-          <View style={s.swatchRow}>
-            {BG_SWATCHES.map(sw => (
-              <TouchableOpacity
-                key={sw.key}
-                style={[s.swatch, { backgroundColor: sw.color }, bgTheme === sw.key && s.swatchActive]}
-                onPress={() => setBgTheme(sw.key)}
-              >
-                {bgTheme === sw.key && <Icon name="check" size={16} color="#fff" />}
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={s.swatchLabels}>
-            {BG_SWATCHES.map(sw => (
-              <Text key={sw.key} style={[s.swatchLabel, { color: t.subtext }, bgTheme === sw.key && { color: t.text, fontWeight: '700' }]}>
-                {sw.label}
-              </Text>
-            ))}
+        {/* Aesthetic */}
+        <SectionTitle t={t}>Your Aesthetic</SectionTitle>
+        <View style={[s.card, { backgroundColor: t.card, borderColor: t.border, overflow: 'hidden' }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.aeScrollContent}
+          >
+            {AESTHETIC_LIST.map(ae => {
+              const selected = aesthetic === ae.key;
+              return (
+                <TouchableOpacity
+                  key={ae.key}
+                  onPress={() => setAesthetic(ae.key)}
+                  activeOpacity={0.82}
+                  style={[
+                    s.aeCard,
+                    { backgroundColor: ae.bg, borderColor: selected ? ae.accent : ae.border },
+                    selected && { borderWidth: 2.5, shadowColor: ae.accent, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
+                  ]}
+                >
+                  {/* Mini UI preview */}
+                  <View style={s.aePreview}>
+                    {/* Fake header strip */}
+                    <View style={[s.aeHeader, { backgroundColor: ae.bg }]}>
+                      <View style={[s.aeWordmark, { backgroundColor: ae.accent, opacity: 0.9 }]} />
+                    </View>
+                    {/* Fake chat bubbles */}
+                    <View style={s.aeBubbles}>
+                      {/* Bloom bubble */}
+                      <View style={[s.aeBloomBubble, { backgroundColor: ae.card, borderColor: ae.border }]}>
+                        <View style={[s.aeTextLine, { backgroundColor: ae.subtext, opacity: 0.35, width: '80%' }]} />
+                        <View style={[s.aeTextLine, { backgroundColor: ae.subtext, opacity: 0.25, width: '55%', marginTop: 3 }]} />
+                      </View>
+                      {/* User bubble */}
+                      <View style={[s.aeUserBubble, { backgroundColor: ae.accent }]}>
+                        <View style={[s.aeTextLine, { backgroundColor: '#fff', opacity: 0.7, width: '70%' }]} />
+                      </View>
+                    </View>
+                    {/* Fake input bar */}
+                    <View style={[s.aeInputBar, { backgroundColor: ae.card, borderColor: ae.border }]}>
+                      <View style={[s.aeInputLine, { backgroundColor: ae.subtext, opacity: 0.2 }]} />
+                      <View style={[s.aeSendBtn, { backgroundColor: ae.accent }]} />
+                    </View>
+                  </View>
+
+                  {/* Label */}
+                  <Text style={[s.aeEmoji]}>{ae.emoji}</Text>
+                  <Text style={[s.aeName, { color: ae.ink }]}>{ae.name}</Text>
+                  {selected && (
+                    <View style={[s.aeCheck, { backgroundColor: ae.accent }]}>
+                      <Icon name="check" size={9} color="#fff" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+          {/* Description of selected */}
+          <View style={[s.aeDescRow, { borderTopColor: t.border }]}>
+            <Text style={[s.aeDescText, { color: t.subtext }]}>
+              {AESTHETICS[aesthetic]?.description ?? ''}
+            </Text>
+            {AESTHETICS[aesthetic]?.isDark && (
+              <View style={[s.aeDarkBadge, { backgroundColor: t.sagePale }]}>
+                <Text style={[s.aeDarkBadgeText, { color: t.moss }]}>Always dark</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -303,14 +345,19 @@ export default function SettingsScreen() {
         <SectionTitle t={t}>Display</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <View style={s.switchRow}>
-            <View>
-              <Text style={[s.switchLabel, { color: t.text }]}>Dark mode</Text>
-              <Text style={[s.switchSub, { color: t.subtext }]}>Warm dark palette, same personality</Text>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={[s.switchLabel, { color: AESTHETICS[aesthetic]?.isDark ? t.subtext : t.text }]}>Dark mode</Text>
+              <Text style={[s.switchSub, { color: t.subtext }]}>
+                {AESTHETICS[aesthetic]?.isDark
+                  ? 'Always on for Midnight'
+                  : 'Warm dark palette, same personality'}
+              </Text>
             </View>
             <Switch
               value={isDark}
               onValueChange={setDarkMode}
-              trackColor={{ false: C.border, true: C.moss }}
+              disabled={!!AESTHETICS[aesthetic]?.isDark}
+              trackColor={{ false: t.border, true: t.moss }}
               thumbColor={C.white}
             />
           </View>
@@ -351,7 +398,7 @@ export default function SettingsScreen() {
                   </Text>
                 ) : (
                   <TouchableOpacity
-                    style={[s.saveBtn, { flex: 0, paddingHorizontal: 20, marginTop: 4 }]}
+                    style={[s.saveBtn, { flex: 0, paddingHorizontal: 20, marginTop: 4, backgroundColor: t.moss }]}
                     onPress={handleEnableNotif}
                   >
                     <Text style={s.saveBtnText}>Enable morning reminder</Text>
@@ -361,7 +408,7 @@ export default function SettingsScreen() {
             ) : (
               <>
                 <View style={s.apiStatusRow}>
-                  <View style={[s.apiDot, { backgroundColor: C.moss }]} />
+                  <View style={[s.apiDot, { backgroundColor: t.moss }]} />
                   <Text style={[s.apiStatusText, { color: t.text }]}>Reminders enabled</Text>
                 </View>
                 <Text style={[s.ndSub, { color: t.subtext }]}>Bloom will remind you to plan your day at:</Text>
@@ -381,7 +428,7 @@ export default function SettingsScreen() {
                     keyboardType="number-pad"
                     maxLength={2}
                   />
-                  <TouchableOpacity style={[s.saveBtn, { flex: 0, paddingHorizontal: 16, paddingVertical: 10 }]} onPress={handleSaveNotifTime}>
+                  <TouchableOpacity style={[s.saveBtn, { flex: 0, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: t.moss }]} onPress={handleSaveNotifTime}>
                     <Text style={s.saveBtnText}>{notifSaved ? 'Saved ✓' : 'Save'}</Text>
                   </TouchableOpacity>
                 </View>
@@ -447,7 +494,6 @@ const s = StyleSheet.create({
   title: {
     fontSize: 38, fontWeight: '800', letterSpacing: -1, marginBottom: 4,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
-    color: C.pinkDark,
   },
 
   titleSub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
@@ -485,9 +531,9 @@ const s = StyleSheet.create({
     paddingVertical: 7, paddingHorizontal: 13, borderRadius: 18,
     borderWidth: 1.5,
   },
-  chipActive: { borderColor: C.moss, backgroundColor: C.sagePale },
+  chipActive: {},
   chipText: { fontSize: 13, fontWeight: '600' },
-  chipTextActive: { color: C.moss },
+  chipTextActive: {},
 
   editActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   cancelBtn: {
@@ -497,7 +543,7 @@ const s = StyleSheet.create({
   cancelBtnText: { fontSize: 14, fontWeight: '600' },
   saveBtn: {
     flex: 2, paddingVertical: 12, borderRadius: 10,
-    backgroundColor: C.moss, alignItems: 'center',
+    alignItems: 'center',
   },
   saveBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
 
@@ -511,22 +557,69 @@ const s = StyleSheet.create({
   ndLabel:   { fontSize: 14, fontWeight: '600', marginBottom: 2 },
   ndSub:     { fontSize: 12, lineHeight: 17 },
 
-  swatchRow: {
-    flexDirection: 'row', justifyContent: 'space-around',
-    paddingTop: 18, paddingHorizontal: 14,
+  // Aesthetic picker
+  aeScrollContent: {
+    flexDirection: 'row', gap: 10, padding: 16, paddingRight: 16,
   },
-  swatch: {
-    width: 44, height: 44, borderRadius: 22,
+  aeCard: {
+    width: 88, borderRadius: 16, borderWidth: 1.5,
+    alignItems: 'center', paddingBottom: 12, overflow: 'hidden',
+    position: 'relative',
+  },
+  aePreview: {
+    width: '100%', height: 96, overflow: 'hidden',
+    borderBottomWidth: 1, borderBottomColor: 'transparent',
+    gap: 5, paddingHorizontal: 8, paddingTop: 8,
+  },
+  aeHeader: {
+    flexDirection: 'row', alignItems: 'center', height: 14,
+    paddingHorizontal: 2,
+  },
+  aeWordmark: {
+    width: 32, height: 6, borderRadius: 3,
+  },
+  aeBubbles: { gap: 5 },
+  aeBloomBubble: {
+    borderRadius: 8, borderBottomLeftRadius: 2,
+    padding: 5, borderWidth: 1, maxWidth: '78%',
+    gap: 2,
+  },
+  aeUserBubble: {
+    borderRadius: 8, borderBottomRightRadius: 2,
+    padding: 5, maxWidth: '65%', alignSelf: 'flex-end',
+  },
+  aeTextLine: {
+    height: 3, borderRadius: 2,
+  },
+  aeInputBar: {
+    flexDirection: 'row', alignItems: 'center', borderRadius: 10,
+    borderWidth: 1, paddingHorizontal: 7, paddingVertical: 5,
+    marginTop: 'auto', gap: 5,
+  },
+  aeInputLine: {
+    flex: 1, height: 3, borderRadius: 2,
+  },
+  aeSendBtn: {
+    width: 16, height: 16, borderRadius: 8,
+  },
+  aeEmoji: { fontSize: 16, marginTop: 10 },
+  aeName: {
+    fontSize: 11, fontWeight: '700', marginTop: 2, letterSpacing: 0.2,
+  },
+  aeCheck: {
+    position: 'absolute', top: 7, right: 7,
+    width: 18, height: 18, borderRadius: 9,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  swatchActive: { borderWidth: 3, borderColor: C.mossDark },
-  swatchLabels: {
-    flexDirection: 'row', justifyContent: 'space-around',
-    paddingTop: 8, paddingBottom: 18, paddingHorizontal: 14,
+  aeDescRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1,
   },
-  swatchLabel: { fontSize: 10, fontWeight: '500', textAlign: 'center', width: 44 },
+  aeDescText: { fontSize: 13 },
+  aeDarkBadge: {
+    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4,
+  },
+  aeDarkBadgeText: { fontSize: 11, fontWeight: '700' },
 
   switchRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

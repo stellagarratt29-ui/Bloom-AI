@@ -116,9 +116,9 @@ export default function HobbiesScreen({ navigation }) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <View style={s.titleRow}>
-          <Text style={[s.title, { color: C.moss }]}>Grow</Text>
+          <Text style={[s.title, { color: t.moss }]}>Grow</Text>
           <TouchableOpacity onPress={() => navigation.navigate('YearReview')} style={s.yearBtn}>
-            <Text style={[s.yearBtnText, { color: C.clay }]}>Year in review ✦</Text>
+            <Text style={[s.yearBtnText, { color: t.clay }]}>Year in review ✦</Text>
           </TouchableOpacity>
         </View>
         <Text style={[s.sub, { color: t.subtext }]}>Hobbies you're building, one milestone at a time.</Text>
@@ -148,7 +148,7 @@ export default function HobbiesScreen({ navigation }) {
             >
               <View style={s.hobbyCardTop}>
                 <View style={[s.iconCircle, { backgroundColor: iconBg }]}>
-                  <Icon name={iconName} size={18} color={C.moss} />
+                  <Icon name={iconName} size={18} color={t.moss} />
                 </View>
                 <Text style={[s.hobbyName, { color: t.text }]}>{h.name}</Text>
                 <TouchableOpacity style={s.menuBtn} onPress={() => setMenuTarget(h)}>
@@ -156,7 +156,7 @@ export default function HobbiesScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
               <View style={[s.progressTrack, { backgroundColor: t.border }]}>
-                <View style={[s.progressFill, { backgroundColor: C.moss, width: `${pct}%` }]} />
+                <View style={[s.progressFill, { backgroundColor: t.moss, width: `${pct}%` }]} />
               </View>
               <Text style={[s.milestoneLabel, { color: t.subtext }]}>MILESTONE {done + 1} OF {total}</Text>
               <Text style={[s.hobbyMilestone, { color: t.text }]} numberOfLines={3}>{h.currentMilestone}</Text>
@@ -182,10 +182,10 @@ export default function HobbiesScreen({ navigation }) {
               {SKILL_LEVELS.map(l => (
                 <TouchableOpacity
                   key={l}
-                  style={[s.levelChip, { borderColor: t.border, backgroundColor: t.bg }, skillLevel === l && s.levelChipActive]}
+                  style={[s.levelChip, { borderColor: t.border, backgroundColor: t.bg }, skillLevel === l && { borderColor: t.moss, backgroundColor: t.sagePale }]}
                   onPress={() => setSkillLevel(l)}
                 >
-                  <Text style={[s.levelChipText, { color: t.subtext }, skillLevel === l && { color: C.moss }]}>{l}</Text>
+                  <Text style={[s.levelChipText, { color: t.subtext }, skillLevel === l && { color: t.moss }]}>{l}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -194,7 +194,7 @@ export default function HobbiesScreen({ navigation }) {
                 <Text style={[s.cancelBtnText, { color: t.subtext }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[s.createBtn, (!hobbyName.trim() || generating) && s.createBtnOff]}
+                style={[s.createBtn, { backgroundColor: t.moss }, (!hobbyName.trim() || generating) && s.createBtnOff]}
                 onPress={handleAdd}
                 disabled={!hobbyName.trim() || generating}
               >
@@ -206,9 +206,9 @@ export default function HobbiesScreen({ navigation }) {
             {generating && <Text style={[s.generatingNote, { color: t.subtext }]}>Building your curriculum…</Text>}
           </View>
         ) : (
-          <TouchableOpacity style={[s.addBtn, { borderColor: C.clayLight }]} onPress={() => setShowAdd(true)}>
-            <Icon name="plus" size={16} color={C.clay} />
-            <Text style={[s.addBtnText, { color: C.clay }]}>Add a hobby</Text>
+          <TouchableOpacity style={[s.addBtn, { borderColor: t.sageLight }]} onPress={() => setShowAdd(true)}>
+            <Icon name="plus" size={16} color={t.clay} />
+            <Text style={[s.addBtnText, { color: t.clay }]}>Add a hobby</Text>
           </TouchableOpacity>
         )}
 
@@ -226,8 +226,8 @@ export default function HobbiesScreen({ navigation }) {
               <Text style={[s.menuItemText, { color: t.text }]}>Edit hobby</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.menuItem} onPress={() => { setDeleteConfirm(menuTarget); setMenuTarget(null); }}>
-              <Icon name="trash-2" size={18} color={C.pinkDark} />
-              <Text style={[s.menuItemText, { color: C.pinkDark }]}>Remove hobby</Text>
+              <Icon name="trash-2" size={18} color={t.pinkDark} />
+              <Text style={[s.menuItemText, { color: t.pinkDark }]}>Remove hobby</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[s.menuItem, { justifyContent: 'center' }]} onPress={() => setMenuTarget(null)}>
               <Text style={[s.menuItemText, { color: t.subtext }]}>Cancel</Text>
@@ -259,7 +259,7 @@ export default function HobbiesScreen({ navigation }) {
                   style={[s.levelChip, { borderColor: t.border, backgroundColor: t.bg }, editSkill === l && s.levelChipActive]}
                   onPress={() => setEditSkill(l)}
                 >
-                  <Text style={[s.levelChipText, { color: t.subtext }, editSkill === l && { color: C.moss }]}>{l}</Text>
+                  <Text style={[s.levelChipText, { color: t.subtext }, editSkill === l && { color: t.moss }]}>{l}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -267,7 +267,7 @@ export default function HobbiesScreen({ navigation }) {
               <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setEditTarget(null)}>
                 <Text style={[s.modalCancelText, { color: t.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[s.modalSave, regen && { opacity: 0.6 }]} onPress={saveEdit} disabled={regen}>
+              <TouchableOpacity style={[s.modalSave, { backgroundColor: t.moss }, regen && { opacity: 0.6 }]} onPress={saveEdit} disabled={regen}>
                 {regen
                   ? <ActivityIndicator size="small" color={C.white} />
                   : <Text style={s.modalSaveText}>Save</Text>}
@@ -287,7 +287,7 @@ export default function HobbiesScreen({ navigation }) {
               <TouchableOpacity style={[s.modalCancel, { borderColor: t.border }]} onPress={() => setDeleteConfirm(null)}>
                 <Text style={[s.modalCancelText, { color: t.subtext }]}>Keep</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[s.modalSave, { backgroundColor: C.pinkDark }]} onPress={() => { removeHobby(deleteConfirm.id); setDeleteConfirm(null); }}>
+              <TouchableOpacity style={[s.modalSave, { backgroundColor: t.pinkDark }]} onPress={() => { removeHobby(deleteConfirm.id); setDeleteConfirm(null); }}>
                 <Text style={s.modalSaveText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -362,7 +362,7 @@ const s = StyleSheet.create({
     flex: 1, paddingVertical: 10, borderRadius: 10,
     borderWidth: 1.5, alignItems: 'center',
   },
-  levelChipActive: { borderColor: C.moss },
+  levelChipActive: { borderWidth: 1.5 },
   levelChipText: { fontSize: 13, fontWeight: '600' },
   addActions: { flexDirection: 'row', gap: 10 },
   cancelBtn: {
@@ -372,7 +372,7 @@ const s = StyleSheet.create({
   cancelBtnText: { fontSize: 14, fontWeight: '600' },
   createBtn: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
-    backgroundColor: C.moss, alignItems: 'center',
+    alignItems: 'center',
   },
   createBtnOff: { opacity: 0.4 },
   createBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
@@ -406,7 +406,7 @@ const s = StyleSheet.create({
   modalCancelText: { fontSize: 14, fontWeight: '600' },
   modalSave: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
-    backgroundColor: C.moss, alignItems: 'center',
+    alignItems: 'center',
   },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
 });

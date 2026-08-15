@@ -7,11 +7,13 @@ import {
 import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { callClaude, getApiKey, generateHobbyMilestone } from '../services/ai';
 
 export default function HobbyDetailScreen({ route, navigation }) {
   const { hobby: initialHobby } = route.params ?? {};
   const { hobbies, completeMilestone } = useApp();
+  const { colors: t } = useTheme();
 
   // Pull live hobby data from context so it updates after milestone completion
   const hobby = hobbies.find(h => h.id === initialHobby?.id) ?? initialHobby;
@@ -115,19 +117,19 @@ Write in plain text, no markdown headers.`,
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        <View style={s.header}>
+        <View style={[s.header, { backgroundColor: t.card, borderBottomColor: t.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <Icon name="arrow-left" size={22} color={C.ink} />
+            <Icon name="arrow-left" size={22} color={t.text} />
           </TouchableOpacity>
           <View style={s.headerCenter}>
-            <Text style={s.headerHobby}>{hobby?.name ?? 'Hobby'}</Text>
-            <Text style={s.headerMilestone} numberOfLines={2}>{hobby?.currentMilestone}</Text>
+            <Text style={[s.headerHobby, { color: t.subtext }]}>{hobby?.name ?? 'Hobby'}</Text>
+            <Text style={[s.headerMilestone, { color: t.text }]} numberOfLines={2}>{hobby?.currentMilestone}</Text>
           </View>
           <TouchableOpacity
-            style={[s.doneBtn, advancing && { opacity: 0.6 }]}
+            style={[s.doneBtn, { backgroundColor: t.moss }, advancing && { opacity: 0.6 }]}
             onPress={handleMilestoneDone}
             disabled={advancing}
           >
@@ -155,7 +157,7 @@ Write in plain text, no markdown headers.`,
               const isDone    = i < idx;
               const isCurrent = i === idx;
               return (
-                <View key={i} style={[s.curriculumStep, isDone && s.curriculumStepDone, isCurrent && s.curriculumStepCurrent]}>
+                <View key={i} style={[s.curriculumStep, { backgroundColor: t.bg, borderColor: t.border }, isDone && { backgroundColor: t.moss, borderColor: t.moss }, isCurrent && { backgroundColor: t.text, borderColor: t.text }]}>
                   <Text style={[s.curriculumStepNum, isDone && s.curriculumStepNumDone, isCurrent && s.curriculumStepNumCurrent]}>
                     {isDone ? '✓' : i + 1}
                   </Text>
@@ -184,12 +186,12 @@ Write in plain text, no markdown headers.`,
 
           {messages.map(m => (
             m.from === 'bloom' ? (
-              <View key={m.id} style={s.bloomBubble}>
-                <Text style={s.bloomText}>{m.text}</Text>
+              <View key={m.id} style={[s.bloomBubble, { backgroundColor: t.card, borderColor: t.border }]}>
+                <Text style={[s.bloomText, { color: t.text }]}>{m.text}</Text>
               </View>
             ) : (
               <View key={m.id} style={s.userRow}>
-                <View style={s.userBubble}>
+                <View style={[s.userBubble, { backgroundColor: t.chatBubble }]}>
                   <Text style={s.userText}>{m.text}</Text>
                 </View>
               </View>
@@ -197,17 +199,17 @@ Write in plain text, no markdown headers.`,
           ))}
 
           {thinking && messages.length > 0 && (
-            <View style={[s.bloomBubble, { paddingVertical: 16 }]}>
-              <ActivityIndicator color={C.sage} size="small" />
+            <View style={[s.bloomBubble, { paddingVertical: 16, backgroundColor: t.card, borderColor: t.border }]}>
+              <ActivityIndicator color={t.subtext} size="small" />
             </View>
           )}
         </ScrollView>
 
-        <View style={s.inputBar}>
+        <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
           <TextInput
-            style={s.input}
+            style={[s.input, { backgroundColor: t.input, borderColor: t.border, color: t.text }]}
             placeholder="Ask about this milestone…"
-            placeholderTextColor={C.muted}
+            placeholderTextColor={t.subtext}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
@@ -215,7 +217,7 @@ Write in plain text, no markdown headers.`,
             editable={!thinking}
           />
           <TouchableOpacity
-            style={[s.sendBtn, (!input.trim() || thinking) && s.sendBtnOff]}
+            style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
