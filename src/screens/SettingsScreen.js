@@ -273,11 +273,7 @@ export default function SettingsScreen() {
         {/* Aesthetic */}
         <SectionTitle t={t}>Your Aesthetic</SectionTitle>
         <View style={[s.card, { backgroundColor: t.card, borderColor: t.border, overflow: 'hidden' }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.aeScrollContent}
-          >
+          <View style={s.aeGrid}>
             {AESTHETIC_LIST.map(ae => {
               const selected = aesthetic === ae.key;
               return (
@@ -286,39 +282,22 @@ export default function SettingsScreen() {
                   onPress={() => setAesthetic(ae.key)}
                   activeOpacity={0.82}
                   style={[
-                    s.aeCard,
-                    { backgroundColor: ae.bg, borderColor: selected ? ae.accent : ae.border },
-                    selected && { borderWidth: 2.5, shadowColor: ae.accent, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
+                    s.aeCell,
+                    { borderColor: selected ? ae.accent : ae.border },
+                    selected && { borderWidth: 2.5 },
                   ]}
                 >
-                  {/* Mini UI preview */}
-                  <View style={s.aePreview}>
-                    {/* Fake header strip */}
-                    <View style={[s.aeHeader, { backgroundColor: ae.bg }]}>
-                      <View style={[s.aeWordmark, { backgroundColor: ae.accent, opacity: 0.9 }]} />
-                    </View>
-                    {/* Fake chat bubbles */}
-                    <View style={s.aeBubbles}>
-                      {/* Bloom bubble */}
-                      <View style={[s.aeBloomBubble, { backgroundColor: ae.card, borderColor: ae.border }]}>
-                        <View style={[s.aeTextLine, { backgroundColor: ae.subtext, opacity: 0.35, width: '80%' }]} />
-                        <View style={[s.aeTextLine, { backgroundColor: ae.subtext, opacity: 0.25, width: '55%', marginTop: 3 }]} />
-                      </View>
-                      {/* User bubble */}
-                      <View style={[s.aeUserBubble, { backgroundColor: ae.accent }]}>
-                        <View style={[s.aeTextLine, { backgroundColor: '#fff', opacity: 0.7, width: '70%' }]} />
-                      </View>
-                    </View>
-                    {/* Fake input bar */}
-                    <View style={[s.aeInputBar, { backgroundColor: ae.card, borderColor: ae.border }]}>
-                      <View style={[s.aeInputLine, { backgroundColor: ae.subtext, opacity: 0.2 }]} />
-                      <View style={[s.aeSendBtn, { backgroundColor: ae.accent }]} />
-                    </View>
+                  {/* Colour orbs */}
+                  <View style={[s.aeOrbArea, { backgroundColor: ae.accentPale }]}>
+                    <View style={[s.aeOrb, s.aeOrb1, { backgroundColor: ae.accentLight }]} />
+                    <View style={[s.aeOrb, s.aeOrb2, { backgroundColor: ae.accent }]} />
+                    <View style={[s.aeOrb, s.aeOrb3, { backgroundColor: ae.calloutAccent }]} />
                   </View>
-
                   {/* Label */}
-                  <Text style={[s.aeEmoji]}>{ae.emoji}</Text>
-                  <Text style={[s.aeName, { color: ae.ink }]}>{ae.name}</Text>
+                  <View style={[s.aeCellFooter, { backgroundColor: ae.bg }]}>
+                    <Text style={s.aeCellEmoji}>{ae.emoji}</Text>
+                    <Text style={[s.aeCellName, { color: ae.ink }]} numberOfLines={1}>{ae.name}</Text>
+                  </View>
                   {selected && (
                     <View style={[s.aeCheck, { backgroundColor: ae.accent }]}>
                       <Icon name="check" size={9} color="#fff" />
@@ -327,7 +306,7 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
           {/* Description of selected */}
           <View style={[s.aeDescRow, { borderTopColor: t.border }]}>
             <Text style={[s.aeDescText, { color: t.subtext }]}>
@@ -557,54 +536,55 @@ const s = StyleSheet.create({
   ndLabel:   { fontSize: 14, fontWeight: '600', marginBottom: 2 },
   ndSub:     { fontSize: 12, lineHeight: 17 },
 
-  // Aesthetic picker
-  aeScrollContent: {
-    flexDirection: 'row', gap: 10, padding: 16, paddingRight: 16,
+  // Aesthetic picker — orb grid
+  aeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    padding: 14,
   },
-  aeCard: {
-    width: 88, borderRadius: 16, borderWidth: 1.5,
-    alignItems: 'center', paddingBottom: 12, overflow: 'hidden',
+  aeCell: {
+    width: '30%',
+    flexGrow: 1,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    overflow: 'hidden',
     position: 'relative',
   },
-  aePreview: {
-    width: '100%', height: 96, overflow: 'hidden',
-    borderBottomWidth: 1, borderBottomColor: 'transparent',
-    gap: 5, paddingHorizontal: 8, paddingTop: 8,
+  aeOrbArea: {
+    height: 72,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  aeHeader: {
-    flexDirection: 'row', alignItems: 'center', height: 14,
-    paddingHorizontal: 2,
+  aeOrb: {
+    position: 'absolute',
+    borderRadius: 999,
   },
-  aeWordmark: {
-    width: 32, height: 6, borderRadius: 3,
+  aeOrb1: {
+    width: 74, height: 74,
+    top: -22, left: -18,
+    opacity: 0.9,
   },
-  aeBubbles: { gap: 5 },
-  aeBloomBubble: {
-    borderRadius: 8, borderBottomLeftRadius: 2,
-    padding: 5, borderWidth: 1, maxWidth: '78%',
-    gap: 2,
+  aeOrb2: {
+    width: 60, height: 60,
+    top: 8, right: -12,
+    opacity: 0.95,
   },
-  aeUserBubble: {
-    borderRadius: 8, borderBottomRightRadius: 2,
-    padding: 5, maxWidth: '65%', alignSelf: 'flex-end',
+  aeOrb3: {
+    width: 48, height: 48,
+    bottom: -14, left: 28,
+    opacity: 0.8,
   },
-  aeTextLine: {
-    height: 3, borderRadius: 2,
+  aeCellFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
   },
-  aeInputBar: {
-    flexDirection: 'row', alignItems: 'center', borderRadius: 10,
-    borderWidth: 1, paddingHorizontal: 7, paddingVertical: 5,
-    marginTop: 'auto', gap: 5,
-  },
-  aeInputLine: {
-    flex: 1, height: 3, borderRadius: 2,
-  },
-  aeSendBtn: {
-    width: 16, height: 16, borderRadius: 8,
-  },
-  aeEmoji: { fontSize: 16, marginTop: 10 },
-  aeName: {
-    fontSize: 11, fontWeight: '700', marginTop: 2, letterSpacing: 0.2,
+  aeCellEmoji: { fontSize: 13 },
+  aeCellName: {
+    fontSize: 11, fontWeight: '700', letterSpacing: 0.2, flex: 1,
   },
   aeCheck: {
     position: 'absolute', top: 7, right: 7,
