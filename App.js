@@ -99,7 +99,7 @@ function CustomTabBar({ state, navigation }) {
     return (
       <View style={[deskS.sidebar, { backgroundColor: colors.card, borderRightColor: colors.border }]}>
         <View style={deskS.logoWrap}>
-          <Text style={[deskS.logoText, { color: C.moss }]}>Bloom</Text>
+          <Text style={[deskS.logoText, { color: colors.moss }]}>Bloom</Text>
           <Text style={[deskS.logoSub, { color: colors.subtext }]}>Your gentle guide.</Text>
         </View>
         {TAB_ITEMS.map((item, index) => {
@@ -107,12 +107,12 @@ function CustomTabBar({ state, navigation }) {
           return (
             <TouchableOpacity
               key={item.name}
-              style={[deskS.navItem, focused && { backgroundColor: C.sagePale }]}
+              style={[deskS.navItem, focused && { backgroundColor: colors.sagePale }]}
               onPress={() => navigation.navigate(item.name)}
               activeOpacity={0.7}
             >
-              <Icon name={item.icon} size={17} color={focused ? C.moss : colors.subtext} />
-              <Text style={[deskS.navLabel, { color: colors.subtext }, focused && { fontWeight: '700', color: C.moss }]}>
+              <Icon name={item.icon} size={17} color={focused ? colors.moss : colors.subtext} />
+              <Text style={[deskS.navLabel, { color: colors.subtext }, focused && { fontWeight: '700', color: colors.moss }]}>
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -143,7 +143,7 @@ function CustomTabBar({ state, navigation }) {
           >
             {focused ? (
               // Active: filled pill with icon + label
-              <View style={[mobileTabS.pill, { backgroundColor: C.moss }]}>
+              <View style={[mobileTabS.pill, { backgroundColor: colors.moss }]}>
                 <Icon name={item.icon} size={16} color="#FFFFFF" />
                 <Text style={mobileTabS.pillLabel}>{item.label}</Text>
               </View>

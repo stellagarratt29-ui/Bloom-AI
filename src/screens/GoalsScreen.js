@@ -208,18 +208,18 @@ const s = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
-  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
   title: {
-    fontSize: 38, fontWeight: '800', letterSpacing: -1,
+    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
   addBtn: {
     fontSize: 13, fontWeight: '700',
     color: C.white,
-    paddingVertical: 7, paddingHorizontal: 14, borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20,
     overflow: 'hidden',
   },
-  sub: { fontSize: 14, lineHeight: 22, marginBottom: 22 },
+  sub: { fontSize: 13, lineHeight: 20, marginBottom: 20, fontWeight: '400' },
 
   addCard: {
     borderRadius: 16, borderWidth: 1.5,
@@ -237,13 +237,16 @@ const s = StyleSheet.create({
   saveBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
   creatingNote: { fontSize: 12, textAlign: 'center' },
 
-  empty: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 16 },
+  empty: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 },
   emptyIconWrap: {
-    width: 72, height: 72, borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 18,
+    width: 68, height: 68, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
-  emptyHead: { fontSize: 20, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3 },
-  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 280, marginBottom: 24 },
+  emptyHead: {
+    fontSize: 22, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+  },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, maxWidth: 270, marginBottom: 24, fontWeight: '400' },
   emptyBtn: { paddingVertical: 13, paddingHorizontal: 28, borderRadius: 24 },
   emptyBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
 

@@ -77,13 +77,17 @@ export default function TasksScreen({ navigation }) {
       { backgroundColor: t.card, borderColor: t.border },
       reducedClutter && ss.taskCardSlim,
     ]}>
+      {/* Priority accent stripe */}
+      <View style={[ss.taskStripe, { backgroundColor: sec?.pillText ?? t.border }]} />
       <TouchableOpacity
         style={ss.doneBtn}
         onPress={() => finishTask(task.id)}
         activeOpacity={0.7}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
       >
-        <Icon name="circle" size={22} color={sec?.cbColor ?? t.subtext} />
+        <View style={[ss.checkCircle, { borderColor: sec?.pillText ?? t.border }]}>
+          <Icon name="circle" size={10} color="transparent" />
+        </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={ss.taskBody}
@@ -96,6 +100,7 @@ export default function TasksScreen({ navigation }) {
         >
           {task.text}
         </Text>
+        <Text style={[ss.taskHint, { color: t.subtext }]}>Tap for help →</Text>
       </TouchableOpacity>
       <TouchableOpacity style={ss.menuBtn} onPress={() => setMenuTarget(task)}>
         <Icon name="more-vertical" size={18} color={t.subtext} />
@@ -357,25 +362,36 @@ const ss = StyleSheet.create({
 
   scroll: { paddingHorizontal: 18, paddingTop: 18 },
 
-  group: { marginBottom: 22 },
+  group: { marginBottom: 20 },
   sectionPill: {
     alignSelf: 'flex-start',
-    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4,
     marginBottom: 10,
   },
-  sectionLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
+  sectionLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1.6 },
 
   taskCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderRadius: 16, paddingVertical: 14, paddingHorizontal: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 14, paddingVertical: 13, paddingRight: 10,
+    paddingLeft: 14,
     borderWidth: 1, marginBottom: 8,
-    shadowColor: '#2A2420', shadowOpacity: 0.09, shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 }, elevation: 3,
+    overflow: 'hidden',
+    shadowColor: '#1A1018', shadowOpacity: 0.06, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  },
+  taskStripe: {
+    position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
+    borderTopLeftRadius: 14, borderBottomLeftRadius: 14,
+  },
+  checkCircle: {
+    width: 22, height: 22, borderRadius: 11, borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
   taskCardSlim: { paddingVertical: 10, marginBottom: 10 },
   doneBtn: { padding: 2, flexShrink: 0 },
-  taskBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  taskText: { flex: 1, fontSize: 14, fontWeight: '500', lineHeight: 20 },
+  taskBody: { flex: 1, flexDirection: 'column', gap: 2 },
+  taskText: { fontSize: 15, fontWeight: '600', lineHeight: 21 },
+  taskHint: { fontSize: 11, fontWeight: '400', letterSpacing: 0.1 },
   menuBtn: { padding: 6 },
 
   // Finished section
@@ -411,9 +427,12 @@ const ss = StyleSheet.create({
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 16, paddingHorizontal: 24 },
   menuItemText: { fontSize: 16, fontWeight: '500' },
 
-  empty: { alignItems: 'center', paddingTop: 60, paddingBottom: 32, paddingHorizontal: 24 },
-  emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 10 },
-  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22 },
+  empty: { alignItems: 'center', paddingTop: 72, paddingBottom: 40, paddingHorizontal: 32 },
+  emptyHead: {
+    fontSize: 22, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+  },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, fontWeight: '400' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalCard: {

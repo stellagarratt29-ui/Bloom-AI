@@ -302,18 +302,21 @@ const s = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
-  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 4 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   title: {
-    fontSize: 38, fontWeight: '800', letterSpacing: -1,
+    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
     fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
   },
-  yearBtn: { paddingBottom: 4 },
+  yearBtn: { paddingVertical: 2 },
   yearBtnText: { fontSize: 13, fontWeight: '700' },
-  sub: { fontSize: 14, lineHeight: 20, marginBottom: 24 },
+  sub: { fontSize: 13, lineHeight: 20, marginBottom: 22, fontWeight: '400' },
 
-  empty: { alignItems: 'center', paddingTop: 40, paddingBottom: 32 },
-  emptyHead: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
+  empty: { alignItems: 'center', paddingTop: 56, paddingBottom: 40 },
+  emptyHead: {
+    fontSize: 22, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+  },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, maxWidth: 270, fontWeight: '400' },
 
   hobbyCard: {
     borderRadius: 18, borderWidth: 1,
