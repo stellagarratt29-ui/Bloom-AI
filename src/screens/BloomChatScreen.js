@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TextInput, TouchableOpacity,
@@ -16,6 +16,7 @@ import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAc
 import { processCalendarRequest } from '../services/calendar';
 import { isCommuteQuery, processCommuteQuery, openInMaps, extractDestination } from '../services/location';
 import { getStruggleWindows, isInStruggleWindow } from '../services/downtime';
+import { speak, stopSpeaking, hasTTS } from '../services/speech';
 
 function getGreeting(userName) {
   const h = new Date().getHours();
@@ -164,6 +165,16 @@ export default function BloomChatScreen() {
   const scrollRef        = useRef(null);
   const historyRef       = useRef([]);
   const autoShownDowntime = useRef(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const voiceModeRef = useRef(false);
+
+  // Keep ref in sync so closures in send() always see current value
+  useEffect(() => { voiceModeRef.current = voiceMode; }, [voiceMode]);
+
+  // Stop speaking when leaving the screen
+  useFocusEffect(useCallback(() => {
+    return () => stopSpeaking();
+  }, []));
 
   useFocusEffect(useCallback(() => {
     getApiKey().then(k => setHasKey(!!k));
@@ -180,6 +191,13 @@ export default function BloomChatScreen() {
   }, [checkInDone]));
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+
+  // Add a Bloom message and speak it aloud if voice mode is on
+  const bloomReply = useCallback((text) => {
+    setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text }]);
+    historyRef.current = [...historyRef.current, { role: 'assistant', content: text }];
+    if (voiceModeRef.current) speak(text);
+  }, []);
 
   const send = async (text) => {
     const trimmed = text.trim();
@@ -201,16 +219,14 @@ export default function BloomChatScreen() {
           const dest = openMapsMatch[1].trim();
           openInMaps(dest);
           const reply = `Opening Maps to ${dest} now.`;
-          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
-          historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+          bloomReply(reply);
           setThinking(false);
           scrollToEnd();
           return;
         }
         const commuteReply = await processCommuteQuery(trimmed);
         if (commuteReply) {
-          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: commuteReply }]);
-          historyRef.current = [...historyRef.current, { role: 'assistant', content: commuteReply }];
+          bloomReply(commuteReply);
           setThinking(false);
           scrollToEnd();
           return;
@@ -221,8 +237,7 @@ export default function BloomChatScreen() {
       if (detectCalendarAction(trimmed)) {
         const calReply = await processCalendarRequest(trimmed);
         if (calReply !== null) {
-          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: calReply }]);
-          historyRef.current = [...historyRef.current, { role: 'assistant', content: calReply }];
+          bloomReply(calReply);
           setThinking(false);
           scrollToEnd();
           return;
@@ -248,16 +263,13 @@ export default function BloomChatScreen() {
           if (taskCount > 0) parts.push(`${taskCount} task${taskCount !== 1 ? 's' : ''}`);
           if (goalCount > 0) parts.push(`${goalCount} goal${goalCount !== 1 ? 's' : ''}`);
           const replyText = response ?? `Sorted ${parts.join(' and ')} — head to your Tasks tab to see them.`;
-
-          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: replyText }]);
-          historyRef.current = [...historyRef.current, { role: 'assistant', content: replyText }];
+          bloomReply(replyText);
           setThinking(false);
           scrollToEnd();
           return;
         } else if (response) {
           // Parsed nothing extractable — show the informative fallback message
-          setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: response }]);
-          historyRef.current = [...historyRef.current, { role: 'assistant', content: response }];
+          bloomReply(response);
           setThinking(false);
           scrollToEnd();
           return;
@@ -268,9 +280,7 @@ export default function BloomChatScreen() {
       const taskText = !isConversationalOrQuestion(trimmed) ? detectTaskAdd(trimmed) : null;
       if (taskText && !hasKey) {
         addTask(taskText, 'medium');
-        const reply = `Added "${taskText}" to your Tasks tab.`;
-        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
-        historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+        bloomReply(`Added "${taskText}" to your Tasks tab.`);
         setThinking(false);
         scrollToEnd();
         return;
@@ -280,18 +290,15 @@ export default function BloomChatScreen() {
       if (hasKey) {
         const system = buildBloomSystem({ userName, goals, tasks, ndToggles, checkIn });
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
-        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
-        historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+        bloomReply(reply);
       } else {
-        const reply = getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
-        setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: reply }]);
-        historyRef.current = [...historyRef.current, { role: 'assistant', content: reply }];
+        bloomReply(getFallback(trimmed, { userName, goals, tasks, history: historyRef.current }));
       }
     } catch (e) {
       const err = e.code === 'AUTH'
         ? 'That API key didn\'t work — go to Settings and paste your Groq key (starts with gsk_). Get one free at groq.com.'
         : getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text: err }]);
+      bloomReply(err);
     } finally {
       setThinking(false);
       scrollToEnd();
@@ -307,15 +314,26 @@ export default function BloomChatScreen() {
             <Text style={[s.headerTitle, { color: t.pinkDark }]}>Bloom</Text>
             <Text style={[s.headerTagline, { color: t.subtext }]}>your gentle guide</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => setShowCheckIn(true)}
-            style={[s.checkInBtn, { backgroundColor: checkIn ? t.sagePale : t.card, borderColor: checkIn ? t.moss : t.border }]}
-            activeOpacity={0.7}
-          >
-            <Text style={[s.checkInBtnText, { color: checkIn ? t.moss : t.subtext }]}>
-              {checkIn ? `${checkIn.mood} · ${checkIn.sleep} sleep` : 'Check in'}
-            </Text>
-          </TouchableOpacity>
+          <View style={s.headerRight}>
+            {hasTTS() && (
+              <TouchableOpacity
+                onPress={() => { setVoiceMode(v => !v); if (voiceMode) stopSpeaking(); }}
+                style={[s.voiceToggle, { backgroundColor: voiceMode ? t.moss : t.card, borderColor: voiceMode ? t.moss : t.border }]}
+                activeOpacity={0.75}
+              >
+                <Icon name={voiceMode ? 'volume-2' : 'volume-x'} size={15} color={voiceMode ? '#fff' : t.subtext} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => setShowCheckIn(true)}
+              style={[s.checkInBtn, { backgroundColor: checkIn ? t.sagePale : t.card, borderColor: checkIn ? t.moss : t.border }]}
+              activeOpacity={0.7}
+            >
+              <Text style={[s.checkInBtnText, { color: checkIn ? t.moss : t.subtext }]}>
+                {checkIn ? `${checkIn.mood} · ${checkIn.sleep} sleep` : 'Check in'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView
@@ -389,8 +407,16 @@ export default function BloomChatScreen() {
             </TouchableOpacity>
           )}
           <VoiceMicButton
-            onTranscript={(txt) => setInput(prev => prev ? prev + ' ' + txt : txt)}
-            color={t.card}
+            onTranscript={(txt) => {
+              if (voiceModeRef.current) {
+                // In voice mode: auto-send immediately, don't fill the input box
+                stopSpeaking(); // stop any current speech before sending
+                send(txt);
+              } else {
+                setInput(prev => prev ? prev + ' ' + txt : txt);
+              }
+            }}
+            color={voiceMode ? t.moss : t.card}
           />
 
           <TextInput
@@ -526,6 +552,11 @@ const s = StyleSheet.create({
   },
   moodChipText: { fontSize: 14, fontWeight: '600' },
 
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  voiceToggle: {
+    width: 34, height: 34, borderRadius: 17, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
   checkInBtn: {
     borderWidth: 1.5, borderRadius: 20,
     paddingVertical: 6, paddingHorizontal: 14,
