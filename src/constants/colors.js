@@ -1,86 +1,83 @@
 // ─────────────────────────────────────────────────────
-//  Palette — Indigo + Stone
-//  Stone-white ground · muted indigo accent · warm near-black
+//  Palette — Clean Minimal
+//  Warm near-white · warm near-black · single amber accent
 // ─────────────────────────────────────────────────────
 export const C = {
-  // Core
-  cream:    '#F9F8F6',   // stone-white — the app background
+  // Grounds
+  cream:    '#F8F7F4',   // warm near-white — app background
   white:    '#FFFFFF',   // card surfaces
-  ink:      '#1A1918',   // near-black (tiny warm bias)
+  ink:      '#1A1918',   // warm near-black
 
-  // Accent — indigo
-  moss:     '#5A5FD4',   // primary action / accent (renamed for compat)
-  mossDark: '#4448B0',   // pressed states
-  clay:     '#E4E2DF',   // neutral secondary tone
+  // Single accent — warm amber
+  moss:     '#BF7B4B',   // primary action / accent (alias kept for compat)
+  mossDark: '#A0622C',
+  clay:     '#E6E4E0',   // neutral secondary
 
-  // Muted support
-  sage:     '#C0BEC8',
-  muted:    '#78777A',
-  border:   '#E4E2DF',
-  shell:    '#FFFFFF',   // card surface alias
+  // Support
+  sage:     '#A8A5A0',
+  muted:    '#7A7875',
+  border:   '#E6E4E0',
+  shell:    '#FFFFFF',
 
-  // Tinted highlights
-  sagePale:  '#EEEFFC',  // indigo tint — selected states, insight banners
-  sageLight: '#D8DAFC',  // lighter indigo tint
-  sageMid:   '#A8ABEE',
-  goldPale:  '#F3F2F0',
-  goldLight: '#E4E2DF',
-  clayLight: '#E8E6E0',
-  clayPale:  '#F3F2F0',
+  // Tinted highlights — amber tints
+  sagePale:  '#FBF0E6',
+  sageLight: '#F2DCC8',
+  sageMid:   '#E8C8A8',
+  goldPale:  '#F0EFEC',
+  goldLight: '#E6E4E0',
+  clayLight: '#ECEAE6',
+  clayPale:  '#F0EFEC',
 
-  // Alias (used across screens)
-  pinkDark:  '#5A5FD4',  // section titles (now indigo)
+  // Compat aliases
+  pinkDark:  '#1A1918',
   forest:    '#1A1918',
-  gold:      '#D4B89C',
+  gold:      '#BF7B4B',
 
   // Legacy washes
-  lavWash:  '#F4F3FC',
-  mintWash: '#F3F2F0',
-  skyWash:  '#F3F2F0',
+  lavWash:  '#FBF0E6',
+  mintWash: '#F0EFEC',
+  skyWash:  '#F0EFEC',
   pinkWash: '#FAEAEA',
-  lavender: '#C0BEC8',
-  mint:     '#BEC4C0',
-  sky:      '#BCC4CC',
-  pink:     '#E0C4C8',
-  lavDark:  '#5A5FD4',
-  mintDark: '#5A5FD4',
-  skyDark:  '#5A5FD4',
+  lavender: '#A8A5A0',
+  mint:     '#A8A5A0',
+  sky:      '#A8A5A0',
+  pink:     '#D4BAB0',
+  lavDark:  '#BF7B4B',
+  mintDark: '#BF7B4B',
+  skyDark:  '#BF7B4B',
 
   // Priority pill colors
-  pillPinkBg:   '#FAEAEA',   pillPinkText: '#CC5A5A',   // urgent / high
-  pillLavBg:    '#EEEFFC',   pillLavText:  '#5A5FD4',   // medium
-  pillSkyBg:    '#F3F2F0',   pillSkyText:  '#78777A',   // low / leisure
-  pillMintBg:   '#EEEFFC',   pillMintText: '#5A5FD4',
+  pillPinkBg:   '#FAEAEA',   pillPinkText: '#C24B4B',   // urgent
+  pillLavBg:    '#FBF0E6',   pillLavText:  '#BF7B4B',   // medium
+  pillSkyBg:    '#F0EFEC',   pillSkyText:  '#7A7875',   // low
+  pillMintBg:   '#FBF0E6',   pillMintText: '#BF7B4B',
 
   // Dark mode ground
-  darkBg:      '#0F0F12',
-  darkCard:    '#1A1920',
-  darkBorder:  '#2A2930',
-  darkText:    '#F0EFF4',
-  darkSubtext: '#8C8B96',
-  darkInput:   '#0F0F12',
+  darkBg:      '#0F0E0D',
+  darkCard:    '#1C1A18',
+  darkBorder:  '#2E2B28',
+  darkText:    '#F0EEE8',
+  darkSubtext: '#8A8784',
+  darkInput:   '#0F0E0D',
 
   overlay: 'rgba(26,25,24,0.22)',
 };
 
-// ─────────────────────────────────────────────────────
-//  Single aesthetic — kept for ThemeContext compat
-// ─────────────────────────────────────────────────────
 export const AESTHETICS = {
   bloom: {
-    name: 'Bloom', emoji: '✦', description: 'Indigo + stone', isDark: false,
-    bg:            '#F9F8F6',
+    name: 'Bloom', emoji: '✦', description: 'Warm minimal', isDark: false,
+    bg:            '#F8F7F4',
     card:          '#FFFFFF',
-    accent:        '#5A5FD4',
-    accentDark:    '#4448B0',
-    accentPale:    '#EEEFFC',
-    accentLight:   '#D8DAFC',
+    accent:        '#BF7B4B',
+    accentDark:    '#A0622C',
+    accentPale:    '#FBF0E6',
+    accentLight:   '#F2DCC8',
     ink:           '#1A1918',
-    subtext:       '#78777A',
-    border:        '#E4E2DF',
-    chatBubble:    '#5A5FD4',
-    calloutAccent: '#D8DAFC',
+    subtext:       '#7A7875',
+    border:        '#E6E4E0',
+    chatBubble:    '#1A1918',
+    calloutAccent: '#F2DCC8',
   },
 };
 
-export const GOAL_ACCENTS = ['#5A5FD4', '#7B78EE', '#9B98F4', '#4448B0', '#C4C3F4'];
+export const GOAL_ACCENTS = ['#BF7B4B', '#D4935E', '#E8AA78', '#A0622C', '#8A5030'];

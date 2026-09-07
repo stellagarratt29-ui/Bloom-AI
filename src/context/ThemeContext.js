@@ -6,79 +6,78 @@ const ThemeContext = createContext(null);
 
 // ─── Token sets ───────────────────────────────────────
 const LIGHT = {
-  bg:           '#F9F8F6',
+  bg:           '#F8F7F4',
   card:         '#FFFFFF',
   input:        '#FFFFFF',
-  border:       '#E4E2DF',
+  border:       '#E6E4E0',
   text:         '#1A1918',
-  subtext:      '#78777A',
-  muted:        '#78777A',
+  subtext:      '#7A7875',
+  muted:        '#9E9B97',
 
-  // Accent — indigo
-  accent:       '#5A5FD4',
-  accentDark:   '#4448B0',
-  accentPale:   '#EEEFFC',
-  accentLight:  '#D8DAFC',
+  // Accent — warm amber
+  accent:       '#BF7B4B',
+  accentDark:   '#A0622C',
+  accentPale:   '#FBF0E6',
+  accentLight:  '#F2DCC8',
 
   // Semantic
-  urgent:       '#CC5A5A',
+  urgent:       '#C24B4B',
   urgentPale:   '#FAEAEA',
 
-  // Chat
-  chatBubble:   '#5A5FD4',
+  // Chat — user bubbles are near-black (clean/deliberate)
+  chatBubble:   '#1A1918',
 
-  // Compat aliases used across existing screens
-  moss:         '#5A5FD4',
-  sagePale:     '#EEEFFC',
-  sageLight:    '#D8DAFC',
-  pinkDark:     '#5A5FD4',
+  // Compat aliases
+  moss:         '#BF7B4B',
+  sagePale:     '#FBF0E6',
+  sageLight:    '#F2DCC8',
+  pinkDark:     '#1A1918',
   white:        '#FFFFFF',
   shell:        '#FFFFFF',
   overlay:      'rgba(26,25,24,0.18)',
 
   // Priority pills
-  pillPinkBg:   '#FAEAEA',   pillPinkText: '#CC5A5A',
-  pillLavBg:    '#EEEFFC',   pillLavText:  '#5A5FD4',
-  pillSkyBg:    '#F3F2F0',   pillSkyText:  '#78777A',
+  pillPinkBg:   '#FAEAEA',   pillPinkText: '#C24B4B',
+  pillLavBg:    '#FBF0E6',   pillLavText:  '#BF7B4B',
+  pillSkyBg:    '#F0EFEC',   pillSkyText:  '#7A7875',
 };
 
 const DARK = {
-  bg:           '#0F0F12',
-  card:         '#1A1920',
-  input:        '#0F0F12',
-  border:       '#2A2930',
-  text:         '#F0EFF4',
-  subtext:      '#8C8B96',
-  muted:        '#8C8B96',
+  bg:           '#0F0E0D',
+  card:         '#1C1A18',
+  input:        '#0F0E0D',
+  border:       '#2E2B28',
+  text:         '#F0EEE8',
+  subtext:      '#8A8784',
+  muted:        '#8A8784',
 
-  accent:       '#7B78EE',
-  accentDark:   '#9996F8',
-  accentPale:   '#1E1D30',
-  accentLight:  '#2A2848',
+  accent:       '#D4935E',
+  accentDark:   '#E8AA78',
+  accentPale:   '#241A10',
+  accentLight:  '#342410',
 
-  urgent:       '#E07070',
+  urgent:       '#D47070',
   urgentPale:   '#2A1818',
 
-  chatBubble:   '#7B78EE',
+  chatBubble:   '#D4935E',
 
-  moss:         '#7B78EE',
-  sagePale:     '#1E1D30',
-  sageLight:    '#2A2848',
-  pinkDark:     '#7B78EE',
-  white:        '#1A1920',
-  shell:        '#1A1920',
+  moss:         '#D4935E',
+  sagePale:     '#241A10',
+  sageLight:    '#342410',
+  pinkDark:     '#D4935E',
+  white:        '#1C1A18',
+  shell:        '#1C1A18',
   overlay:      'rgba(0,0,0,0.5)',
 
-  pillPinkBg:   '#2A1818',   pillPinkText: '#E07070',
-  pillLavBg:    '#1E1D30',   pillLavText:  '#7B78EE',
-  pillSkyBg:    '#1E1E22',   pillSkyText:  '#8C8B96',
+  pillPinkBg:   '#2A1818',   pillPinkText: '#D47070',
+  pillLavBg:    '#241A10',   pillLavText:  '#D4935E',
+  pillSkyBg:    '#1E1C1A',   pillSkyText:  '#8A8784',
 };
 
 export function ThemeProvider({ children }) {
   const [isDark, _setIsDark] = useState(false);
 
   useEffect(() => {
-    // Try new key first, then old key for migration
     AsyncStorage.getItem(THEME_KEY)
       .then(raw => {
         if (raw) {
@@ -100,8 +99,8 @@ export function ThemeProvider({ children }) {
 
   const colors = isDark ? DARK : LIGHT;
 
-  // Compat: aesthetic/setAesthetic/setBgTheme were accessed by old SettingsScreen
-  const aesthetic = 'bloom';
+  // Compat stubs
+  const aesthetic    = 'bloom';
   const setAesthetic = () => {};
   const setBgTheme   = () => {};
 

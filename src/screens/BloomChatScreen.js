@@ -95,7 +95,7 @@ function getFallback(msg, { userName, goals, tasks }) {
   const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|gym|run|cook|clean)\b/)?.[0];
   if (keyWord) return `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`;
   if (isConversationalOrQuestion(msg)) {
-    return `To answer that properly, add a Groq key in the You tab — free at groq.com. Until then I can sort tasks from anything you dump here.`;
+    return `To answer that properly, add a Claude key in the You tab (console.anthropic.com → API Keys, starts with sk-ant-). Until then I can sort tasks from anything you dump here.`;
   }
   return `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
@@ -191,7 +191,7 @@ export default function BloomChatScreen() {
       }
     } catch (e) {
       const err = e.code === 'AUTH'
-        ? "That API key didn't work — go to the You tab and paste your Groq key (starts with gsk_). Get one free at groq.com."
+        ? "That key didn't work — go to You tab and paste your Claude key (starts with sk-ant-). Get one at console.anthropic.com → API Keys."
         : getFallback(trimmed, { userName, goals, tasks });
       bloomReply(err);
     } finally {
@@ -277,9 +277,9 @@ export default function BloomChatScreen() {
             <View style={[s.keyBanner, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}>
               <Icon name="zap" size={14} color={t.accent} />
               <Text style={[s.keyBannerText, { color: t.text }]}>
-                Add a free Groq key in the{' '}
+                Add your Claude key in the{' '}
                 <Text style={{ fontWeight: '700' }}>You</Text>
-                {' '}tab for full AI — free at groq.com, no card needed.
+                {' '}tab for full AI — free key at console.anthropic.com (sk-ant-...)
               </Text>
             </View>
           )}
