@@ -6,55 +6,35 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import Icon from '../components/Icon';
-import CheckInModal from '../components/CheckInModal';
 import VoiceMicButton from '../components/VoiceMicButton';
-import DowntimeSheet from './DowntimeSheet';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { callClaude, buildBloomSystem, getApiKey, parseBrainDump, generateGoalAction, detectCalendarAction } from '../services/ai';
-import { processCalendarRequest } from '../services/calendar';
-import { isCommuteQuery, processCommuteQuery, openInMaps, extractDestination } from '../services/location';
-import { getStruggleWindows, isInStruggleWindow } from '../services/downtime';
+import {
+  callClaude, buildBloomSystem, getApiKey, parseBrainDump,
+  generateGoalAction,
+} from '../services/ai';
 import { speak, stopSpeaking, hasTTS } from '../services/speech';
 
 function getGreeting(userName) {
   const h = new Date().getHours();
   const time = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
   const name = userName ? `, ${userName}` : '';
-  return `Good ${time}${name}. How are you feeling today, and what's on your mind? Just tell me everything — tasks, worries, plans — and I'll sort it out.`;
+  return `Good ${time}${name}. What's on your mind? Tell me everything — tasks, worries, plans — and I'll sort it out.`;
 }
 
-// Returns true when the message is clearly a direct question or conversation —
-// NOT a description of tasks/worries the user wants sorted. When true, skip
-// brain-dump extraction entirely and respond as a real assistant.
 function isConversationalOrQuestion(text) {
   const t = text.trim();
   const lower = t.toLowerCase();
-
-  // Any question mark → definitely a question
   if (t.includes('?')) return true;
-
-  // WH- question starters
-  if (/^(what|how|why|when|where|who|which|whose|whom)\b/i.test(t)) return true;
-
-  // "What's / how's" contractions
-  if (/^(what'?s|who'?s|how'?s|where'?s|when'?s)\b/i.test(t)) return true;
-
-  // Auxiliary verb questions directed at Bloom or general
-  if (/^(can you|could you|will you|would you|do you|does bloom|are you|is bloom|have you|should i|may i)\b/i.test(lower)) return true;
-
-  // Imperative requests directed at Bloom (not task-listing imperatives)
-  if (/^(show me|tell me|explain|help me|give me|find me|describe|summarise|summarize|list my|remind me of|walk me through)\b/i.test(lower)) return true;
-
-  // Casual chat / greetings / acknowledgments
-  if (/^(hey|hi|hello|sup|yo|hiya|howdy|good morning|good afternoon|good evening)\b/i.test(lower)) return true;
-  if (/^(thanks|thank you|cheers|ok|okay|got it|sounds good|perfect|great|nice|awesome|cool|sure|yep|yeah|nope)[\s!?.]*$/i.test(lower)) return true;
-  if (/^(bye|goodbye|see ya|later|talk soon)[\s!?.]*$/i.test(lower)) return true;
-
-  // "Done" / completion signals — follow-ups after a brain dump ("That's it", "That's all", etc.)
-  if (/^(that'?s?\s*(it|all|everything|them|all of them|the lot)|nothing else|done for now|just those|those are all|all of (it|them)|yes[,]?\s*that'?s?\s*(it|all)|that'?s?\s*(all i (have|got|need)|my (whole\s+)?list))[\s!?.]*$/i.test(lower)) return true;
-
+  if (/^(what|how|why|when|where|who|which)\b/i.test(t)) return true;
+  if (/^(what'?s|how'?s|where'?s)\b/i.test(t)) return true;
+  if (/^(can you|could you|will you|would you|do you|are you|should i)\b/i.test(lower)) return true;
+  if (/^(show me|tell me|explain|help me|give me|find me|summarize|list my)\b/i.test(lower)) return true;
+  if (/^(hey|hi|hello|sup|yo|good morning|good afternoon|good evening)\b/i.test(lower)) return true;
+  if (/^(thanks|thank you|cheers|ok|okay|got it|sounds good|perfect|great|nice|cool|sure|yep|yeah|nope)[\s!?.]*$/i.test(lower)) return true;
+  if (/^(bye|goodbye|see ya|later)[\s!?.]*$/i.test(lower)) return true;
+  if (/^(that'?s?\s*(it|all|everything)|nothing else|done for now|just those|all of (it|them))[\s!?.]*$/i.test(lower)) return true;
   return false;
 }
 
@@ -74,12 +54,12 @@ function detectTaskAdd(msg) {
     /^(?:add|remind me to|put|i need to|don'?t let me forget to?|can you add|please add|schedule)\s+(.+?)(?:\s+(?:to|on|in)\s+(?:my\s+)?(?:list|tasks?|schedule))?[.!?]?$/
   );
   if (m) return m[1].trim();
-  const shortAction = /^(?:dentists?|doctors?|hospital|meetings?|appointments?|appts?|calls?|emails?|texts?|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
+  const shortAction = /^(?:dentists?|doctors?|hospital|meetings?|appointments?|calls?|emails?|texts?|pick up|buy|get|go to|visit|finish|complete|clean|tidy|pay|book|fix|check|ring)\b/.test(lower);
   if (shortAction && lower.split(' ').length <= 8) return msg.trim();
   return null;
 }
 
-function getFallback(msg, { userName, goals, tasks, history }) {
+function getFallback(msg, { userName, goals, tasks }) {
   const m = msg.toLowerCase().trim();
   const name = userName ? ` ${userName}` : '';
 
@@ -89,15 +69,11 @@ function getFallback(msg, { userName, goals, tasks, history }) {
     return `Anytime${name}. What else?`;
   if (/^(bye|goodbye|see ya|later)[\s!.]*$/.test(m)) return `Talk soon${name}.`;
   if (/how are you/.test(m)) return `I'm here and ready. How are YOU doing today?`;
-  if (/what (time|day|date) is it/.test(m)) {
-    const now = new Date();
-    return `It's ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} on ${now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}.`;
-  }
-  if (/what should i (do|focus on|work on)|what('s| is) (most important|next|first)|my tasks|my list/.test(m)) {
+  if (/what should i (do|focus on|work on)|what('s| is) (most important|next|first)|my tasks/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     if (pending.length > 0) {
       const top = pending.find(t => t.priority === 'high') || pending[0];
-      return `Your most important task right now: "${top.text}". Head to your Tasks tab to see everything.`;
+      return `Your most important task right now: "${top.text}". Head to Today to see everything.`;
     }
     return `Nothing on your list yet${name}. Tell me what's on your mind.`;
   }
@@ -105,94 +81,49 @@ function getFallback(msg, { userName, goals, tasks, history }) {
     const aboutMatch = m.match(/(?:about|with|for|over)\s+(.{3,40}?)(?:\s+(?:and|but|,)|[.!?]|$)/);
     const topic = aboutMatch?.[1]?.trim();
     return topic
-      ? `That's a lot — especially with "${topic}" hanging over you. Pick just one tiny thing to do next and do only that.`
-      : `That feeling is real. Pick the single smallest possible action and do just that. What is it?`;
+      ? `That's a lot — especially with "${topic}" on your plate. Pick one tiny thing to do next.`
+      : `That feeling is real. What's the single smallest possible action you could take right now?`;
   }
   if (/can'?t start|procrastinat|stuck|don'?t know where to start/.test(m))
     return `Set a 10-minute timer and just begin — it doesn't have to be good, it just has to start. Which task?`;
-
-  // "That's it" / "That's all" — follow-up after a brain dump
-  if (/^(that'?s?\s*(it|all|everything|them|all of them|the lot)|nothing else|done for now|just those|those are all|all of (it|them)|yes[,]?\s*that'?s?\s*(it|all)|that'?s?\s*(all i (have|got|need)|my (whole\s+)?list))[\s!?.]*$/i.test(m)) {
-    const pending = (tasks || []).filter(t => !t.done);
-    if (pending.length > 0) {
-      const top = pending.find(t => t.priority === 'high') || pending[0];
-      return `All sorted — ${pending.length} task${pending.length !== 1 ? 's' : ''} in your Tasks tab. "${top.text}" is the most pressing one. Tap any task to get step-by-step help.`;
-    }
-    return `You're all set${name}. Head to your Tasks tab to see your list.`;
-  }
-
   if (/done|finished|completed|just did|just finished/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     return pending.length > 0
-      ? `Nice work. Check your Tasks tab for what's next.`
+      ? `Nice work. Your Today tab shows what's next.`
       : `Everything's done — well done${name}. Add more any time.`;
   }
-  if (/goal|progress/.test(m)) {
-    const g = goals?.[0]?.text;
-    return g ? `Your goal: "${g}". Check the Goals tab for your next step.` : `Head to Goals to set a big goal — I'll build you a real plan.`;
-  }
-  const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|paint|draw|gym|run|cook|clean)\b/)?.[0];
+  const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|gym|run|cook|clean)\b/)?.[0];
   if (keyWord) return `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`;
-
-  // Question or conversational message without an AI key — be upfront
   if (isConversationalOrQuestion(msg)) {
-    return `To answer that properly I need an AI connection — add a Claude API key in Settings and I'll give you a real response. Until then I can help you capture and sort tasks.`;
+    return `To answer that properly, add a Groq key in the You tab — free at groq.com. Until then I can sort tasks from anything you dump here.`;
   }
-
   return `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
 
-const MOODS = [
-  { key: 'great',       label: 'Great',        bg: '#D6EDD4', text: '#2D6B34' },
-  { key: 'good',        label: 'Good',         bg: '#E4F0E2', text: '#4A7A52' },
-  { key: 'okay',        label: 'Okay',         bg: '#EDE8E1', text: '#6B5E4A' },
-  { key: 'tired',       label: 'Tired',        bg: '#E8E4F0', text: '#5A4A7A' },
-  { key: 'stressed',    label: 'Stressed',     bg: '#F5E8DC', text: '#8B4A1E' },
-  { key: 'overwhelmed', label: 'Overwhelmed',  bg: '#F5DCE0', text: '#8B1E35' },
-];
-
 export default function BloomChatScreen() {
-  const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles, checkIn, checkInDone, saveCheckIn } = useApp();
+  const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles, checkIn } = useApp();
   const { colors: t } = useTheme();
+
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
   ]);
-  const [input, setInput]         = useState('');
-  const [thinking, setThinking]   = useState(false);
-  const [hasKey, setHasKey]       = useState(null);
-  const [showCheckIn, setShowCheckIn] = useState(false);
-  const [showDowntime, setShowDowntime] = useState(false);
-  const scrollRef        = useRef(null);
-  const historyRef       = useRef([]);
-  const autoShownDowntime = useRef(false);
+  const [input,     setInput]     = useState('');
+  const [thinking,  setThinking]  = useState(false);
+  const [hasKey,    setHasKey]    = useState(null);
   const [voiceMode, setVoiceMode] = useState(false);
   const voiceModeRef = useRef(false);
+  const scrollRef    = useRef(null);
+  const historyRef   = useRef([]);
 
-  // Keep ref in sync so closures in send() always see current value
   useEffect(() => { voiceModeRef.current = voiceMode; }, [voiceMode]);
-
-  // Stop speaking when leaving the screen
-  useFocusEffect(useCallback(() => {
-    return () => stopSpeaking();
-  }, []));
 
   useFocusEffect(useCallback(() => {
     getApiKey().then(k => setHasKey(!!k));
-    if (!checkInDone) setShowCheckIn(true);
-    // Auto-surface downtime sheet once per focus if in a struggle window
-    if (!autoShownDowntime.current) {
-      getStruggleWindows().then(windows => {
-        if (isInStruggleWindow(windows)) {
-          autoShownDowntime.current = true;
-          setShowDowntime(true);
-        }
-      });
-    }
-  }, [checkInDone]));
+    return () => stopSpeaking();
+  }, []));
 
   const scrollToEnd = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
 
-  // Add a Bloom message and speak it aloud if voice mode is on
   const bloomReply = useCallback((text) => {
     setMessages(prev => [...prev, { id: Date.now() + 1, from: 'bloom', text }]);
     historyRef.current = [...historyRef.current, { role: 'assistant', content: text }];
@@ -211,40 +142,7 @@ export default function BloomChatScreen() {
     setThinking(true);
 
     try {
-      // Commute / travel time path
-      if (isCommuteQuery(trimmed)) {
-        // "open maps to X" shortcut
-        const openMapsMatch = trimmed.match(/open\s+(?:maps?|google maps?|apple maps?)\s+(?:to|for)\s+(.+)/i);
-        if (openMapsMatch) {
-          const dest = openMapsMatch[1].trim();
-          openInMaps(dest);
-          const reply = `Opening Maps to ${dest} now.`;
-          bloomReply(reply);
-          setThinking(false);
-          scrollToEnd();
-          return;
-        }
-        const commuteReply = await processCommuteQuery(trimmed);
-        if (commuteReply) {
-          bloomReply(commuteReply);
-          setThinking(false);
-          scrollToEnd();
-          return;
-        }
-      }
-
-      // Calendar action path
-      if (detectCalendarAction(trimmed)) {
-        const calReply = await processCalendarRequest(trimmed);
-        if (calReply !== null) {
-          bloomReply(calReply);
-          setThinking(false);
-          scrollToEnd();
-          return;
-        }
-      }
-
-      // Brain dump path — only if the message is clearly task/worry listing, not a question
+      // Brain dump path
       if (!isConversationalOrQuestion(trimmed) && looksLikeTaskDump(trimmed)) {
         const { items, response } = await parseBrainDump(trimmed, userName, ndToggles, userOccupation);
         if (items.length > 0) {
@@ -255,20 +153,17 @@ export default function BloomChatScreen() {
               goalActionsMap[g.text] = await generateGoalAction({ goalText: g.text });
             })
           );
-
           processBrainDump(items, goalActionsMap);
           const taskCount = items.filter(i => i.category !== 'goal').length;
           const goalCount = goalItems.length;
           const parts = [];
           if (taskCount > 0) parts.push(`${taskCount} task${taskCount !== 1 ? 's' : ''}`);
           if (goalCount > 0) parts.push(`${goalCount} goal${goalCount !== 1 ? 's' : ''}`);
-          const replyText = response ?? `Sorted ${parts.join(' and ')} — head to your Tasks tab to see them.`;
-          bloomReply(replyText);
+          bloomReply(response ?? `Sorted ${parts.join(' and ')} — tap Today to see them.`);
           setThinking(false);
           scrollToEnd();
           return;
         } else if (response) {
-          // Parsed nothing extractable — show the informative fallback message
           bloomReply(response);
           setThinking(false);
           scrollToEnd();
@@ -276,11 +171,11 @@ export default function BloomChatScreen() {
         }
       }
 
-      // Single task add — skip if it's a question/conversation
+      // Single task add
       const taskText = !isConversationalOrQuestion(trimmed) ? detectTaskAdd(trimmed) : null;
       if (taskText && !hasKey) {
         addTask(taskText, 'medium');
-        bloomReply(`Added "${taskText}" to your Tasks tab.`);
+        bloomReply(`Added "${taskText}" to your Today tab.`);
         setThinking(false);
         scrollToEnd();
         return;
@@ -292,12 +187,12 @@ export default function BloomChatScreen() {
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
         bloomReply(reply);
       } else {
-        bloomReply(getFallback(trimmed, { userName, goals, tasks, history: historyRef.current }));
+        bloomReply(getFallback(trimmed, { userName, goals, tasks }));
       }
     } catch (e) {
       const err = e.code === 'AUTH'
-        ? 'That API key didn\'t work — go to Settings and paste your Groq key (starts with gsk_). Get one free at groq.com.'
-        : getFallback(trimmed, { userName, goals, tasks, history: historyRef.current });
+        ? "That API key didn't work — go to the You tab and paste your Groq key (starts with gsk_). Get one free at groq.com."
+        : getFallback(trimmed, { userName, goals, tasks });
       bloomReply(err);
     } finally {
       setThinking(false);
@@ -309,33 +204,41 @@ export default function BloomChatScreen() {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
+        {/* Header */}
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-          <View style={s.headerLeft}>
-            <Text style={[s.headerTitle, { color: t.pinkDark }]}>Bloom</Text>
-            <Text style={[s.headerTagline, { color: t.subtext }]}>your gentle guide</Text>
+          <View>
+            <Text style={[s.headerTitle, { color: t.accent }]}>Chat</Text>
+            <Text style={[s.headerTagline, { color: t.subtext }]}>dump it all here</Text>
           </View>
-          <View style={s.headerRight}>
-            {hasTTS() && (
-              <TouchableOpacity
-                onPress={() => { setVoiceMode(v => !v); if (voiceMode) stopSpeaking(); }}
-                style={[s.voiceToggle, { backgroundColor: voiceMode ? t.moss : t.card, borderColor: voiceMode ? t.moss : t.border }]}
-                activeOpacity={0.75}
-              >
-                <Icon name={voiceMode ? 'volume-2' : 'volume-x'} size={15} color={voiceMode ? '#fff' : t.subtext} />
-              </TouchableOpacity>
-            )}
+          {hasTTS() && (
             <TouchableOpacity
-              onPress={() => setShowCheckIn(true)}
-              style={[s.checkInBtn, { backgroundColor: checkIn ? t.sagePale : t.card, borderColor: checkIn ? t.moss : t.border }]}
-              activeOpacity={0.7}
+              onPress={() => {
+                const next = !voiceMode;
+                setVoiceMode(next);
+                if (!next) stopSpeaking();
+              }}
+              style={[
+                s.voiceToggle,
+                {
+                  backgroundColor: voiceMode ? t.accent : t.card,
+                  borderColor: voiceMode ? t.accent : t.border,
+                },
+              ]}
+              activeOpacity={0.75}
             >
-              <Text style={[s.checkInBtnText, { color: checkIn ? t.moss : t.subtext }]}>
-                {checkIn ? `${checkIn.mood} · ${checkIn.sleep} sleep` : 'Check in'}
+              <Icon
+                name={voiceMode ? 'volume-2' : 'volume-x'}
+                size={15}
+                color={voiceMode ? '#fff' : t.subtext}
+              />
+              <Text style={[s.voiceToggleLabel, { color: voiceMode ? '#fff' : t.subtext }]}>
+                {voiceMode ? 'Voice on' : 'Voice off'}
               </Text>
             </TouchableOpacity>
-          </View>
+          )}
         </View>
 
+        {/* Messages */}
         <ScrollView
           ref={scrollRef}
           style={s.scroll}
@@ -364,64 +267,48 @@ export default function BloomChatScreen() {
 
           {thinking && (
             <View style={s.bloomRow}>
-              <View style={[s.bloomBubble, { paddingVertical: 18 }]}>
-                <ActivityIndicator size="small" color={t.moss} />
+              <View style={[s.bloomBubble, { backgroundColor: t.card, borderColor: t.border, paddingVertical: 18 }]}>
+                <ActivityIndicator size="small" color={t.accent} />
               </View>
             </View>
           )}
 
           {hasKey === false && (
-            <View style={[s.keyBanner, { backgroundColor: C.sagePale, borderColor: C.sageLight }]}>
-              <Icon name="zap" size={14} color={t.moss} style={{ flexShrink: 0 }} />
-              <Text style={[s.keyBannerText, { color: C.ink }]}>
-                Add a free AI key in{' '}
-                <Text style={{ fontWeight: '700' }}>Settings</Text>
-                {' '}to unlock real AI — get one free at groq.com (email only, no card).
+            <View style={[s.keyBanner, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}>
+              <Icon name="zap" size={14} color={t.accent} />
+              <Text style={[s.keyBannerText, { color: t.text }]}>
+                Add a free Groq key in the{' '}
+                <Text style={{ fontWeight: '700' }}>You</Text>
+                {' '}tab for full AI — free at groq.com, no card needed.
               </Text>
             </View>
           )}
 
           {messages.length <= 1 && !thinking && (
-            <View style={[s.hint, { backgroundColor: t.sagePale, borderColor: t.sageLight }]}>
+            <View style={[s.hint, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}>
               <Text style={[s.hintText, { color: t.text }]}>
-                Type everything on your mind — tasks, feelings, plans, worries. Bloom will sort them into your Tasks tab.
+                Type everything on your mind — tasks, feelings, plans, worries. Bloom will sort them into your Today tab.
               </Text>
             </View>
           )}
         </ScrollView>
 
-        {/* Downtime chip — subtle pill above the input bar */}
-        <TouchableOpacity
-          style={[s.downtimeChip, { backgroundColor: t.card, borderColor: t.border }]}
-          onPress={() => setShowDowntime(true)}
-          activeOpacity={0.75}
-        >
-          <Icon name="coffee" size={13} color={t.moss} />
-          <Text style={[s.downtimeChipText, { color: t.subtext }]}>Free moment?</Text>
-        </TouchableOpacity>
-
+        {/* Input bar */}
         <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
-          {!!input.trim() && (
-            <TouchableOpacity style={s.clearBtn} onPress={() => setInput('')}>
-              <Icon name="x" size={16} color={C.muted} />
-            </TouchableOpacity>
-          )}
           <VoiceMicButton
             onTranscript={(txt) => {
               if (voiceModeRef.current) {
-                // In voice mode: auto-send immediately, don't fill the input box
-                stopSpeaking(); // stop any current speech before sending
+                stopSpeaking();
                 send(txt);
               } else {
                 setInput(prev => prev ? prev + ' ' + txt : txt);
               }
             }}
-            color={voiceMode ? t.moss : t.card}
+            color={voiceMode ? t.accent : t.card}
           />
-
           <TextInput
             style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
-            placeholder="Tell Bloom what's on your mind…"
+            placeholder="What's on your mind…"
             placeholderTextColor={t.subtext}
             value={input}
             onChangeText={setInput}
@@ -431,57 +318,54 @@ export default function BloomChatScreen() {
             editable={!thinking}
           />
           <TouchableOpacity
-            style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
+            style={[
+              s.sendBtn,
+              { backgroundColor: t.chatBubble },
+              (!input.trim() || thinking) && s.sendBtnOff,
+            ]}
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Icon name="send" size={16} color={C.white} />
+            <Icon name="send" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
       </KeyboardAvoidingView>
-
-      <CheckInModal
-        visible={showCheckIn}
-        onDone={(data) => { saveCheckIn(data); setShowCheckIn(false); }}
-      />
-
-      <DowntimeSheet
-        visible={showDowntime}
-        onClose={() => setShowDowntime(false)}
-      />
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   flex: { flex: 1 },
-  safe: { flex: 1, backgroundColor: C.cream },
+  safe: { flex: 1 },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14,
-    backgroundColor: C.cream, borderBottomWidth: 1, borderBottomColor: C.border,
-  },
-  headerLeft: {
-    flexDirection: 'column', gap: 0,
+    borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 30, fontWeight: '800', letterSpacing: -0.6,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
-    lineHeight: 34,
+    fontSize: 28, fontWeight: '800', letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'web' ? '"Outfit", system-ui, sans-serif' : undefined,
+    lineHeight: 32,
   },
-  headerTagline: {
-    fontSize: 11, fontWeight: '500', letterSpacing: 0.3,
+  headerTagline: { fontSize: 11, fontWeight: '500', letterSpacing: 0.2 },
+
+  voiceToggle: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1,
   },
+  voiceToggleLabel: { fontSize: 12, fontWeight: '600' },
+
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingVertical: 18, gap: 12 },
 
   bloomRow: { alignSelf: 'stretch', maxWidth: '88%' },
   bloomBubble: {
-    backgroundColor: C.white, borderRadius: 20, borderBottomLeftRadius: 4,
-    padding: 15, borderWidth: 1, borderColor: C.border,
-    shadowColor: '#1A0F14', shadowOpacity: 0.06, shadowRadius: 12,
+    borderRadius: 20, borderBottomLeftRadius: 4,
+    padding: 15, borderWidth: 1,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 12,
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   bloomText: { fontSize: 15, lineHeight: 25, fontWeight: '400' },
@@ -491,75 +375,32 @@ const s = StyleSheet.create({
     borderRadius: 20, borderBottomRightRadius: 4,
     paddingVertical: 12, paddingHorizontal: 16, maxWidth: '82%',
   },
-  userText: { fontSize: 15, color: C.white, lineHeight: 22, fontWeight: '500' },
+  userText: { fontSize: 15, color: '#FFFFFF', lineHeight: 22, fontWeight: '500' },
 
   keyBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 6,
+    borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 4,
   },
   keyBannerText: { flex: 1, fontSize: 13, lineHeight: 20 },
 
   hint: {
-    borderRadius: 16, padding: 18,
-    marginTop: 8, borderWidth: 1,
+    borderRadius: 14, borderWidth: 1, padding: 16, marginBottom: 4,
   },
-  hintText: { fontSize: 14, lineHeight: 23, textAlign: 'center', fontWeight: '500' },
-
-  downtimeChip: {
-    alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderRadius: 20, borderWidth: 1, paddingVertical: 6, paddingHorizontal: 14,
-    marginBottom: 8,
-  },
-  downtimeChipText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.1 },
+  hintText: { fontSize: 14, lineHeight: 22 },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 14, paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.cream,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderTopWidth: 1,
   },
   input: {
-    flex: 1, backgroundColor: C.white, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: 26, paddingVertical: 12, paddingHorizontal: 18,
-    fontSize: 15,
+    flex: 1, fontSize: 15, borderRadius: 22, borderWidth: 1,
+    paddingHorizontal: 16, paddingVertical: 11,
+    outlineStyle: 'none',
   },
   sendBtn: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 42, height: 42, borderRadius: 21,
     alignItems: 'center', justifyContent: 'center',
   },
-  sendBtnOff: { opacity: 0.3 },
-  clearBtn: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: C.border,
-    alignItems: 'center', justifyContent: 'center', marginRight: 2,
-  },
-  micBtn: { alignItems: 'center', justifyContent: 'center' },
-  micInner: {
-    width: 42, height: 42, borderRadius: 21, borderWidth: 1.5,
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  moodBadge: {
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
-  },
-  moodBadgeText: { fontSize: 13, fontWeight: '600' },
-
-  moodCard: {
-    borderRadius: 18, borderWidth: 1, padding: 16, gap: 12,
-  },
-  moodCardTitle: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
-  moodChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  moodChip: {
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-  },
-  moodChipText: { fontSize: 14, fontWeight: '600' },
-
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  voiceToggle: {
-    width: 34, height: 34, borderRadius: 17, borderWidth: 1.5,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  checkInBtn: {
-    borderWidth: 1.5, borderRadius: 20,
-    paddingVertical: 6, paddingHorizontal: 14,
-  },
-  checkInBtnText: { fontSize: 12, fontWeight: '600' },
+  sendBtnOff: { opacity: 0.35 },
 });

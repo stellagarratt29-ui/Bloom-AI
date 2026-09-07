@@ -1,184 +1,86 @@
 // ─────────────────────────────────────────────────────
-//  BLOOM — Warm Blush Palette
-//  Warm linen white · soft baby blush · warm near-black
-//  Think: tulips on a marble table, morning light, clean & airy
+//  Palette — Indigo + Stone
+//  Stone-white ground · muted indigo accent · warm near-black
 // ─────────────────────────────────────────────────────
 export const C = {
-  // === Core palette ===
-  cream:    '#FAF7F4',   // warm linen white — the base of everything
-  linen:    '#F5F1EE',   // slightly deeper warm white for sections
-  ink:      '#1C1517',   // warm near-black (slight rose bias)
-  moss:     '#C4838E',   // soft blush rose — primary action
-  mossDark: '#A86870',   // deeper blush for pressed states
-  sage:     '#C4BABC',   // warm neutral — barely pinkish grey
-  clay:     '#E8BCC2',   // petal pink — soft secondary accent
-  clayDark: '#C898A0',   // deeper petal
-  gold:     '#D4B89C',   // warm champagne (used sparingly)
-  white:    '#FFFFFF',
-  shell:    '#FDF8F7',   // barely-blush white for cards
+  // Core
+  cream:    '#F9F8F6',   // stone-white — the app background
+  white:    '#FFFFFF',   // card surfaces
+  ink:      '#1A1918',   // near-black (tiny warm bias)
 
-  // === Supporting tones — warm, barely-there ===
-  lavender: '#CEC4CC',   // warm mauve-grey
-  mint:     '#BEC4C0',   // warm sage-grey
-  sky:      '#BCC4CC',   // warm steel-grey
-  pink:     '#E0C4C8',   // soft petal pink
+  // Accent — indigo
+  moss:     '#5A5FD4',   // primary action / accent (renamed for compat)
+  mossDark: '#4448B0',   // pressed states
+  clay:     '#E4E2DF',   // neutral secondary tone
 
-  // === Per-theme accent darks ===
-  lavDark:  '#9888A8',
-  mintDark: '#708878',
-  skyDark:  '#6888A0',
-  pinkDark: '#B88890',
+  // Muted support
+  sage:     '#C0BEC8',
+  muted:    '#78777A',
+  border:   '#E4E2DF',
+  shell:    '#FFFFFF',   // card surface alias
 
-  // === Category pills — barely-there, warm ===
-  pillPinkBg:   '#FAEAEC',   pillPinkText: '#A87880',   // soft rose
-  pillLavBg:    '#F2EEF6',   pillLavText:  '#887898',   // warm mauve
-  pillSkyBg:    '#EAF0F4',   pillSkyText:  '#6888A0',   // barely steel
-  pillMintBg:   '#EAF0EC',   pillMintText: '#688870',   // barely sage
+  // Tinted highlights
+  sagePale:  '#EEEFFC',  // indigo tint — selected states, insight banners
+  sageLight: '#D8DAFC',  // lighter indigo tint
+  sageMid:   '#A8ABEE',
+  goldPale:  '#F3F2F0',
+  goldLight: '#E4E2DF',
+  clayLight: '#E8E6E0',
+  clayPale:  '#F3F2F0',
 
-  // === Background washes — extremely light, warm ===
-  lavWash:  '#F6F2F8',
-  mintWash: '#F2F5F2',
-  skyWash:  '#F0F3F6',
-  pinkWash: '#FBF0F2',
+  // Alias (used across screens)
+  pinkDark:  '#5A5FD4',  // section titles (now indigo)
+  forest:    '#1A1918',
+  gold:      '#D4B89C',
 
-  // === Dark mode — warm dark, not cold Apple grey ===
-  darkBg:      '#161214',   // warm deep dark — slight rose undertone
-  darkCard:    '#201C1E',   // warm charcoal card
-  darkBorder:  '#302A2C',   // warm separator
-  darkText:    '#F8F4F4',   // warm off-white text
-  darkSubtext: '#948890',   // warm muted label
-  darkInput:   '#161214',
+  // Legacy washes
+  lavWash:  '#F4F3FC',
+  mintWash: '#F3F2F0',
+  skyWash:  '#F3F2F0',
+  pinkWash: '#FAEAEA',
+  lavender: '#C0BEC8',
+  mint:     '#BEC4C0',
+  sky:      '#BCC4CC',
+  pink:     '#E0C4C8',
+  lavDark:  '#5A5FD4',
+  mintDark: '#5A5FD4',
+  skyDark:  '#5A5FD4',
 
-  // === Aliases ===
-  forest:    '#1C1517',
-  sagePale:  '#FDF0F2',   // blush tint — used for selected states, highlights
-  sageLight: '#F0D8DC',   // soft blush — used for progress bars, accents
-  sageMid:   '#D4B8BC',
-  clayLight: '#F0D0D6',
-  clayPale:  '#FDF4F6',
-  goldLight: '#EAD8C0',
-  goldPale:  '#FAF4EC',
-  muted:     '#9C8A8C',   // warm pinkish grey — subtext
-  border:    '#EDE6E7',   // warm slightly-blush border
-  overlay:   'rgba(28,21,23,0.22)',
-};
+  // Priority pill colors
+  pillPinkBg:   '#FAEAEA',   pillPinkText: '#CC5A5A',   // urgent / high
+  pillLavBg:    '#EEEFFC',   pillLavText:  '#5A5FD4',   // medium
+  pillSkyBg:    '#F3F2F0',   pillSkyText:  '#78777A',   // low / leisure
+  pillMintBg:   '#EEEFFC',   pillMintText: '#5A5FD4',
 
-// Background themes — kept for any legacy references
-export const BG_THEMES = {
-  cream:    '#FAF7F4',
-  lavender: '#F6F2F8',
-  mint:     '#F2F5F2',
-  sky:      '#F0F3F6',
-  pink:     '#FBF0F2',
+  // Dark mode ground
+  darkBg:      '#0F0F12',
+  darkCard:    '#1A1920',
+  darkBorder:  '#2A2930',
+  darkText:    '#F0EFF4',
+  darkSubtext: '#8C8B96',
+  darkInput:   '#0F0F12',
+
+  overlay: 'rgba(26,25,24,0.22)',
 };
 
 // ─────────────────────────────────────────────────────
-//  AESTHETIC PRESETS — full palette per aesthetic
+//  Single aesthetic — kept for ThemeContext compat
 // ─────────────────────────────────────────────────────
 export const AESTHETICS = {
   bloom: {
-    name: 'Bloom',
-    emoji: '🌸',
-    description: 'Warm blush rose',
-    isDark: false,
-    bg:            '#FAF7F4',
+    name: 'Bloom', emoji: '✦', description: 'Indigo + stone', isDark: false,
+    bg:            '#F9F8F6',
     card:          '#FFFFFF',
-    accent:        '#C4838E',
-    accentDark:    '#A86870',
-    accentPale:    '#FDF0F2',
-    accentLight:   '#F0D8DC',
-    ink:           '#1C1517',
-    subtext:       '#9C8A8C',
-    border:        '#EDE6E7',
-    chatBubble:    '#C4838E',
-    calloutAccent: '#E8BCC2',
-  },
-  matcha: {
-    name: 'Matcha',
-    emoji: '🍵',
-    description: 'Earthy sage green',
-    isDark: false,
-    bg:            '#F3F6F0',
-    card:          '#FFFFFF',
-    accent:        '#6E9468',
-    accentDark:    '#527050',
-    accentPale:    '#ECF4EA',
-    accentLight:   '#C8E0C4',
-    ink:           '#182018',
-    subtext:       '#68806A',
-    border:        '#D4E4D0',
-    chatBubble:    '#6E9468',
-    calloutAccent: '#A8CCA4',
-  },
-  ocean: {
-    name: 'Ocean',
-    emoji: '🌊',
-    description: 'Calm coastal blue',
-    isDark: false,
-    bg:            '#EDF4F8',
-    card:          '#FFFFFF',
-    accent:        '#4E87A4',
-    accentDark:    '#35708A',
-    accentPale:    '#E0EFF6',
-    accentLight:   '#B4D4E8',
-    ink:           '#102030',
-    subtext:       '#5C8098',
-    border:        '#C8DEE8',
-    chatBubble:    '#4E87A4',
-    calloutAccent: '#94C4DC',
-  },
-  lavender: {
-    name: 'Lavender',
-    emoji: '💜',
-    description: 'Dreamy soft purple',
-    isDark: false,
-    bg:            '#F4F1FB',
-    card:          '#FFFFFF',
-    accent:        '#8A6CC8',
-    accentDark:    '#6E54B0',
-    accentPale:    '#EDE8FA',
-    accentLight:   '#CEC4F0',
-    ink:           '#1A1430',
-    subtext:       '#826898',
-    border:        '#DDD4F0',
-    chatBubble:    '#8A6CC8',
-    calloutAccent: '#C4B0EE',
-  },
-  peach: {
-    name: 'Peach',
-    emoji: '🍑',
-    description: 'Sunny warm peach',
-    isDark: false,
-    bg:            '#FAF1E8',
-    card:          '#FFFFFF',
-    accent:        '#CC7850',
-    accentDark:    '#B06038',
-    accentPale:    '#FAE8DC',
-    accentLight:   '#F0C8A8',
-    ink:           '#2A1808',
-    subtext:       '#946858',
-    border:        '#ECDDD0',
-    chatBubble:    '#CC7850',
-    calloutAccent: '#F0B898',
-  },
-  midnight: {
-    name: 'Midnight',
-    emoji: '🌙',
-    description: 'Deep dark violet',
-    isDark: true,
-    bg:            '#13121E',
-    card:          '#1E1C2C',
-    accent:        '#9B84E0',
-    accentDark:    '#7B64C0',
-    accentPale:    '#2A2840',
-    accentLight:   '#3C3858',
-    ink:           '#F0EEF8',
-    subtext:       '#8880A0',
-    border:        '#2E2C44',
-    chatBubble:    '#9B84E0',
-    calloutAccent: '#C8B8F8',
+    accent:        '#5A5FD4',
+    accentDark:    '#4448B0',
+    accentPale:    '#EEEFFC',
+    accentLight:   '#D8DAFC',
+    ink:           '#1A1918',
+    subtext:       '#78777A',
+    border:        '#E4E2DF',
+    chatBubble:    '#5A5FD4',
+    calloutAccent: '#D8DAFC',
   },
 };
 
-// Goal card accents — warm, soft
-export const GOAL_ACCENTS = ['#C4838E', '#E8BCC2', '#C4BABC', '#BCC4CC', '#D4B89C'];
+export const GOAL_ACCENTS = ['#5A5FD4', '#7B78EE', '#9B98F4', '#4448B0', '#C4C3F4'];
