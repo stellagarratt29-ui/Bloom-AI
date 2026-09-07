@@ -29,7 +29,6 @@ import DyslexiaStyleInjector from './src/components/DyslexiaStyleInjector';
 
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import LandingScreen    from './src/screens/LandingScreen';
-import IntentionScreen  from './src/screens/IntentionScreen';
 import TodayScreen      from './src/screens/TodayScreen';
 import BloomChatScreen  from './src/screens/BloomChatScreen';
 import TaskGuideScreen  from './src/screens/TaskGuideScreen';
@@ -176,17 +175,11 @@ function SplashScreen() {
 function RootNavigator() {
   const { loaded, hasOnboarded, finishOnboarding } = useApp();
   const navRef = useRef(null);
-  const [landingSeen,  setLandingSeen]  = useState(false);
-  const [intentionSeen, setIntentionSeen] = useState(false);
+  const [landingSeen, setLandingSeen] = useState(false);
 
   if (!loaded) return <SplashScreen />;
   if (!hasOnboarded && !landingSeen) return <LandingScreen onGetStarted={() => setLandingSeen(true)} />;
   if (!hasOnboarded) return <OnboardingScreen onFinish={finishOnboarding} />;
-
-  // Intention gate — shown every cold open, dismissed on tap or after 6s
-  if (!intentionSeen) {
-    return <IntentionScreen onDone={() => setIntentionSeen(true)} />;
-  }
 
   return (
     <NavigationContainer ref={navRef}>
