@@ -29,8 +29,8 @@ const LIGHT = {
   urgent:       '#C05A5A',
   urgentPale:   '#FDEEED',
 
-  // User chat bubbles — warm near-black
-  chatBubble:   '#1A1510',
+  // User chat bubbles — sage moss (warm, branded)
+  chatBubble:   '#7A9A89',
 
   // Compat aliases
   moss:         '#7A9A89',

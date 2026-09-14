@@ -406,17 +406,17 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   bloomText: {
-    fontSize: 15, lineHeight: 26, fontWeight: '400',
+    fontSize: 15, lineHeight: 28, fontWeight: '400',
     fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
 
-  userRow: { alignItems: 'flex-end', marginBottom: 12 },
+  userRow: { alignItems: 'flex-end', marginBottom: 14 },
   userBubble: {
-    borderRadius: 20, borderBottomRightRadius: 5,
-    paddingVertical: 11, paddingHorizontal: 16, maxWidth: '80%',
+    borderRadius: 22, borderBottomRightRadius: 6,
+    paddingVertical: 12, paddingHorizontal: 18, maxWidth: '80%',
   },
   userText: {
-    fontSize: 15, color: '#FFFFFF', lineHeight: 22, fontWeight: '400',
+    fontSize: 15, color: '#FFFFFF', lineHeight: 22, fontWeight: '500',
     fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
 
@@ -426,17 +426,17 @@ const s = StyleSheet.create({
   keyBannerText: { fontSize: 13, lineHeight: 20 },
 
   inputBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 14, paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
     borderTopWidth: 0.5,
   },
   input: {
-    flex: 1, fontSize: 15, borderRadius: 22,
-    paddingHorizontal: 16, paddingVertical: 11,
+    flex: 1, fontSize: 15, borderRadius: 26,
+    paddingHorizontal: 18, paddingVertical: 13,
     outlineStyle: 'none',
   },
   sendBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.3 },

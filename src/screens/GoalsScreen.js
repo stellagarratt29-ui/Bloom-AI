@@ -251,9 +251,9 @@ const s = StyleSheet.create({
   emptyBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
 
   goalCard: {
-    borderRadius: 18, borderWidth: 1, borderLeftWidth: 4,
-    padding: 18, marginBottom: 14,
-    shadowColor: '#2A2420', shadowOpacity: 0.09, shadowRadius: 12,
+    borderRadius: 20, borderWidth: 1, borderLeftWidth: 3,
+    padding: 20, marginBottom: 14,
+    shadowColor: '#C98B6B', shadowOpacity: 0.12, shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
   goalHeader: {

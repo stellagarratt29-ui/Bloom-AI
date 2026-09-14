@@ -302,8 +302,7 @@ export default function TasksScreen({ navigation }) {
   const activeTasks = tasks.filter(tk => !tk.done);
 
   const TaskCard = ({ task, sec }) => (
-    <View style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border }]}>
-      <View style={[ss.taskStripe, { backgroundColor: sec?.pillText ?? t.border }]} />
+    <View style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border, borderLeftColor: sec?.pillText ?? t.border, borderLeftWidth: 3 }]}>
       <TouchableOpacity style={ss.doneBtn} onPress={() => finishTask(task.id)} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}>
         <View style={[ss.checkCircle, { borderColor: sec?.pillText ?? t.border }]} />
       </TouchableOpacity>
@@ -398,7 +397,7 @@ export default function TasksScreen({ navigation }) {
               if (!items.length) return null;
               return (
                 <View key={sec.key} style={ss.group}>
-                  <View style={[ss.sectionPill, { backgroundColor: sec.pillBg }]}>
+                  <View style={ss.sectionPill}>
                     <Text style={[ss.sectionLabel, { color: sec.pillText }]}>{sec.label.toUpperCase()}</Text>
                   </View>
                   {items.map(task => (
@@ -411,8 +410,8 @@ export default function TasksScreen({ navigation }) {
             {finishedTasks.length > 0 && (
               <View style={ss.group}>
                 <TouchableOpacity style={ss.finishedHeader} onPress={() => setShowFinished(v => !v)} activeOpacity={0.75}>
-                  <View style={[ss.sectionPill, { backgroundColor: t.border }]}>
-                    <Text style={[ss.sectionLabel, { color: t.subtext }]}>DONE ({finishedTasks.length})</Text>
+                  <View style={ss.sectionPill}>
+                    <Text style={[ss.sectionLabel, { color: t.muted }]}>DONE ({finishedTasks.length})</Text>
                   </View>
                   <Icon name={showFinished ? 'chevron-up' : 'chevron-down'} size={15} color={t.subtext} />
                 </TouchableOpacity>
@@ -566,17 +565,16 @@ const ss = StyleSheet.create({
   },
   focusBannerText: { flex: 1, fontSize: 13, fontWeight: '600' },
 
-  group: { marginBottom: 20 },
-  sectionPill: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 10 },
-  sectionLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1.6 },
+  group: { marginBottom: 24 },
+  sectionPill: { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 0, paddingVertical: 0, marginBottom: 12 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.4 },
 
   taskCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: 14, paddingVertical: 13, paddingRight: 10, paddingLeft: 14,
-    borderWidth: 1, marginBottom: 8, overflow: 'hidden',
-    shadowColor: '#1A1018', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    borderRadius: 18, paddingVertical: 15, paddingRight: 12, paddingLeft: 16,
+    borderWidth: 1, borderLeftWidth: 3, marginBottom: 10, overflow: 'hidden',
+    shadowColor: '#C98B6B', shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
-  taskStripe: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, borderTopLeftRadius: 14, borderBottomLeftRadius: 14 },
   checkCircle: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
   doneBtn: { padding: 2, flexShrink: 0 },
   taskBody: { flex: 1, flexDirection: 'column', gap: 2 },
