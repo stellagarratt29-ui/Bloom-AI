@@ -86,30 +86,33 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// ─── Custom tab bar ───────────────────────────────────
+// ─── Custom tab bar — Studio Minimal ─────────────────
 function CustomTabBar({ state, navigation }) {
   const layout = useLayout();
   const { colors: t, isDark } = useTheme();
 
-  // Desktop sidebar
+  // Desktop sidebar — slim, no heavy fill
   if (layout === 'desktop') {
     return (
-      <View style={[deskS.sidebar, { backgroundColor: t.card, borderRightColor: t.border }]}>
+      <View style={[deskS.sidebar, { backgroundColor: t.bg, borderRightColor: t.border }]}>
         <View style={deskS.logoWrap}>
-          <Text style={[deskS.logoText, { color: t.accent }]}>Bloom</Text>
-          <Text style={[deskS.logoSub, { color: t.subtext }]}>Your day, sorted.</Text>
+          <Text style={[deskS.logoText, { color: t.text }]}>bloom</Text>
         </View>
         {TAB_ITEMS.map((item, index) => {
           const focused = state.index === index;
           return (
             <TouchableOpacity
               key={item.name}
-              style={[deskS.navItem, focused && { backgroundColor: t.accentPale }]}
+              style={[deskS.navItem, focused && deskS.navItemActive]}
               onPress={() => navigation.navigate(item.name)}
-              activeOpacity={0.7}
+              activeOpacity={0.65}
             >
-              <Icon name={item.icon} size={17} color={focused ? t.accent : t.subtext} />
-              <Text style={[deskS.navLabel, { color: t.subtext }, focused && { fontWeight: '700', color: t.accent }]}>
+              <Icon name={item.icon} size={16} color={focused ? t.text : t.muted} />
+              <Text style={[
+                deskS.navLabel,
+                { color: focused ? t.text : t.muted },
+                focused && { fontWeight: '600' },
+              ]}>
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -119,10 +122,10 @@ function CustomTabBar({ state, navigation }) {
     );
   }
 
-  // Mobile tab bar — clean pill design
+  // Mobile tab bar — ultra-clean, thin indicator
   const barBg = Platform.OS === 'web'
-    ? (isDark ? 'rgba(14,18,16,0.95)' : 'rgba(255,255,255,0.96)')
-    : t.card;
+    ? (isDark ? 'rgba(17,17,17,0.96)' : 'rgba(255,255,255,0.97)')
+    : t.bg;
 
   return (
     <View style={[
@@ -131,8 +134,8 @@ function CustomTabBar({ state, navigation }) {
         backgroundColor: barBg,
         borderTopColor: t.border,
         ...(Platform.OS === 'web' ? {
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         } : {}),
       },
     ]}>
@@ -143,18 +146,21 @@ function CustomTabBar({ state, navigation }) {
             key={item.name}
             style={mobileTabS.item}
             onPress={() => navigation.navigate(item.name)}
-            activeOpacity={0.7}
+            activeOpacity={0.6}
           >
-            {focused ? (
-              <View style={[mobileTabS.pill, { backgroundColor: t.accent }]}>
-                <Icon name={item.icon} size={14} color="#FFFFFF" />
-                <Text style={mobileTabS.pillLabel}>{item.label}</Text>
-              </View>
-            ) : (
-              <View style={mobileTabS.iconWrap}>
-                <Icon name={item.icon} size={20} color={t.subtext} />
-              </View>
-            )}
+            {focused && <View style={[mobileTabS.indicator, { backgroundColor: t.text }]} />}
+            <Icon
+              name={item.icon}
+              size={20}
+              color={focused ? t.text : t.muted}
+            />
+            <Text style={[
+              mobileTabS.label,
+              { color: focused ? t.text : t.muted },
+              focused && { fontWeight: '600' },
+            ]}>
+              {item.label}
+            </Text>
           </TouchableOpacity>
         );
       })}
@@ -166,57 +172,56 @@ const deskS = StyleSheet.create({
   sidebar: {
     width: SIDEBAR_W,
     borderRightWidth: 1,
-    paddingTop: 48, paddingBottom: 24, paddingHorizontal: 14,
+    paddingTop: 52, paddingBottom: 24, paddingHorizontal: 16,
   },
-  logoWrap: { marginBottom: 36, paddingHorizontal: 10 },
+  logoWrap: { marginBottom: 44, paddingHorizontal: 8 },
   logoText: {
-    fontSize: 22, fontWeight: '800', letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? '"Outfit", Georgia, sans-serif' : undefined,
+    fontSize: 18, fontWeight: '600', letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
-  logoSub:  { fontSize: 11, marginTop: 3 },
-  navItem:  {
-    flexDirection: 'row', alignItems: 'center', gap: 11,
-    paddingVertical: 11, paddingHorizontal: 12,
-    borderRadius: 12, marginBottom: 2,
+  navItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 10, paddingHorizontal: 8,
+    borderRadius: 8, marginBottom: 1,
   },
-  navLabel: { fontSize: 14, fontWeight: '500' },
+  navItemActive: {
+    // just text/icon change — no background fill
+  },
+  navLabel: { fontSize: 13, fontWeight: '400', letterSpacing: 0.1 },
 });
 
 const mobileTabS = StyleSheet.create({
   bar: {
     borderTopWidth: 0.5,
-    height: 68,
-    paddingHorizontal: 4,
-    paddingBottom: 6,
-    paddingTop: 6,
+    height: 64,
+    paddingHorizontal: 0,
+    paddingBottom: 4,
+    paddingTop: 0,
     flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
+    alignItems: 'flex-end',
   },
   item: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: 8,
+    paddingTop: 0,
+    gap: 3,
     outlineStyle: 'none',
   },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    paddingHorizontal: 11,
-    borderRadius: 22,
+  indicator: {
+    position: 'absolute',
+    top: 0,
+    width: 20,
+    height: 1.5,
+    borderRadius: 1,
   },
-  pillLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.1,
+  label: {
+    fontSize: 10,
+    fontWeight: '400',
+    letterSpacing: 0.3,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
-  iconWrap: { padding: 6, borderRadius: 10 },
 });
 
 // ─── Stacks ───────────────────────────────────────────
@@ -279,14 +284,11 @@ function MainTabs() {
 function SplashScreen() {
   const { colors: t } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: t?.bg ?? C.cream, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: t?.bg ?? '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{
-        fontSize: 32, fontWeight: '800', color: t?.accent ?? C.moss, letterSpacing: -0.5,
-        fontFamily: Platform.OS === 'web' ? '"Outfit", system-ui, sans-serif' : undefined,
-      }}>Bloom</Text>
-      <Text style={{ fontSize: 14, color: t?.subtext ?? C.muted, marginTop: 8 }}>
-        Your day, sorted.
-      </Text>
+        fontSize: 28, fontWeight: '500', color: t?.text ?? '#0F0F0F', letterSpacing: -0.3,
+        fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+      }}>bloom</Text>
     </View>
   );
 }
@@ -339,23 +341,10 @@ function TutorialOverlay() {
   );
 }
 
-// ─── Shell ────────────────────────────────────────────
+// ─── Shell — no gray wrapper, full bleed ─────────────
 function ThemedShell({ children }) {
   const { colors } = useTheme();
-  const layout = useLayout();
-  if (Platform.OS !== 'web' || layout !== 'phone') {
-    return <View style={{ flex: 1, backgroundColor: colors.bg }}>{children}</View>;
-  }
-  return (
-    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#DDD9D3' }}>
-      <View style={{
-        flex: 1, width: '100%', maxWidth: 430,
-        backgroundColor: colors.bg, overflow: 'hidden',
-      }}>
-        {children}
-      </View>
-    </View>
-  );
+  return <View style={{ flex: 1, backgroundColor: colors.bg }}>{children}</View>;
 }
 
 export default function App() {

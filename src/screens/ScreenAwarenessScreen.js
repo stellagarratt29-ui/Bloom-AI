@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
-  StyleSheet, Platform, ActivityIndicator, TextInput, Modal,
+  StyleSheet, Platform, TextInput, Modal,
 } from 'react-native';
 import Icon from '../components/Icon';
 import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { callClaude, getApiKey } from '../services/ai';
 
 function getHobbyIcon(name) {
   const n = (name || '').toLowerCase();
@@ -80,42 +79,6 @@ export default function ScreenAwarenessScreen({ navigation }) {
   const [showGoalEdit, setShowGoalEdit] = useState(false);
   const [goalHours,   setGoalHours]   = useState('');
   const [goalMins,    setGoalMins]    = useState('');
-  const [insight,     setInsight]     = useState('');
-  const [loadingInsight, setLoadingInsight] = useState(false);
-
-  useEffect(() => {
-    if (loggedDays.length === 0) return;
-    setLoadingInsight(true);
-    const avgStr   = weekAvg !== null ? fmtMins(weekAvg) : 'unknown';
-    const goalStr  = fmtMins(screenTimeGoal);
-    const todayStr2 = todayMins !== null ? fmtMins(todayMins) : 'not logged yet';
-    const context  = `Daily screen time goal: ${goalStr}. Today: ${todayStr2}. 7-day average: ${avgStr}. Days logged this week: ${loggedDays.length}/7.`;
-
-    getApiKey().then(key => {
-      if (!key) {
-        const overGoal = todayMins !== null && todayMins > screenTimeGoal;
-        setInsight(overGoal
-          ? `You've gone over your ${fmtMins(screenTimeGoal)} goal today. A hobby break could help reset.`
-          : weekAvg !== null
-            ? `Your weekly average is ${fmtMins(weekAvg)}. Keep logging to see your patterns.`
-            : 'Log your screen time daily to start seeing patterns here.');
-        setLoadingInsight(false);
-        return;
-      }
-      callClaude({
-        system: "You are Bloom. Write ONE short observational sentence about this person's screen time data. Be specific to the numbers. Warm but honest — no shame, no generic advice.",
-        messages: [{ role: 'user', content: context }],
-        maxTokens: 80,
-      })
-        .then(text => { setInsight(text.trim()); setLoadingInsight(false); })
-        .catch(() => {
-          setInsight(weekAvg !== null
-            ? `Your average this week is ${fmtMins(weekAvg)} per day.`
-            : 'Log each day to start building your screen time picture.');
-          setLoadingInsight(false);
-        });
-    });
-  }, [screenTimeLogs.length, today]);
 
   const handleLog = () => {
     const h = parseInt(logHours || '0', 10) || 0;
@@ -144,19 +107,19 @@ export default function ScreenAwarenessScreen({ navigation }) {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={[s.title, { color: C.lavDark }]}>Screen{'\n'}Time</Text>
+        <Text style={[s.title, { color: t.text }]}>Screen{'\n'}Time</Text>
         <Text style={[s.sub, { color: t.subtext }]}>Bloom tracks your time here automatically. Log your total phone screen time to see the full picture.</Text>
 
         {/* In Bloom auto-tracking card */}
-        <View style={[s.bloomCard, { backgroundColor: t.card, borderColor: C.lavDark }]}>
+        <View style={[s.bloomCard, { backgroundColor: t.card, borderColor: t.accent }]}>
           <View style={s.bloomCardHeader}>
-            <View style={[s.autoBadge, { backgroundColor: C.lavWash }]}>
-              <View style={[s.autoDot, { backgroundColor: C.lavDark }]} />
-              <Text style={[s.autoBadgeText, { color: C.lavDark }]}>auto</Text>
+            <View style={[s.autoBadge, { backgroundColor: t.accentPale }]}>
+              <View style={[s.autoDot, { backgroundColor: t.accent }]} />
+              <Text style={[s.autoBadgeText, { color: t.accent }]}>auto</Text>
             </View>
             <Text style={[s.bloomCardLabel, { color: t.subtext }]}>IN BLOOM TODAY</Text>
           </View>
-          <Text style={[s.bloomCardTime, { color: C.lavDark }]}>
+          <Text style={[s.bloomCardTime, { color: t.accent }]}>
             {bloomTodayMins !== null ? fmtMins(bloomTodayMins) : '–'}
           </Text>
           <Text style={[s.bloomCardHint, { color: t.subtext }]}>
@@ -171,29 +134,29 @@ export default function ScreenAwarenessScreen({ navigation }) {
           <View style={s.todayHeader}>
             <View>
               <Text style={[s.todayLabel, { color: t.subtext }]}>TOTAL PHONE TIME</Text>
-              <Text style={[s.todayTime, { color: overGoal ? C.clay : C.lavDark }]}>
+              <Text style={[s.todayTime, { color: overGoal ? t.clay : t.accent }]}>
                 {todayMins !== null ? fmtMins(todayMins) : '–'}
               </Text>
               <Text style={[s.goalLine, { color: t.subtext }]}>goal: {fmtMins(screenTimeGoal)}</Text>
             </View>
             <TouchableOpacity
               style={[s.logBtn, {
-                backgroundColor: todayMins !== null ? t.bg : C.moss,
-                borderColor: todayMins !== null ? t.border : C.moss,
+                backgroundColor: todayMins !== null ? t.bg : t.accent,
+                borderColor: todayMins !== null ? t.border : t.accent,
               }]}
               onPress={() => setShowLog(true)}
             >
-              <Icon name={todayMins !== null ? 'edit-2' : 'plus'} size={14} color={todayMins !== null ? t.subtext : C.white} />
-              <Text style={[s.logBtnText, { color: todayMins !== null ? t.subtext : C.white }]}>
+              <Icon name={todayMins !== null ? 'edit-2' : 'plus'} size={14} color={todayMins !== null ? t.subtext : '#FFF'} />
+              <Text style={[s.logBtnText, { color: todayMins !== null ? t.subtext : '#FFF' }]}>
                 {todayMins !== null ? 'Edit' : 'Log today'}
               </Text>
             </TouchableOpacity>
           </View>
           <View style={[s.progressTrack, { backgroundColor: t.border }]}>
-            <View style={[s.progressFill, { width: `${pctToday}%`, backgroundColor: overGoal ? C.clay : C.moss }]} />
+            <View style={[s.progressFill, { width: `${pctToday}%`, backgroundColor: overGoal ? t.clay : t.accent }]} />
           </View>
           {todayMins !== null && (
-            <Text style={[s.progressNote, { color: overGoal ? C.clay : C.moss }]}>
+            <Text style={[s.progressNote, { color: overGoal ? t.clay : t.accent }]}>
               {overGoal
                 ? `${fmtMins(todayMins - screenTimeGoal)} over goal`
                 : `${fmtMins(screenTimeGoal - todayMins)} under goal`}
@@ -206,7 +169,7 @@ export default function ScreenAwarenessScreen({ navigation }) {
           <View style={s.chartHeader}>
             <Text style={[s.chartTitle, { color: t.text }]}>This week</Text>
             {weekAvg !== null && (
-              <Text style={[s.avgBadge, { backgroundColor: C.lavWash, color: C.lavDark }]}>
+              <Text style={[s.avgBadge, { backgroundColor: t.accentPale, color: t.accent }]}>
                 avg {fmtMins(weekAvg)}
               </Text>
             )}
@@ -226,12 +189,12 @@ export default function ScreenAwarenessScreen({ navigation }) {
                     <View style={[s.bar, {
                       height: minutes !== null ? `${Math.max(barPct * 100, 5)}%` : '3%',
                       backgroundColor: minutes === null ? t.border
-                        : over ? C.clayLight
-                        : isToday ? C.lavDark
-                        : C.lavWash,
+                        : over ? t.clayLight
+                        : isToday ? t.accent
+                        : t.accentPale,
                     }]} />
                   </View>
-                  <Text style={[s.barLabel, { color: isToday ? C.lavDark : t.subtext, fontWeight: isToday ? '700' : '500' }]}>
+                  <Text style={[s.barLabel, { color: isToday ? t.accent : t.subtext, fontWeight: isToday ? '700' : '500' }]}>
                     {dayLabel(date)}
                   </Text>
                   <Text style={[s.barVal, { color: minutes === null ? t.border : t.subtext }]}>
@@ -256,8 +219,8 @@ export default function ScreenAwarenessScreen({ navigation }) {
           }}
           activeOpacity={0.7}
         >
-          <View style={[s.goalIcon, { backgroundColor: C.lavWash }]}>
-            <Icon name="target" size={16} color={C.lavDark} />
+          <View style={[s.goalIcon, { backgroundColor: t.accentPale }]}>
+            <Icon name="target" size={16} color={t.accent} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[s.goalCardLabel, { color: t.subtext }]}>DAILY GOAL</Text>
@@ -266,16 +229,6 @@ export default function ScreenAwarenessScreen({ navigation }) {
           <Icon name="chevron-right" size={16} color={t.subtext} />
         </TouchableOpacity>
 
-        {/* Bloom insight */}
-        {(loggedDays.length > 0 || insight) ? (
-          <View style={[s.insightCard, { borderLeftColor: C.lavDark, backgroundColor: t.card, borderColor: t.border }]}>
-            <Text style={[s.insightLabel, { color: C.lavDark }]}>BLOOM NOTICED</Text>
-            {loadingInsight
-              ? <ActivityIndicator size="small" color={C.lavDark} style={{ marginVertical: 8 }} />
-              : <Text style={[s.insightText, { color: t.text }]}>{insight}</Text>}
-          </View>
-        ) : null}
-
         {/* Take a break */}
         {redirectHobbies.length > 0 ? (
           <>
@@ -283,23 +236,23 @@ export default function ScreenAwarenessScreen({ navigation }) {
             {redirectHobbies.map((h) => (
               <TouchableOpacity
                 key={h.id}
-                style={[s.breakBtn, { borderColor: C.clay, backgroundColor: t.card }]}
+                style={[s.breakBtn, { borderColor: t.border, backgroundColor: t.card }]}
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate('GrowTab', { screen: 'HobbyDetail', params: { hobby: h } })}
               >
-                <Icon name={getHobbyIcon(h.name)} size={16} color={C.clay} />
-                <Text style={[s.breakText, { color: C.clay }]}>{h.name} instead?</Text>
+                <Icon name={getHobbyIcon(h.name)} size={16} color={t.accent} />
+                <Text style={[s.breakText, { color: t.text }]}>{h.name} instead?</Text>
               </TouchableOpacity>
             ))}
           </>
         ) : (
           <TouchableOpacity
-            style={[s.noHobbiesHint, { borderColor: C.clay, backgroundColor: t.card }]}
+            style={[s.noHobbiesHint, { borderColor: t.border, backgroundColor: t.card }]}
             onPress={() => navigation.navigate('GrowTab')}
             activeOpacity={0.7}
           >
-            <Icon name="plus-circle" size={16} color={C.clay} />
-            <Text style={[s.noHobbiesText, { color: C.clay }]}>Add hobbies in Grow — they'll appear here as offline alternatives →</Text>
+            <Icon name="plus-circle" size={16} color={t.accent} />
+            <Text style={[s.noHobbiesText, { color: t.subtext }]}>Add hobbies in Grow — they'll appear here as offline alternatives →</Text>
           </TouchableOpacity>
         )}
 
@@ -410,8 +363,8 @@ const s = StyleSheet.create({
   scroll: { paddingHorizontal: 22, paddingTop: 22 },
 
   title: {
-    fontSize: 38, fontWeight: '800', lineHeight: 46, letterSpacing: -1, marginBottom: 6,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+    fontSize: 28, fontWeight: '600', lineHeight: 36, letterSpacing: -0.5, marginBottom: 6,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
   sub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
 
@@ -476,16 +429,6 @@ const s = StyleSheet.create({
   goalCardLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 2 },
   goalCardValue: { fontSize: 18, fontWeight: '800' },
 
-  insightCard: {
-    paddingLeft: 16, paddingRight: 14, paddingVertical: 14,
-    borderLeftWidth: 3, borderWidth: 1, borderRadius: 14,
-    marginBottom: 24,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 1,
-  },
-  insightLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.3, marginBottom: 8 },
-  insightText:  { fontSize: 14, lineHeight: 22 },
-
   breakTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 10 },
   breakBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -527,7 +470,7 @@ const s = StyleSheet.create({
   modalCancelText: { fontSize: 14, fontWeight: '600' },
   modalSave: {
     flex: 2, paddingVertical: 13, borderRadius: 12,
-    backgroundColor: C.moss, alignItems: 'center',
+    backgroundColor: '#7A9A89', alignItems: 'center',
   },
-  modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
+  modalSaveText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 });

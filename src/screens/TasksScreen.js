@@ -243,9 +243,9 @@ const fS = StyleSheet.create({
   pillText: { fontSize: 10, fontWeight: '800', letterSpacing: 1.8 },
 
   taskText: {
-    fontSize: 26, fontWeight: '700', textAlign: 'center', lineHeight: 36,
+    fontSize: 26, fontWeight: '600', textAlign: 'center', lineHeight: 36,
     letterSpacing: -0.3, marginBottom: 8,
-    fontFamily: Platform.OS === 'web' ? '"Outfit", Georgia, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
 
   actions: { gap: 12 },
@@ -344,7 +344,7 @@ export default function TasksScreen({ navigation }) {
       )}
 
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-        <Text style={[ss.title, { color: t.clay }]}>Tasks</Text>
+        <Text style={[ss.title, { color: t.text }]}>Tasks</Text>
         <View style={ss.headerRight}>
           {points > 0 && (
             <View style={[ss.pointsBadge, { backgroundColor: t.accentPale }]}>
@@ -541,8 +541,8 @@ const ss = StyleSheet.create({
     paddingHorizontal: 22, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1,
   },
   title: {
-    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
-    fontFamily: Platform.OS === 'web' ? '"Outfit", Georgia, sans-serif' : undefined,
+    fontSize: 28, fontWeight: '600', letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pointsBadge: { borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
@@ -596,7 +596,7 @@ const ss = StyleSheet.create({
 
   empty: { alignItems: 'center', paddingTop: 80, paddingBottom: 40, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 52, marginBottom: 16 },
-  emptyHead: { fontSize: 22, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3, fontFamily: Platform.OS === 'web' ? '"Outfit", Georgia, sans-serif' : undefined },
+  emptyHead: { fontSize: 22, fontWeight: '600', marginBottom: 10, letterSpacing: -0.3, fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23 },
 
   menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },

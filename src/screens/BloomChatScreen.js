@@ -5,6 +5,7 @@ import {
   ScrollView, SafeAreaView, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from '../components/Icon';
 import VoiceMicButton from '../components/VoiceMicButton';
 import { C } from '../constants/colors';
@@ -15,6 +16,20 @@ import {
   generateGoalAction,
 } from '../services/ai';
 import { speak, stopSpeaking, hasTTS } from '../services/speech';
+
+const MORNING_KEY = '@bloom_morning_seen';
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getMorningGreeting(userName) {
+  const h = new Date().getHours();
+  const name = userName ? `, ${userName}` : '';
+  if (h < 12) return `Good morning${name}.`;
+  if (h < 17) return `Good afternoon${name}.`;
+  return `Good evening${name}.`;
+}
 
 function getGreeting(userName) {
   const h = new Date().getHours();
@@ -73,7 +88,7 @@ function getFallback(msg, { userName, goals, tasks }) {
     const pending = (tasks || []).filter(t => !t.done);
     if (pending.length > 0) {
       const top = pending.find(t => t.priority === 'high') || pending[0];
-      return `Your most important task right now: "${top.text}". Head to Today to see everything.`;
+      return `Your most important task right now: "${top.text}". Head to Tasks to see everything.`;
     }
     return `Nothing on your list yet${name}. Tell me what's on your mind.`;
   }
@@ -89,7 +104,7 @@ function getFallback(msg, { userName, goals, tasks }) {
   if (/done|finished|completed|just did|just finished/.test(m)) {
     const pending = (tasks || []).filter(t => !t.done);
     return pending.length > 0
-      ? `Nice work. Your Today tab shows what's next.`
+      ? `Nice work. Your Tasks tab shows what's next.`
       : `Everything's done — well done${name}. Add more any time.`;
   }
   const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|gym|run|cook|clean)\b/)?.[0];
@@ -100,6 +115,47 @@ function getFallback(msg, { userName, goals, tasks }) {
   return `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
 
+// ─── Morning check-in card ───────────────────────────
+function MorningCard({ userName, onDismiss, t }) {
+  const greeting = getMorningGreeting(userName);
+  return (
+    <View style={[mc.card, { borderColor: t.border }]}>
+      <Text style={[mc.greeting, { color: t.text }]}>{greeting}</Text>
+      <Text style={[mc.question, { color: t.text }]}>What's on your mind today?</Text>
+      <Text style={[mc.sub, { color: t.subtext }]}>
+        Type everything below — tasks, worries, plans. I'll sort it out.
+      </Text>
+      <TouchableOpacity onPress={onDismiss} style={mc.dismiss}>
+        <Text style={[mc.dismissText, { color: t.muted }]}>Dismiss</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const mc = StyleSheet.create({
+  card: {
+    marginHorizontal: 16, marginTop: 20, marginBottom: 8,
+    borderRadius: 16, borderWidth: 1,
+    paddingVertical: 24, paddingHorizontal: 22,
+  },
+  greeting: {
+    fontSize: 13, fontWeight: '500', letterSpacing: 0.2,
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+  },
+  question: {
+    fontSize: 22, fontWeight: '600', letterSpacing: -0.3, lineHeight: 30,
+    marginBottom: 10,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+  },
+  sub: {
+    fontSize: 13, lineHeight: 20,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+  },
+  dismiss: { marginTop: 16, alignSelf: 'flex-start' },
+  dismissText: { fontSize: 12 },
+});
+
 export default function BloomChatScreen() {
   const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles, checkIn } = useApp();
   const { colors: t } = useTheme();
@@ -107,15 +163,31 @@ export default function BloomChatScreen() {
   const [messages, setMessages] = useState([
     { id: 1, from: 'bloom', text: getGreeting(userName) },
   ]);
-  const [input,     setInput]     = useState('');
-  const [thinking,  setThinking]  = useState(false);
-  const [hasKey,    setHasKey]    = useState(null);
-  const [voiceMode, setVoiceMode] = useState(false);
+  const [input,        setInput]        = useState('');
+  const [thinking,     setThinking]     = useState(false);
+  const [hasKey,       setHasKey]       = useState(null);
+  const [voiceMode,    setVoiceMode]    = useState(false);
+  const [showMorning,  setShowMorning]  = useState(false);
   const voiceModeRef = useRef(false);
   const scrollRef    = useRef(null);
   const historyRef   = useRef([]);
 
   useEffect(() => { voiceModeRef.current = voiceMode; }, [voiceMode]);
+
+  // Show morning card once per day
+  useEffect(() => {
+    AsyncStorage.getItem(MORNING_KEY)
+      .then(raw => {
+        const last = raw ? JSON.parse(raw) : null;
+        if (last !== todayStr()) setShowMorning(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const dismissMorning = useCallback(() => {
+    setShowMorning(false);
+    AsyncStorage.setItem(MORNING_KEY, JSON.stringify(todayStr())).catch(() => {});
+  }, []);
 
   useFocusEffect(useCallback(() => {
     getApiKey().then(k => setHasKey(!!k));
@@ -133,6 +205,9 @@ export default function BloomChatScreen() {
   const send = async (text) => {
     const trimmed = text.trim();
     if (!trimmed || thinking) return;
+
+    // Dismiss morning card on first message
+    if (showMorning) dismissMorning();
 
     const userMsg = { id: Date.now(), from: 'user', text: trimmed };
     setMessages(prev => [...prev, userMsg]);
@@ -159,7 +234,7 @@ export default function BloomChatScreen() {
           const parts = [];
           if (taskCount > 0) parts.push(`${taskCount} task${taskCount !== 1 ? 's' : ''}`);
           if (goalCount > 0) parts.push(`${goalCount} goal${goalCount !== 1 ? 's' : ''}`);
-          bloomReply(response ?? `Sorted ${parts.join(' and ')} — tap Today to see them.`);
+          bloomReply(response ?? `Sorted ${parts.join(' and ')} — tap Tasks to see them.`);
           setThinking(false);
           scrollToEnd();
           return;
@@ -175,7 +250,7 @@ export default function BloomChatScreen() {
       const taskText = !isConversationalOrQuestion(trimmed) ? detectTaskAdd(trimmed) : null;
       if (taskText && !hasKey) {
         addTask(taskText, 'medium');
-        bloomReply(`Added "${taskText}" to your Today tab.`);
+        bloomReply(`Added "${taskText}" to your Tasks tab.`);
         setThinking(false);
         scrollToEnd();
         return;
@@ -204,12 +279,9 @@ export default function BloomChatScreen() {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        {/* Header */}
+        {/* Header — minimal */}
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-          <View>
-            <Text style={[s.headerTitle, { color: t.accent }]}>Chat</Text>
-            <Text style={[s.headerTagline, { color: t.subtext }]}>dump it all here</Text>
-          </View>
+          <Text style={[s.headerTitle, { color: t.text }]}>Chat</Text>
           {hasTTS() && (
             <TouchableOpacity
               onPress={() => {
@@ -217,23 +289,10 @@ export default function BloomChatScreen() {
                 setVoiceMode(next);
                 if (!next) stopSpeaking();
               }}
-              style={[
-                s.voiceToggle,
-                {
-                  backgroundColor: voiceMode ? t.accent : t.card,
-                  borderColor: voiceMode ? t.accent : t.border,
-                },
-              ]}
-              activeOpacity={0.75}
+              style={[s.voiceToggle, { borderColor: t.border }]}
+              activeOpacity={0.7}
             >
-              <Icon
-                name={voiceMode ? 'volume-2' : 'volume-x'}
-                size={15}
-                color={voiceMode ? '#fff' : t.subtext}
-              />
-              <Text style={[s.voiceToggleLabel, { color: voiceMode ? '#fff' : t.subtext }]}>
-                {voiceMode ? 'Voice on' : 'Voice off'}
-              </Text>
+              <Icon name={voiceMode ? 'volume-2' : 'volume-x'} size={14} color={t.subtext} />
             </TouchableOpacity>
           )}
         </View>
@@ -246,6 +305,11 @@ export default function BloomChatScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Morning check-in card */}
+          {showMorning && (
+            <MorningCard userName={userName} onDismiss={dismissMorning} t={t} />
+          )}
+
           {messages.map(m => {
             if (m.from === 'user') {
               return (
@@ -258,36 +322,23 @@ export default function BloomChatScreen() {
             }
             return (
               <View key={m.id} style={s.bloomRow}>
-                <View style={[s.bloomBubble, { backgroundColor: t.card, borderColor: t.border }]}>
-                  <Text style={[s.bloomText, { color: t.text }]}>{m.text}</Text>
-                </View>
+                <Text style={[s.bloomText, { color: t.text }]}>{m.text}</Text>
               </View>
             );
           })}
 
           {thinking && (
             <View style={s.bloomRow}>
-              <View style={[s.bloomBubble, { backgroundColor: t.card, borderColor: t.border, paddingVertical: 18 }]}>
-                <ActivityIndicator size="small" color={t.accent} />
-              </View>
+              <ActivityIndicator size="small" color={t.accent} style={{ marginTop: 4 }} />
             </View>
           )}
 
           {hasKey === false && (
             <View style={[s.keyBanner, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}>
-              <Icon name="zap" size={14} color={t.accent} />
               <Text style={[s.keyBannerText, { color: t.text }]}>
                 Add your Claude key in the{' '}
-                <Text style={{ fontWeight: '700' }}>You</Text>
-                {' '}tab for full AI — free key at console.anthropic.com (sk-ant-...)
-              </Text>
-            </View>
-          )}
-
-          {messages.length <= 1 && !thinking && (
-            <View style={[s.hint, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}>
-              <Text style={[s.hintText, { color: t.text }]}>
-                Type everything on your mind — tasks, feelings, plans, worries. Bloom will sort them into your Today tab.
+                <Text style={{ fontWeight: '600' }}>You</Text>
+                {' '}tab for full AI — free key at console.anthropic.com
               </Text>
             </View>
           )}
@@ -297,19 +348,15 @@ export default function BloomChatScreen() {
         <View style={[s.inputBar, { backgroundColor: t.bg, borderTopColor: t.border }]}>
           <VoiceMicButton
             onTranscript={(txt) => {
-              if (voiceModeRef.current) {
-                stopSpeaking();
-                send(txt);
-              } else {
-                setInput(prev => prev ? prev + ' ' + txt : txt);
-              }
+              if (voiceModeRef.current) { stopSpeaking(); send(txt); }
+              else setInput(prev => prev ? prev + ' ' + txt : txt);
             }}
-            color={voiceMode ? t.accent : t.card}
+            color={t.card}
           />
           <TextInput
-            style={[s.input, { backgroundColor: t.card, borderColor: t.border, color: t.text }]}
+            style={[s.input, { backgroundColor: t.input, color: t.text }]}
             placeholder="What's on your mind…"
-            placeholderTextColor={t.subtext}
+            placeholderTextColor={t.muted}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
@@ -318,15 +365,11 @@ export default function BloomChatScreen() {
             editable={!thinking}
           />
           <TouchableOpacity
-            style={[
-              s.sendBtn,
-              { backgroundColor: t.chatBubble },
-              (!input.trim() || thinking) && s.sendBtnOff,
-            ]}
+            style={[s.sendBtn, { backgroundColor: t.chatBubble }, (!input.trim() || thinking) && s.sendBtnOff]}
             onPress={() => send(input)}
             disabled={!input.trim() || thinking}
           >
-            <Icon name="send" size={16} color="#FFFFFF" />
+            <Icon name="send" size={15} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -342,65 +385,59 @@ const s = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
   },
   headerTitle: {
-    fontSize: 28, fontWeight: '800', letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? '"Outfit", system-ui, sans-serif' : undefined,
-    lineHeight: 32,
+    fontSize: 17, fontWeight: '600', letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
-  headerTagline: { fontSize: 11, fontWeight: '500', letterSpacing: 0.2 },
-
   voiceToggle: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 20, borderWidth: 1,
+    width: 34, height: 34, borderRadius: 17,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1,
   },
-  voiceToggleLabel: { fontSize: 12, fontWeight: '600' },
 
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingVertical: 18, gap: 12 },
+  scrollContent: { paddingHorizontal: 16, paddingVertical: 18, gap: 4 },
 
-  bloomRow: { alignSelf: 'stretch', maxWidth: '88%' },
-  bloomBubble: {
-    borderRadius: 20, borderBottomLeftRadius: 4,
-    padding: 15, borderWidth: 1,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  bloomRow: {
+    alignSelf: 'flex-start',
+    maxWidth: '88%',
+    marginBottom: 12,
   },
-  bloomText: { fontSize: 15, lineHeight: 25, fontWeight: '400' },
+  bloomText: {
+    fontSize: 15, lineHeight: 26, fontWeight: '400',
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+  },
 
-  userRow: { alignItems: 'flex-end' },
+  userRow: { alignItems: 'flex-end', marginBottom: 12 },
   userBubble: {
-    borderRadius: 20, borderBottomRightRadius: 4,
-    paddingVertical: 12, paddingHorizontal: 16, maxWidth: '82%',
+    borderRadius: 20, borderBottomRightRadius: 5,
+    paddingVertical: 11, paddingHorizontal: 16, maxWidth: '80%',
   },
-  userText: { fontSize: 15, color: '#FFFFFF', lineHeight: 22, fontWeight: '500' },
+  userText: {
+    fontSize: 15, color: '#FFFFFF', lineHeight: 22, fontWeight: '400',
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+  },
 
   keyBanner: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 4,
+    borderRadius: 12, borderWidth: 1, padding: 14, marginTop: 8, marginBottom: 4,
   },
-  keyBannerText: { flex: 1, fontSize: 13, lineHeight: 20 },
-
-  hint: {
-    borderRadius: 14, borderWidth: 1, padding: 16, marginBottom: 4,
-  },
-  hintText: { fontSize: 14, lineHeight: 22 },
+  keyBannerText: { fontSize: 13, lineHeight: 20 },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 12, paddingVertical: 10,
-    borderTopWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderTopWidth: 0.5,
   },
   input: {
-    flex: 1, fontSize: 15, borderRadius: 22, borderWidth: 1,
+    flex: 1, fontSize: 15, borderRadius: 22,
     paddingHorizontal: 16, paddingVertical: 11,
     outlineStyle: 'none',
   },
   sendBtn: {
-    width: 42, height: 42, borderRadius: 21,
+    width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
   },
-  sendBtnOff: { opacity: 0.35 },
+  sendBtnOff: { opacity: 0.3 },
 });

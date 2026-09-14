@@ -4,82 +4,82 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const THEME_KEY = '@bloom_theme_v3';
 const ThemeContext = createContext(null);
 
-// ─── Forest & Clay palette ────────────────────────────
+// ─── Studio Minimal palette ───────────────────────────
 const LIGHT = {
-  bg:           '#FAFAF8',
+  bg:           '#FFFFFF',
   card:         '#FFFFFF',
-  input:        '#FFFFFF',
-  border:       '#EDEBE7',
-  text:         '#1E2B20',
-  subtext:      '#7A8A7C',
-  muted:        '#9AA49C',
+  input:        '#F5F5F4',
+  border:       '#E8E8E7',
+  text:         '#0F0F0F',
+  subtext:      '#6B6B6B',
+  muted:        '#ABABAB',
 
-  // Forest sage — primary accent
-  accent:       '#4A7C59',
-  accentDark:   '#355A40',
-  accentPale:   '#EBF3EE',
-  accentLight:  '#D0E8D8',
+  // Dusty sage — primary accent
+  accent:       '#7A9A89',
+  accentDark:   '#5C7A6A',
+  accentPale:   '#EFF4F2',
+  accentLight:  '#DDE8E3',
 
-  // Terracotta — secondary / warm highlight
-  clay:         '#C4744A',
-  clayPale:     '#FCF0EB',
-  clayLight:    '#F0E4DA',
+  // Muted sand — secondary / warm highlight
+  clay:         '#B09080',
+  clayPale:     '#F6F1EF',
+  clayLight:    '#EAE2DE',
 
   // Semantic
-  urgent:       '#B54040',
-  urgentPale:   '#FAEAEA',
+  urgent:       '#B85050',
+  urgentPale:   '#FDF1F1',
 
-  // User chat bubbles — near-black for clean contrast
-  chatBubble:   '#1E2B20',
+  // User chat bubbles — near-black (clean, not green)
+  chatBubble:   '#0F0F0F',
 
-  // Compat aliases (consumed by existing screens)
-  moss:         '#4A7C59',
-  sagePale:     '#EBF3EE',
-  sageLight:    '#D0E8D8',
-  pinkDark:     '#C4744A',
+  // Compat aliases
+  moss:         '#7A9A89',
+  sagePale:     '#EFF4F2',
+  sageLight:    '#DDE8E3',
+  pinkDark:     '#0F0F0F',
   white:        '#FFFFFF',
   shell:        '#FFFFFF',
-  overlay:      'rgba(30,43,32,0.18)',
+  overlay:      'rgba(0,0,0,0.14)',
 
-  pillPinkBg:   '#FCF0EB',   pillPinkText: '#B54040',
-  pillLavBg:    '#EBF3EE',   pillLavText:  '#4A7C59',
-  pillSkyBg:    '#F0F2F0',   pillSkyText:  '#7A8A7C',
+  pillPinkBg:   '#FDF1F1',   pillPinkText: '#B85050',
+  pillLavBg:    '#EFF4F2',   pillLavText:  '#7A9A89',
+  pillSkyBg:    '#F4F4F4',   pillSkyText:  '#6B6B6B',
 };
 
 const DARK = {
-  bg:           '#0E1210',
-  card:         '#1A211C',
-  input:        '#0E1210',
-  border:       '#2A332C',
-  text:         '#E8F0EA',
-  subtext:      '#7A8A7C',
-  muted:        '#6A7A6C',
+  bg:           '#111111',
+  card:         '#1A1A1A',
+  input:        '#222222',
+  border:       '#2E2E2E',
+  text:         '#F0EFEE',
+  subtext:      '#888888',
+  muted:        '#555555',
 
-  accent:       '#6A9E78',
-  accentDark:   '#8AB898',
-  accentPale:   '#1A2A1E',
-  accentLight:  '#203028',
+  accent:       '#9BB8A8',
+  accentDark:   '#B8CFBF',
+  accentPale:   '#1C2520',
+  accentLight:  '#243028',
 
-  clay:         '#D4845A',
-  clayPale:     '#2A1C14',
-  clayLight:    '#342218',
+  clay:         '#C0A090',
+  clayPale:     '#27201E',
+  clayLight:    '#322824',
 
-  urgent:       '#D06060',
+  urgent:       '#E06060',
   urgentPale:   '#2A1818',
 
-  chatBubble:   '#6A9E78',
+  chatBubble:   '#9BB8A8',
 
-  moss:         '#6A9E78',
-  sagePale:     '#1A2A1E',
-  sageLight:    '#203028',
-  pinkDark:     '#D4845A',
-  white:        '#1A211C',
-  shell:        '#1A211C',
+  moss:         '#9BB8A8',
+  sagePale:     '#1C2520',
+  sageLight:    '#243028',
+  pinkDark:     '#F0EFEE',
+  white:        '#1A1A1A',
+  shell:        '#1A1A1A',
   overlay:      'rgba(0,0,0,0.5)',
 
-  pillPinkBg:   '#2A1818',   pillPinkText: '#D06060',
-  pillLavBg:    '#1A2A1E',   pillLavText:  '#6A9E78',
-  pillSkyBg:    '#1C201C',   pillSkyText:  '#7A8A7C',
+  pillPinkBg:   '#2A1818',   pillPinkText: '#E06060',
+  pillLavBg:    '#1C2520',   pillLavText:  '#9BB8A8',
+  pillSkyBg:    '#1E1E1E',   pillSkyText:  '#888888',
 };
 
 export function ThemeProvider({ children }) {

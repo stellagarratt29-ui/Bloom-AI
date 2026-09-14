@@ -50,7 +50,7 @@ export default function GoalsScreen({ navigation }) {
         <View style={s.titleRow}>
           <Text style={[s.title, { color: t.pinkDark }]}>Goals</Text>
           <TouchableOpacity onPress={() => setShowAdd(v => !v)} style={[s.addBtn, { backgroundColor: t.moss }]}>
-            <Text style={{ color: C.white, fontWeight: '700', fontSize: 13 }}>+ Add goal</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>+ Add goal</Text>
           </TouchableOpacity>
         </View>
         <Text style={[s.sub, { color: t.subtext }]}>Big things you're working toward.</Text>
@@ -211,11 +211,11 @@ const s = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
   title: {
     fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
   addBtn: {
     fontSize: 13, fontWeight: '700',
-    color: C.white,
+    color: '#FFFFFF',
     paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20,
     overflow: 'hidden',
   },
@@ -234,7 +234,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 18, borderRadius: 12, alignItems: 'center',
   },
   saveBtnOff: { opacity: 0.35 },
-  saveBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
+  saveBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
   creatingNote: { fontSize: 12, textAlign: 'center' },
 
   empty: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 },
@@ -244,11 +244,11 @@ const s = StyleSheet.create({
   },
   emptyHead: {
     fontSize: 22, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, maxWidth: 270, marginBottom: 24, fontWeight: '400' },
   emptyBtn: { paddingVertical: 13, paddingHorizontal: 28, borderRadius: 24 },
-  emptyBtnText: { color: C.white, fontWeight: '700', fontSize: 15 },
+  emptyBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
 
   goalCard: {
     borderRadius: 18, borderWidth: 1, borderLeftWidth: 4,
@@ -309,5 +309,5 @@ const s = StyleSheet.create({
     flex: 2, paddingVertical: 13, borderRadius: 12,
     alignItems: 'center',
   },
-  modalSaveText: { fontSize: 14, fontWeight: '700', color: C.white },
+  modalSaveText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 });

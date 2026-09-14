@@ -116,7 +116,7 @@ export default function HobbiesScreen({ navigation }) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         <View style={s.titleRow}>
-          <Text style={[s.title, { color: t.moss }]}>Grow</Text>
+          <Text style={[s.title, { color: t.text }]}>Grow</Text>
           <TouchableOpacity onPress={() => navigation.navigate('YearReview')} style={s.yearBtn}>
             <Text style={[s.yearBtnText, { color: t.clay }]}>Year in review ✦</Text>
           </TouchableOpacity>
@@ -199,7 +199,7 @@ export default function HobbiesScreen({ navigation }) {
                 disabled={!hobbyName.trim() || generating}
               >
                 {generating
-                  ? <ActivityIndicator size="small" color={C.white} />
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
                   : <Text style={s.createBtnText}>Build my curriculum →</Text>}
               </TouchableOpacity>
             </View>
@@ -269,7 +269,7 @@ export default function HobbiesScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity style={[s.modalSave, { backgroundColor: t.moss }, regen && { opacity: 0.6 }]} onPress={saveEdit} disabled={regen}>
                 {regen
-                  ? <ActivityIndicator size="small" color={C.white} />
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
                   : <Text style={s.modalSaveText}>Save</Text>}
               </TouchableOpacity>
             </View>
@@ -304,8 +304,8 @@ const s = StyleSheet.create({
 
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   title: {
-    fontSize: 34, fontWeight: '800', letterSpacing: -0.8,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+    fontSize: 28, fontWeight: '600', letterSpacing: -0.5,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
   yearBtn: { paddingVertical: 2 },
   yearBtnText: { fontSize: 13, fontWeight: '700' },
@@ -313,8 +313,8 @@ const s = StyleSheet.create({
 
   empty: { alignItems: 'center', paddingTop: 56, paddingBottom: 40 },
   emptyHead: {
-    fontSize: 22, fontWeight: '800', marginBottom: 10, letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : undefined,
+    fontSize: 22, fontWeight: '600', marginBottom: 10, letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
   },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, maxWidth: 270, fontWeight: '400' },
 
@@ -378,7 +378,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   createBtnOff: { opacity: 0.4 },
-  createBtnText: { fontSize: 14, fontWeight: '700', color: C.white },
+  createBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   generatingNote: { fontSize: 12, textAlign: 'center', marginTop: 12 },
 
   addBtn: {
