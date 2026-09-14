@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bloom — Pause</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #FAFAF8;
+      --card:    #FFFFFF;
+      --text:    #1E2B20;
+      --sub:     #7A8A7C;
+      --border:  #EDEBE7;
+      --accent:  #4A7C59;
+      --apal:    #EBF3EE;
+      --clay:    #C4744A;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:    #0E1210;
+        --card:  #1A211C;
+        --text:  #E8F0EA;
+        --sub:   #7A8A7C;
+        --border:#2A332C;
+        --accent:#6A9E78;
+        --apal:  #1A2A1E;
+        --clay:  #D4845A;
+      }
+    }
+
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 0;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 36px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 32px rgba(30,43,32,0.06);
+    }
+
+    .site-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: var(--apal);
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.4px;
+      margin-bottom: 14px;
+    }
+
+    p {
+      font-size: 15px;
+      color: var(--sub);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    /* Countdown */
+    .countdown-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+    .countdown {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -2px;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .countdown-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--sub);
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      display: block;
+      background: var(--accent);
+      color: #FFF;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 16px 24px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-secondary {
+      display: block;
+      background: transparent;
+      color: var(--sub);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--sub); }
+
+    .pause-btn {
+      background: transparent;
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      border: none;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-top: 20px;
+      text-decoration: underline;
+      text-decoration-color: transparent;
+      transition: text-decoration-color 0.15s;
+    }
+    .pause-btn:hover { text-decoration-color: var(--sub); }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 11px;
+      color: var(--sub);
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">🌿 Bloom</div>
+
+  <div class="card">
+    <div class="site-pill" id="site-pill">Social media</div>
+
+    <h1>You were heading somewhere distracting.</h1>
+    <p>Take a breath. Here's your Bloom plan instead — everything you meant to get done today.</p>
+
+    <!-- 10-second countdown -->
+    <div class="countdown-wrap">
+      <div class="countdown" id="countdown">10</div>
+      <div class="countdown-label">seconds — then you decide</div>
+    </div>
+
+    <div class="actions">
+      <a href="https://stellagarratt29-ui.github.io/Bloom-AI/" class="btn-primary" id="bloom-link">
+        Open Bloom →
+      </a>
+      <button class="btn-secondary" id="continue-btn" disabled>
+        Continue to site anyway
+      </button>
+    </div>
+
+    <button class="pause-btn" id="pause-btn">Pause blocking for 5 minutes</button>
+  </div>
+
+  <div class="footer">Bloom Focus Mode is on · Click the 🌿 icon in your toolbar to manage</div>
+
+  <script>
+    // Parse site name from URL
+    const params = new URLSearchParams(location.search);
+    const site = params.get('site') || 'that site';
+    document.getElementById('site-pill').textContent = site;
+
+    // Store the original destination (passed via referrer or history)
+    const originalUrl = document.referrer || null;
+
+    // Countdown
+    let count = 10;
+    const countEl = document.getElementById('countdown');
+    const continueBtn = document.getElementById('continue-btn');
+
+    const tick = setInterval(() => {
+      count--;
+      countEl.textContent = count;
+      if (count <= 0) {
+        clearInterval(tick);
+        continueBtn.disabled = false;
+        continueBtn.style.opacity = '1';
+        countEl.textContent = '0';
+      }
+    }, 1000);
+
+    // Continue anyway — pause blocking for 1 min and navigate back
+    continueBtn.addEventListener('click', () => {
+      if (continueBtn.disabled) return;
+      chrome.runtime.sendMessage({ type: 'PAUSE_BLOCKING', minutes: 1 }, () => {
+        // Try to go back, or close
+        if (history.length > 1) { history.back(); }
+        else { window.close(); }
+      });
+    });
+
+    // Pause blocking for 5 minutes
+    document.getElementById('pause-btn').addEventListener('click', () => {
+      chrome.runtime.sendMessage({ type: 'PAUSE_BLOCKING', minutes: 5 }, (res) => {
+        const btn = document.getElementById('pause-btn');
+        btn.textContent = '✓ Blocking paused for 5 minutes';
+        btn.style.cursor = 'default';
+        if (history.length > 1) {
+          setTimeout(() => history.back(), 600);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

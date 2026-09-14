@@ -1,0 +1,99 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=YouTube&color=%23FF0000" }
+    },
+    "condition": {
+      "urlFilter": "||youtube.com^",
+      "resourceTypes": ["main_frame"],
+      "excludedInitiatorDomains": ["youtube.com"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=TikTok&color=%23010101" }
+    },
+    "condition": {
+      "urlFilter": "||tiktok.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=Instagram&color=%23E1306C" }
+    },
+    "condition": {
+      "urlFilter": "||instagram.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=X+%2F+Twitter&color=%23000000" }
+    },
+    "condition": {
+      "urlFilter": "||twitter.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=X+%2F+Twitter&color=%23000000" }
+    },
+    "condition": {
+      "urlFilter": "||x.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 6,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=Reddit&color=%23FF4500" }
+    },
+    "condition": {
+      "urlFilter": "||reddit.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 7,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=Facebook&color=%231877F2" }
+    },
+    "condition": {
+      "urlFilter": "||facebook.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 8,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": { "extensionPath": "/blocked.html?site=Snapchat&color=%23FFFC00" }
+    },
+    "condition": {
+      "urlFilter": "||snapchat.com^",
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

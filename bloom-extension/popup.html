@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bloom Focus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #FAFAF8;
+      --card:    #FFFFFF;
+      --text:    #1E2B20;
+      --sub:     #7A8A7C;
+      --border:  #EDEBE7;
+      --accent:  #4A7C59;
+      --apal:    #EBF3EE;
+      --alight:  #D0E8D8;
+      --clay:    #C4744A;
+      --claypal: #FCF0EB;
+      --urgent:  #B54040;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:    #0E1210;
+        --card:  #1A211C;
+        --text:  #E8F0EA;
+        --sub:   #7A8A7C;
+        --border:#2A332C;
+        --accent:#6A9E78;
+        --apal:  #1A2A1E;
+        --alight:#203028;
+        --clay:  #D4845A;
+        --claypal:#2A1C14;
+        --urgent:#D06060;
+      }
+    }
+
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      width: 300px;
+      padding: 0;
+    }
+
+    /* Header */
+    .header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 16px; font-weight: 800; color: var(--accent); }
+    .logo span { font-weight: 400; color: var(--sub); font-size: 12px; margin-left: 4px; }
+
+    /* Toggle */
+    .toggle-row {
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .toggle-info { flex: 1; }
+    .toggle-label { font-size: 14px; font-weight: 700; }
+    .toggle-sub   { font-size: 11px; color: var(--sub); margin-top: 2px; line-height: 1.5; }
+
+    /* Custom toggle switch */
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 26px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+    input:checked + .slider { background: var(--accent); }
+    input:checked + .slider::before { transform: translateX(20px); }
+
+    /* Blocked count */
+    .stat-row {
+      margin: 0 18px 16px;
+      background: var(--apal);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stat-num  { font-size: 22px; font-weight: 800; color: var(--accent); }
+    .stat-label{ font-size: 12px; color: var(--sub); line-height: 1.4; }
+
+    /* Site list */
+    .section-label {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.6px;
+      text-transform: uppercase; color: var(--sub);
+      padding: 0 18px; margin-bottom: 8px;
+    }
+
+    .site-list { padding: 0 18px; display: flex; flex-direction: column; gap: 6px; }
+
+    .site-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .site-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .site-name { flex: 1; font-size: 13px; font-weight: 600; }
+    .site-toggle { flex-shrink: 0; }
+
+    /* Footer */
+    .footer {
+      padding: 14px 18px 16px;
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .open-bloom {
+      display: block;
+      background: var(--accent);
+      color: #FFF;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+      transition: opacity 0.15s;
+    }
+    .open-bloom:hover { opacity: 0.88; }
+
+    .off-note {
+      font-size: 11px; color: var(--sub); text-align: center;
+      margin-top: 8px; line-height: 1.5;
+    }
+
+    /* Status badge */
+    .status-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px; border-radius: 6px;
+    }
+    .status-on  { background: var(--apal);    color: var(--accent); }
+    .status-off { background: var(--border);  color: var(--sub); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">🌿 Bloom <span>Focus Mode</span></div>
+    <div class="status-badge status-off" id="status-badge">OFF</div>
+  </div>
+
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Block distracting sites</div>
+      <div class="toggle-sub" id="toggle-sub">Turn on to block YouTube, TikTok, Instagram and more.</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="block-toggle" />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="stat-row" id="stat-row" style="display:none">
+    <div class="stat-num" id="blocked-count">0</div>
+    <div class="stat-label">sites redirected<br>to Bloom today</div>
+  </div>
+
+  <div class="section-label" style="margin-top:4px">Blocked sites</div>
+
+  <div class="site-list">
+    <div class="site-item">
+      <div class="site-dot" style="background:#FF0000"></div>
+      <span class="site-name">YouTube</span>
+    </div>
+    <div class="site-item">
+      <div class="site-dot" style="background:#010101"></div>
+      <span class="site-name">TikTok</span>
+    </div>
+    <div class="site-item">
+      <div class="site-dot" style="background:#E1306C"></div>
+      <span class="site-name">Instagram</span>
+    </div>
+    <div class="site-item">
+      <div class="site-dot" style="background:#000000"></div>
+      <span class="site-name">X / Twitter</span>
+    </div>
+    <div class="site-item">
+      <div class="site-dot" style="background:#FF4500"></div>
+      <span class="site-name">Reddit</span>
+    </div>
+    <div class="site-item">
+      <div class="site-dot" style="background:#1877F2"></div>
+      <span class="site-name">Facebook</span>
+    </div>
+    <div class="site-item">
+      <div class="site-dot" style="background:#FFFC00;border:1px solid #DDD"></div>
+      <span class="site-name">Snapchat</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://stellagarratt29-ui.github.io/Bloom-AI/" target="_blank" class="open-bloom">
+      Open Bloom →
+    </a>
+    <div class="off-note" id="off-note">Blocking is off. Toggle above to start.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

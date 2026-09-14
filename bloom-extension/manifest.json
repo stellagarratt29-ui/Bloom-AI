@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Bloom — Focus Mode",
+  "short_name": "Bloom Focus",
+  "version": "1.0.0",
+  "description": "Block distracting sites and redirect you to Bloom. Built for ADHD brains.",
+
+  "permissions": [
+    "declarativeNetRequest",
+    "storage",
+    "alarms"
+  ],
+
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.tiktok.com/*",
+    "*://*.instagram.com/*",
+    "*://*.twitter.com/*",
+    "*://*.x.com/*",
+    "*://*.reddit.com/*",
+    "*://*.facebook.com/*",
+    "*://*.snapchat.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Bloom Focus"
+  },
+
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "default_ruleset",
+        "enabled": false,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
