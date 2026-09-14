@@ -1,83 +1,83 @@
 // ─────────────────────────────────────────────────────
-//  Palette — Clean Minimal
-//  Warm near-white · warm near-black · single amber accent
+//  Palette — Forest & Clay
+//  Warm near-white · deep forest ink · sage green accent · terracotta secondary
 // ─────────────────────────────────────────────────────
 export const C = {
   // Grounds
-  cream:    '#F8F7F4',   // warm near-white — app background
+  cream:    '#FAFAF8',   // warm near-white — app background
   white:    '#FFFFFF',   // card surfaces
-  ink:      '#1A1918',   // warm near-black
+  ink:      '#1E2B20',   // deep warm forest-black (primary text)
 
-  // Single accent — warm amber
-  moss:     '#BF7B4B',   // primary action / accent (alias kept for compat)
-  mossDark: '#A0622C',
-  clay:     '#E6E4E0',   // neutral secondary
+  // Primary accent — sage forest green
+  moss:     '#4A7C59',   // primary action / accent
+  mossDark: '#355A40',
+  clay:     '#C4744A',   // secondary accent — warm terracotta
 
   // Support
-  sage:     '#A8A5A0',
-  muted:    '#7A7875',
-  border:   '#E6E4E0',
+  sage:     '#7A8A7C',
+  muted:    '#7A8A7C',
+  border:   '#EDEBE7',
   shell:    '#FFFFFF',
 
-  // Tinted highlights — amber tints
-  sagePale:  '#FBF0E6',
-  sageLight: '#F2DCC8',
-  sageMid:   '#E8C8A8',
-  goldPale:  '#F0EFEC',
-  goldLight: '#E6E4E0',
-  clayLight: '#ECEAE6',
-  clayPale:  '#F0EFEC',
+  // Tinted highlights
+  sagePale:  '#EBF3EE',  // sage tint — selected states
+  sageLight: '#D0E8D8',  // lighter sage tint
+  sageMid:   '#A8CCB4',
+  goldPale:  '#F8F3EE',
+  goldLight: '#F0E8DE',
+  clayLight: '#F0E4DA',
+  clayPale:  '#FCF0EB',
 
   // Compat aliases
-  pinkDark:  '#1A1918',
-  forest:    '#1A1918',
-  gold:      '#BF7B4B',
+  pinkDark:  '#C4744A',  // terracotta for section titles
+  forest:    '#1E2B20',
+  gold:      '#C4744A',
 
   // Legacy washes
-  lavWash:  '#FBF0E6',
-  mintWash: '#F0EFEC',
-  skyWash:  '#F0EFEC',
-  pinkWash: '#FAEAEA',
-  lavender: '#A8A5A0',
-  mint:     '#A8A5A0',
-  sky:      '#A8A5A0',
-  pink:     '#D4BAB0',
-  lavDark:  '#BF7B4B',
-  mintDark: '#BF7B4B',
-  skyDark:  '#BF7B4B',
+  lavWash:  '#EBF3EE',
+  mintWash: '#F0F4F0',
+  skyWash:  '#EBF3EE',
+  pinkWash: '#FCF0EB',
+  lavender: '#A8B8AA',
+  mint:     '#A8CCB4',
+  sky:      '#A8C0B4',
+  pink:     '#E4C4B0',
+  lavDark:  '#4A7C59',
+  mintDark: '#4A7C59',
+  skyDark:  '#4A7C59',
 
   // Priority pill colors
-  pillPinkBg:   '#FAEAEA',   pillPinkText: '#C24B4B',   // urgent
-  pillLavBg:    '#FBF0E6',   pillLavText:  '#BF7B4B',   // medium
-  pillSkyBg:    '#F0EFEC',   pillSkyText:  '#7A7875',   // low
-  pillMintBg:   '#FBF0E6',   pillMintText: '#BF7B4B',
+  pillPinkBg:   '#FCF0EB',   pillPinkText: '#B54040',   // urgent
+  pillLavBg:    '#EBF3EE',   pillLavText:  '#4A7C59',   // medium
+  pillSkyBg:    '#F0F2F0',   pillSkyText:  '#7A8A7C',   // low
+  pillMintBg:   '#EBF3EE',   pillMintText: '#4A7C59',
 
-  // Dark mode ground
-  darkBg:      '#0F0E0D',
-  darkCard:    '#1C1A18',
-  darkBorder:  '#2E2B28',
-  darkText:    '#F0EEE8',
-  darkSubtext: '#8A8784',
-  darkInput:   '#0F0E0D',
+  // Dark mode
+  darkBg:      '#0E1210',
+  darkCard:    '#1A211C',
+  darkBorder:  '#2A332C',
+  darkText:    '#E8F0EA',
+  darkSubtext: '#7A8A7C',
+  darkInput:   '#0E1210',
 
-  overlay: 'rgba(26,25,24,0.22)',
+  overlay: 'rgba(30,43,32,0.22)',
 };
 
 export const AESTHETICS = {
   bloom: {
-    name: 'Bloom', emoji: '✦', description: 'Warm minimal', isDark: false,
-    bg:            '#F8F7F4',
+    name: 'Bloom', emoji: '✦', description: 'Forest & clay', isDark: false,
+    bg:            '#FAFAF8',
     card:          '#FFFFFF',
-    accent:        '#BF7B4B',
-    accentDark:    '#A0622C',
-    accentPale:    '#FBF0E6',
-    accentLight:   '#F2DCC8',
-    ink:           '#1A1918',
-    subtext:       '#7A7875',
-    border:        '#E6E4E0',
-    chatBubble:    '#1A1918',
-    calloutAccent: '#F2DCC8',
+    accent:        '#4A7C59',
+    accentDark:    '#355A40',
+    accentPale:    '#EBF3EE',
+    accentLight:   '#D0E8D8',
+    ink:           '#1E2B20',
+    subtext:       '#7A8A7C',
+    border:        '#EDEBE7',
+    chatBubble:    '#1E2B20',
+    calloutAccent: '#D0E8D8',
   },
 };
 
-export const GOAL_ACCENTS = ['#BF7B4B', '#D4935E', '#E8AA78', '#A0622C', '#8A5030'];
+export const GOAL_ACCENTS = ['#4A7C59', '#6A9E78', '#355A40', '#C4744A', '#A8CCB4'];

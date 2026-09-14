@@ -4,74 +4,82 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const THEME_KEY = '@bloom_theme_v3';
 const ThemeContext = createContext(null);
 
-// ─── Token sets ───────────────────────────────────────
+// ─── Forest & Clay palette ────────────────────────────
 const LIGHT = {
-  bg:           '#F8F7F4',
+  bg:           '#FAFAF8',
   card:         '#FFFFFF',
   input:        '#FFFFFF',
-  border:       '#E6E4E0',
-  text:         '#1A1918',
-  subtext:      '#7A7875',
-  muted:        '#9E9B97',
+  border:       '#EDEBE7',
+  text:         '#1E2B20',
+  subtext:      '#7A8A7C',
+  muted:        '#9AA49C',
 
-  // Accent — warm amber
-  accent:       '#BF7B4B',
-  accentDark:   '#A0622C',
-  accentPale:   '#FBF0E6',
-  accentLight:  '#F2DCC8',
+  // Forest sage — primary accent
+  accent:       '#4A7C59',
+  accentDark:   '#355A40',
+  accentPale:   '#EBF3EE',
+  accentLight:  '#D0E8D8',
+
+  // Terracotta — secondary / warm highlight
+  clay:         '#C4744A',
+  clayPale:     '#FCF0EB',
+  clayLight:    '#F0E4DA',
 
   // Semantic
-  urgent:       '#C24B4B',
+  urgent:       '#B54040',
   urgentPale:   '#FAEAEA',
 
-  // Chat — user bubbles are near-black (clean/deliberate)
-  chatBubble:   '#1A1918',
+  // User chat bubbles — near-black for clean contrast
+  chatBubble:   '#1E2B20',
 
-  // Compat aliases
-  moss:         '#BF7B4B',
-  sagePale:     '#FBF0E6',
-  sageLight:    '#F2DCC8',
-  pinkDark:     '#1A1918',
+  // Compat aliases (consumed by existing screens)
+  moss:         '#4A7C59',
+  sagePale:     '#EBF3EE',
+  sageLight:    '#D0E8D8',
+  pinkDark:     '#C4744A',
   white:        '#FFFFFF',
   shell:        '#FFFFFF',
-  overlay:      'rgba(26,25,24,0.18)',
+  overlay:      'rgba(30,43,32,0.18)',
 
-  // Priority pills
-  pillPinkBg:   '#FAEAEA',   pillPinkText: '#C24B4B',
-  pillLavBg:    '#FBF0E6',   pillLavText:  '#BF7B4B',
-  pillSkyBg:    '#F0EFEC',   pillSkyText:  '#7A7875',
+  pillPinkBg:   '#FCF0EB',   pillPinkText: '#B54040',
+  pillLavBg:    '#EBF3EE',   pillLavText:  '#4A7C59',
+  pillSkyBg:    '#F0F2F0',   pillSkyText:  '#7A8A7C',
 };
 
 const DARK = {
-  bg:           '#0F0E0D',
-  card:         '#1C1A18',
-  input:        '#0F0E0D',
-  border:       '#2E2B28',
-  text:         '#F0EEE8',
-  subtext:      '#8A8784',
-  muted:        '#8A8784',
+  bg:           '#0E1210',
+  card:         '#1A211C',
+  input:        '#0E1210',
+  border:       '#2A332C',
+  text:         '#E8F0EA',
+  subtext:      '#7A8A7C',
+  muted:        '#6A7A6C',
 
-  accent:       '#D4935E',
-  accentDark:   '#E8AA78',
-  accentPale:   '#241A10',
-  accentLight:  '#342410',
+  accent:       '#6A9E78',
+  accentDark:   '#8AB898',
+  accentPale:   '#1A2A1E',
+  accentLight:  '#203028',
 
-  urgent:       '#D47070',
+  clay:         '#D4845A',
+  clayPale:     '#2A1C14',
+  clayLight:    '#342218',
+
+  urgent:       '#D06060',
   urgentPale:   '#2A1818',
 
-  chatBubble:   '#D4935E',
+  chatBubble:   '#6A9E78',
 
-  moss:         '#D4935E',
-  sagePale:     '#241A10',
-  sageLight:    '#342410',
-  pinkDark:     '#D4935E',
-  white:        '#1C1A18',
-  shell:        '#1C1A18',
+  moss:         '#6A9E78',
+  sagePale:     '#1A2A1E',
+  sageLight:    '#203028',
+  pinkDark:     '#D4845A',
+  white:        '#1A211C',
+  shell:        '#1A211C',
   overlay:      'rgba(0,0,0,0.5)',
 
-  pillPinkBg:   '#2A1818',   pillPinkText: '#D47070',
-  pillLavBg:    '#241A10',   pillLavText:  '#D4935E',
-  pillSkyBg:    '#1E1C1A',   pillSkyText:  '#8A8784',
+  pillPinkBg:   '#2A1818',   pillPinkText: '#D06060',
+  pillLavBg:    '#1A2A1E',   pillLavText:  '#6A9E78',
+  pillSkyBg:    '#1C201C',   pillSkyText:  '#7A8A7C',
 };
 
 export function ThemeProvider({ children }) {
@@ -99,7 +107,6 @@ export function ThemeProvider({ children }) {
 
   const colors = isDark ? DARK : LIGHT;
 
-  // Compat stubs
   const aesthetic    = 'bloom';
   const setAesthetic = () => {};
   const setBgTheme   = () => {};
