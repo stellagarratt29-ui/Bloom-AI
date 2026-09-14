@@ -552,7 +552,7 @@ const s = StyleSheet.create({
   },
   title: {
     fontSize: 22, fontWeight: '600', letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   dateLabel: { fontSize: 12, fontWeight: '400', marginTop: 1 },
   headerActions: { flexDirection: 'row', gap: 8 },

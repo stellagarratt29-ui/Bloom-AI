@@ -211,7 +211,7 @@ const s = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
   title: {
     fontSize: 28, fontWeight: '600', letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   addBtn: {
     fontSize: 13, fontWeight: '700',
@@ -244,7 +244,7 @@ const s = StyleSheet.create({
   },
   emptyHead: {
     fontSize: 22, fontWeight: '600', marginBottom: 10, letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, maxWidth: 270, marginBottom: 24, fontWeight: '400' },
   emptyBtn: { paddingVertical: 13, paddingHorizontal: 28, borderRadius: 24 },

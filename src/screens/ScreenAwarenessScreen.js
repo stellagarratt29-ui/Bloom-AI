@@ -364,7 +364,7 @@ const s = StyleSheet.create({
 
   title: {
     fontSize: 28, fontWeight: '600', lineHeight: 36, letterSpacing: -0.5, marginBottom: 6,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   sub: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
 

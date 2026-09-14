@@ -1,43 +1,43 @@
 // ─────────────────────────────────────────────────────
-//  Palette — Studio Minimal
-//  Pure white · near-black text · dusty sage accent · muted sand secondary
+//  Palette — SMEG Warm
+//  Warm cream · warm near-black · sage green · dusty peach
 // ─────────────────────────────────────────────────────
 export const C = {
   // Grounds
-  cream:    '#FFFFFF',   // pure white — app background
+  cream:    '#FAF7F2',   // warm cream — app background
   white:    '#FFFFFF',   // card surfaces
-  ink:      '#0F0F0F',   // near-black (primary text)
+  ink:      '#1A1510',   // warm near-black (primary text)
 
-  // Primary accent — dusty sage (muted, refined)
+  // Primary accent — sage green (SMEG signature)
   moss:     '#7A9A89',
   mossDark: '#5C7A6A',
-  clay:     '#B09080',   // muted warm sand/rose (secondary)
+  clay:     '#C98B6B',   // dusty peach / warm coral (SMEG secondary)
 
   // Support
-  sage:     '#6B6B6B',
-  muted:    '#6B6B6B',
-  border:   '#E8E8E7',
-  shell:    '#FFFFFF',
+  sage:     '#6B6560',
+  muted:    '#6B6560',
+  border:   '#E5DDD5',   // warm border
+  shell:    '#FAF7F2',
 
   // Tinted highlights
-  sagePale:  '#EFF4F2',
-  sageLight: '#DDE8E3',
+  sagePale:  '#EBF2EE',
+  sageLight: '#D5E8DF',
   sageMid:   '#AACABB',
-  goldPale:  '#F5F1ED',
-  goldLight: '#EDE7E2',
-  clayLight: '#EAE2DE',
-  clayPale:  '#F6F1EF',
+  goldPale:  '#F7EFE9',
+  goldLight: '#EEE0D5',
+  clayLight: '#EEE0D5',
+  clayPale:  '#F7EFE9',
 
   // Compat aliases
-  pinkDark:  '#0F0F0F',   // used by GoalsScreen title — now near-black
-  forest:    '#0F0F0F',
-  gold:      '#B09080',
+  pinkDark:  '#1A1510',
+  forest:    '#1A1510',
+  gold:      '#C98B6B',
 
   // Legacy washes
-  lavWash:  '#EFF4F2',
-  mintWash: '#EFF4F2',
-  skyWash:  '#EFF4F2',
-  pinkWash: '#F6F1EF',
+  lavWash:  '#EBF2EE',
+  mintWash: '#EBF2EE',
+  skyWash:  '#EBF2EE',
+  pinkWash: '#F7EFE9',
   lavender: '#AACABB',
   mint:     '#AACABB',
   sky:      '#AACABB',
@@ -46,38 +46,38 @@ export const C = {
   mintDark: '#7A9A89',
   skyDark:  '#7A9A89',
 
-  // Priority pill colors — very soft
-  pillPinkBg:   '#FDF1F1',   pillPinkText: '#B85050',   // urgent
-  pillLavBg:    '#EFF4F2',   pillLavText:  '#7A9A89',   // medium
-  pillSkyBg:    '#F4F4F4',   pillSkyText:  '#6B6B6B',   // low
-  pillMintBg:   '#EFF4F2',   pillMintText: '#7A9A89',
+  // Priority pill colors
+  pillPinkBg:   '#FDEEED',   pillPinkText: '#C05A5A',
+  pillLavBg:    '#EBF2EE',   pillLavText:  '#7A9A89',
+  pillSkyBg:    '#F0EBE4',   pillSkyText:  '#6B6560',
+  pillMintBg:   '#EBF2EE',   pillMintText: '#7A9A89',
 
   // Dark mode
-  darkBg:      '#111111',
-  darkCard:    '#1A1A1A',
-  darkBorder:  '#2E2E2E',
-  darkText:    '#F0EFEE',
-  darkSubtext: '#888888',
-  darkInput:   '#111111',
+  darkBg:      '#1A1510',
+  darkCard:    '#231F1A',
+  darkBorder:  '#3A342D',
+  darkText:    '#F5F0EA',
+  darkSubtext: '#9A9088',
+  darkInput:   '#2C2720',
 
-  overlay: 'rgba(0,0,0,0.18)',
+  overlay: 'rgba(26,21,16,0.16)',
 };
 
 export const AESTHETICS = {
   bloom: {
-    name: 'Bloom', emoji: '✦', description: 'Studio Minimal', isDark: false,
-    bg:            '#FFFFFF',
+    name: 'Bloom', emoji: '✦', description: 'SMEG Warm',
+    bg:            '#FAF7F2',
     card:          '#FFFFFF',
     accent:        '#7A9A89',
     accentDark:    '#5C7A6A',
-    accentPale:    '#EFF4F2',
-    accentLight:   '#DDE8E3',
-    ink:           '#0F0F0F',
-    subtext:       '#6B6B6B',
-    border:        '#E8E8E7',
-    chatBubble:    '#0F0F0F',
-    calloutAccent: '#DDE8E3',
+    accentPale:    '#EBF2EE',
+    accentLight:   '#D5E8DF',
+    ink:           '#1A1510',
+    subtext:       '#6B6560',
+    border:        '#E5DDD5',
+    chatBubble:    '#1A1510',
+    calloutAccent: '#D5E8DF',
   },
 };
 
-export const GOAL_ACCENTS = ['#7A9A89', '#5C7A6A', '#9BB5A8', '#B09080', '#AACABB'];
+export const GOAL_ACCENTS = ['#7A9A89', '#5C7A6A', '#9BB5A8', '#C98B6B', '#AACABB'];

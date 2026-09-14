@@ -305,7 +305,7 @@ const s = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   title: {
     fontSize: 28, fontWeight: '600', letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   yearBtn: { paddingVertical: 2 },
   yearBtnText: { fontSize: 13, fontWeight: '700' },
@@ -314,7 +314,7 @@ const s = StyleSheet.create({
   empty: { alignItems: 'center', paddingTop: 56, paddingBottom: 40 },
   emptyHead: {
     fontSize: 22, fontWeight: '600', marginBottom: 10, letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23, maxWidth: 270, fontWeight: '400' },
 

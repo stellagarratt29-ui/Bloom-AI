@@ -141,16 +141,16 @@ const mc = StyleSheet.create({
   greeting: {
     fontSize: 13, fontWeight: '500', letterSpacing: 0.2,
     marginBottom: 8,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   question: {
     fontSize: 22, fontWeight: '600', letterSpacing: -0.3, lineHeight: 30,
     marginBottom: 10,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   sub: {
     fontSize: 13, lineHeight: 20,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   dismiss: { marginTop: 16, alignSelf: 'flex-start' },
   dismissText: { fontSize: 12 },
@@ -389,7 +389,7 @@ const s = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 17, fontWeight: '600', letterSpacing: -0.2,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   voiceToggle: {
     width: 34, height: 34, borderRadius: 17,
@@ -407,7 +407,7 @@ const s = StyleSheet.create({
   },
   bloomText: {
     fontSize: 15, lineHeight: 26, fontWeight: '400',
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
 
   userRow: { alignItems: 'flex-end', marginBottom: 12 },
@@ -417,7 +417,7 @@ const s = StyleSheet.create({
   },
   userText: {
     fontSize: 15, color: '#FFFFFF', lineHeight: 22, fontWeight: '400',
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
 
   keyBanner: {

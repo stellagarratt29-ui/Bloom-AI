@@ -124,7 +124,7 @@ function CustomTabBar({ state, navigation }) {
 
   // Mobile tab bar — ultra-clean, thin indicator
   const barBg = Platform.OS === 'web'
-    ? (isDark ? 'rgba(17,17,17,0.96)' : 'rgba(255,255,255,0.97)')
+    ? (isDark ? 'rgba(26,21,16,0.96)' : 'rgba(250,247,242,0.97)')
     : t.bg;
 
   return (
@@ -176,8 +176,8 @@ const deskS = StyleSheet.create({
   },
   logoWrap: { marginBottom: 44, paddingHorizontal: 8 },
   logoText: {
-    fontSize: 18, fontWeight: '600', letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontSize: 18, fontWeight: '700', letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   navItem: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -218,9 +218,9 @@ const mobileTabS = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    fontWeight: '400',
-    letterSpacing: 0.3,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
 });
 
@@ -286,8 +286,8 @@ function SplashScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: t?.bg ?? '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{
-        fontSize: 28, fontWeight: '500', color: t?.text ?? '#0F0F0F', letterSpacing: -0.3,
-        fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+        fontSize: 28, fontWeight: '700', color: t?.text ?? '#1A1510', letterSpacing: -0.5,
+        fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
       }}>bloom</Text>
     </View>
   );

@@ -245,7 +245,7 @@ const fS = StyleSheet.create({
   taskText: {
     fontSize: 26, fontWeight: '600', textAlign: 'center', lineHeight: 36,
     letterSpacing: -0.3, marginBottom: 8,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
 
   actions: { gap: 12 },
@@ -542,7 +542,7 @@ const ss = StyleSheet.create({
   },
   title: {
     fontSize: 28, fontWeight: '600', letterSpacing: -0.5,
-    fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined,
+    fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pointsBadge: { borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
@@ -596,7 +596,7 @@ const ss = StyleSheet.create({
 
   empty: { alignItems: 'center', paddingTop: 80, paddingBottom: 40, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 52, marginBottom: 16 },
-  emptyHead: { fontSize: 22, fontWeight: '600', marginBottom: 10, letterSpacing: -0.3, fontFamily: Platform.OS === 'web' ? '"Inter", system-ui, sans-serif' : undefined },
+  emptyHead: { fontSize: 22, fontWeight: '600', marginBottom: 10, letterSpacing: -0.3, fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 23 },
 
   menuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
