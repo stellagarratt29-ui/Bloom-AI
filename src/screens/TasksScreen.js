@@ -340,18 +340,6 @@ export default function TasksScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[ss.safe, { backgroundColor: t.bg }]}>
-      {/* Focus Mode overlay */}
-      {focusMode && (
-        <FocusMode
-          tasks={activeTasks}
-          SECTIONS={SECTIONS}
-          t={t}
-          onClose={() => setFocusMode(false)}
-          onDone={(id) => finishTask(id)}
-          onSkip={() => {}}
-          navigation={navigation}
-        />
-      )}
 
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
         <View>
@@ -374,20 +362,6 @@ export default function TasksScreen({ navigation }) {
           </View>
         ) : (
           <>
-            {/* Focus nudge banner */}
-            {activeTasks.length > 2 && (
-              <TouchableOpacity
-                style={[ss.focusBanner, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}
-                onPress={() => setFocusMode(true)}
-                activeOpacity={0.8}
-              >
-                <Icon name="target" size={16} color={t.accent} />
-                <Text style={[ss.focusBannerText, { color: t.accent }]}>
-                  {activeTasks.length} tasks — tap Focus to do one at a time
-                </Text>
-                <Icon name="chevron-right" size={15} color={t.accent} />
-              </TouchableOpacity>
-            )}
 
             {SECTIONS.map(sec => {
               const items = activeTasks.filter(tk => getUrgency(tk) === sec.key);
