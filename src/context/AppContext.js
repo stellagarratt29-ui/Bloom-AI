@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { extractTokenFromHash, saveCalendarToken } from '../services/calendar';
+import { restoreGoogleSession, getGoogleUser, signOutGoogle } from '../services/google';
 
 const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v3';
@@ -80,6 +81,7 @@ export function AppProvider({ children }) {
   const [userOccupation, setUserOccupation] = useState('');
   const [lastDumpDate, setLastDumpDate] = useState('');
   const [calendarConnected, setCalendarConnected] = useState(false);
+  const [googleUser, setGoogleUserState] = useState(null); // {name,email,picture}
 
   // Daily check-in (not persisted — resets each session/day)
   const [checkIn, setCheckIn] = useState(null); // { mood, sleep, energy, date }
@@ -142,6 +144,12 @@ export function AppProvider({ children }) {
       }
     }
 
+    // Restore Google session if browser kept it
+    if (restoreGoogleSession()) {
+      const u = getGoogleUser();
+      if (u) setGoogleUserState(u);
+    }
+
     AsyncStorage.getItem(STORAGE_KEY)
       .then(raw => {
         if (raw) {
@@ -149,7 +157,12 @@ export function AppProvider({ children }) {
             const s = JSON.parse(raw);
             if (s.hasOnboarded)    setHasOnboarded(true);
             if (s.tasks) {
-              const active = s.tasks.filter(t => !t.done);
+              // Task rollover: overnight, 'tonight' tasks become 'thisweek'
+              const today = todayStr();
+              const rolled = (s.lastDumpDate && s.lastDumpDate !== today)
+                ? s.tasks.map(t => t.urgency === 'tonight' && !t.done ? { ...t, urgency: 'thisweek' } : t)
+                : s.tasks;
+              const active = rolled.filter(t => !t.done);
               setTasks(active);
               // Migrate legacy done tasks to finishedTasks on first load
               if (!s.finishedTasks && s.tasks.some(t => t.done)) {
@@ -376,6 +389,22 @@ export function AppProvider({ children }) {
     setHasOnboarded(true);
   }, []);
 
+  const setGoogleUser = useCallback((user) => setGoogleUserState(user), []);
+  const clearGoogleUser = useCallback(() => {
+    signOutGoogle();
+    setGoogleUserState(null);
+  }, []);
+
+  const clearAllData = useCallback(() => {
+    setTasks([]);
+    setFinishedTasks([]);
+    setPoints(0);
+    setHobbies([]);
+    setGoals([]);
+    setLifeProjects([]);
+    setLastDumpDate('');
+  }, []);
+
   const resetOnboarding = useCallback(() => {
     setHasOnboarded(false);
     setUserName('');
@@ -405,6 +434,7 @@ export function AppProvider({ children }) {
       userOccupation, setUserOccupation,
       lastDumpDate,
       calendarConnected, setCalendarConnected,
+      googleUser, setGoogleUser, clearGoogleUser, clearAllData,
       ndSupport, setNdSupport,
       ndToggles, setNdToggles, updateNdToggles,
       tutorialSeen, setTutorialSeen,

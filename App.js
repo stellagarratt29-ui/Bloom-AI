@@ -35,19 +35,22 @@ import BloomChatScreen  from './src/screens/BloomChatScreen';
 import TaskGuideScreen  from './src/screens/TaskGuideScreen';
 import TasksScreen      from './src/screens/TasksScreen';
 import LifeScreen       from './src/screens/LifeScreen';
+import CalendarScreen   from './src/screens/CalendarScreen';
 import SettingsScreen   from './src/screens/SettingsScreen';
 
 const RootStack    = createNativeStackNavigator();
 const ChatStackNav = createNativeStackNavigator();
 const PlanStackNav = createNativeStackNavigator();
+const CalStackNav  = createNativeStackNavigator();
 const LifeStackNav = createNativeStackNavigator();
 const Tab          = createBottomTabNavigator();
 
-// ─── 3 tabs ──────────────────────────────────────────
+// ─── 4 tabs ──────────────────────────────────────────
 const TAB_ITEMS = [
-  { name: 'ChatTab', icon: 'message-circle', label: 'Chat' },
-  { name: 'PlanTab', icon: 'check-square',   label: 'Plan' },
-  { name: 'LifeTab', icon: 'compass',        label: 'Life' },
+  { name: 'ChatTab',     icon: 'message-circle', label: 'Chat'     },
+  { name: 'PlanTab',     icon: 'check-square',   label: 'Plan'     },
+  { name: 'CalendarTab', icon: 'calendar',       label: 'Calendar' },
+  { name: 'LifeTab',     icon: 'compass',        label: 'Life'     },
 ];
 
 const SIDEBAR_W = 220;
@@ -219,6 +222,7 @@ function ChatStack() {
   return (
     <ChatStackNav.Navigator screenOptions={{ headerShown: false }}>
       <ChatStackNav.Screen name="BloomChat" component={BloomChatScreen} />
+      <ChatStackNav.Screen name="Settings"  component={SettingsScreen}  />
     </ChatStackNav.Navigator>
   );
 }
@@ -226,9 +230,19 @@ function ChatStack() {
 function PlanStack() {
   return (
     <PlanStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <PlanStackNav.Screen name="PlanList"  component={TasksScreen} />
+      <PlanStackNav.Screen name="PlanList"  component={TasksScreen}     />
       <PlanStackNav.Screen name="TaskGuide" component={TaskGuideScreen} />
+      <PlanStackNav.Screen name="Settings"  component={SettingsScreen}  />
     </PlanStackNav.Navigator>
+  );
+}
+
+function CalendarStack() {
+  return (
+    <CalStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <CalStackNav.Screen name="CalMain"  component={CalendarScreen} />
+      <CalStackNav.Screen name="Settings" component={SettingsScreen} />
+    </CalStackNav.Navigator>
   );
 }
 
@@ -236,6 +250,7 @@ function LifeStack() {
   return (
     <LifeStackNav.Navigator screenOptions={{ headerShown: false }}>
       <LifeStackNav.Screen name="LifeMain" component={LifeScreen} />
+      <LifeStackNav.Screen name="Settings" component={SettingsScreen} />
     </LifeStackNav.Navigator>
   );
 }
@@ -249,9 +264,10 @@ function MainTabs() {
       screenOptions={{ headerShown: false }}
       initialRouteName="ChatTab"
     >
-      <Tab.Screen name="ChatTab" component={ChatStack} />
-      <Tab.Screen name="PlanTab" component={PlanStack} />
-      <Tab.Screen name="LifeTab" component={LifeStack} />
+      <Tab.Screen name="ChatTab"     component={ChatStack}     />
+      <Tab.Screen name="PlanTab"     component={PlanStack}     />
+      <Tab.Screen name="CalendarTab" component={CalendarStack} />
+      <Tab.Screen name="LifeTab"     component={LifeStack}     />
     </Tab.Navigator>
   );
 }
