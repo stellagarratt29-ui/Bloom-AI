@@ -28,36 +28,26 @@ import { C } from './src/constants/colors';
 import DyslexiaStyleInjector from './src/components/DyslexiaStyleInjector';
 import { useNotifications } from './src/hooks/useNotifications';
 
-import OnboardingScreen      from './src/screens/OnboardingScreen';
-import LandingScreen         from './src/screens/LandingScreen';
-import TutorialScreen        from './src/screens/TutorialScreen';
-import BloomChatScreen       from './src/screens/BloomChatScreen';
-import TaskGuideScreen       from './src/screens/TaskGuideScreen';
-import TasksScreen           from './src/screens/TasksScreen';
-import HobbiesScreen         from './src/screens/HobbiesScreen';
-import HobbyDetailScreen     from './src/screens/HobbyDetailScreen';
-import GoalsScreen           from './src/screens/GoalsScreen';
-import GoalDetailScreen      from './src/screens/GoalDetailScreen';
-import CalendarScreen        from './src/screens/CalendarScreen';
-import ScreenAwarenessScreen from './src/screens/ScreenAwarenessScreen';
-import SettingsScreen        from './src/screens/SettingsScreen';
-import YearReviewScreen      from './src/screens/YearReviewScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import LandingScreen    from './src/screens/LandingScreen';
+import TutorialScreen   from './src/screens/TutorialScreen';
+import BloomChatScreen  from './src/screens/BloomChatScreen';
+import TaskGuideScreen  from './src/screens/TaskGuideScreen';
+import TasksScreen      from './src/screens/TasksScreen';
+import LifeScreen       from './src/screens/LifeScreen';
+import SettingsScreen   from './src/screens/SettingsScreen';
 
-const RootStack      = createNativeStackNavigator();
-const ChatStackNav   = createNativeStackNavigator();
-const TasksStackNav  = createNativeStackNavigator();
-const GrowStackNav   = createNativeStackNavigator();
-const GoalsStackNav  = createNativeStackNavigator();
-const Tab            = createBottomTabNavigator();
+const RootStack    = createNativeStackNavigator();
+const ChatStackNav = createNativeStackNavigator();
+const PlanStackNav = createNativeStackNavigator();
+const LifeStackNav = createNativeStackNavigator();
+const Tab          = createBottomTabNavigator();
 
-// ─── Tab definitions ─────────────────────────────────
+// ─── 3 tabs ──────────────────────────────────────────
 const TAB_ITEMS = [
-  { name: 'ChatTab',    icon: 'message-circle', label: 'Chat'   },
-  { name: 'TasksTab',   icon: 'check-square',   label: 'Tasks'  },
-  { name: 'GrowTab',    icon: 'sun',            label: 'Grow'   },
-  { name: 'GoalsTab',   icon: 'target',         label: 'Goals'  },
-  { name: 'CalendarTab',icon: 'calendar',       label: 'Plan'   },
-  { name: 'ScreenTab',  icon: 'activity',       label: 'Focus'  },
+  { name: 'ChatTab', icon: 'message-circle', label: 'Chat' },
+  { name: 'PlanTab', icon: 'check-square',   label: 'Plan' },
+  { name: 'LifeTab', icon: 'compass',        label: 'Life' },
 ];
 
 const SIDEBAR_W = 220;
@@ -233,31 +223,20 @@ function ChatStack() {
   );
 }
 
-function TasksStack() {
+function PlanStack() {
   return (
-    <TasksStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <TasksStackNav.Screen name="TasksList" component={TasksScreen} />
-      <TasksStackNav.Screen name="TaskGuide" component={TaskGuideScreen} />
-    </TasksStackNav.Navigator>
+    <PlanStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <PlanStackNav.Screen name="PlanList"  component={TasksScreen} />
+      <PlanStackNav.Screen name="TaskGuide" component={TaskGuideScreen} />
+    </PlanStackNav.Navigator>
   );
 }
 
-function GrowStack() {
+function LifeStack() {
   return (
-    <GrowStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <GrowStackNav.Screen name="Hobbies"     component={HobbiesScreen} />
-      <GrowStackNav.Screen name="HobbyDetail" component={HobbyDetailScreen} />
-      <GrowStackNav.Screen name="YearReview"  component={YearReviewScreen} />
-    </GrowStackNav.Navigator>
-  );
-}
-
-function GoalsStack() {
-  return (
-    <GoalsStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <GoalsStackNav.Screen name="GoalsList"  component={GoalsScreen} />
-      <GoalsStackNav.Screen name="GoalDetail" component={GoalDetailScreen} />
-    </GoalsStackNav.Navigator>
+    <LifeStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <LifeStackNav.Screen name="LifeMain" component={LifeScreen} />
+    </LifeStackNav.Navigator>
   );
 }
 
@@ -270,12 +249,9 @@ function MainTabs() {
       screenOptions={{ headerShown: false }}
       initialRouteName="ChatTab"
     >
-      <Tab.Screen name="ChatTab"     component={ChatStack} />
-      <Tab.Screen name="TasksTab"    component={TasksStack} />
-      <Tab.Screen name="GrowTab"     component={GrowStack} />
-      <Tab.Screen name="GoalsTab"    component={GoalsStack} />
-      <Tab.Screen name="CalendarTab" component={CalendarScreen} />
-      <Tab.Screen name="ScreenTab"   component={ScreenAwarenessScreen} />
+      <Tab.Screen name="ChatTab" component={ChatStack} />
+      <Tab.Screen name="PlanTab" component={PlanStack} />
+      <Tab.Screen name="LifeTab" component={LifeStack} />
     </Tab.Navigator>
   );
 }

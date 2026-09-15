@@ -8,18 +8,20 @@ import { C } from '../constants/colors';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
-function getHighLabel(occupation) {
-  if (!occupation || occupation === 'Student') return 'School & Health';
-  if (occupation === 'Working') return 'Work & Health';
-  if (occupation === 'Both') return 'Work, School & Health';
-  return 'Health & Urgent';
-}
-
-const SECTION_BASE = [
-  { key: 'high',   pillBg: C.pillPinkBg, pillText: C.pillPinkText },
-  { key: 'medium', label: 'Tasks',         pillBg: C.pillLavBg,  pillText: C.pillLavText  },
-  { key: 'low',    label: 'Fun & Leisure', pillBg: C.pillSkyBg,  pillText: C.pillSkyText  },
+// Urgency sections — Tonight / This Week / Whenever
+const SECTIONS = [
+  { key: 'tonight',  label: 'Tonight',    color: '#C05A5A', paleBg: '#FDEEED' },
+  { key: 'thisweek', label: 'This week',  color: '#7A9A89', paleBg: '#EBF2EE' },
+  { key: 'whenever', label: 'Whenever',   color: '#C98B6B', paleBg: '#F7EFE9' },
 ];
+
+// Legacy priority → urgency mapping for existing tasks
+function getUrgency(task) {
+  if (task.urgency) return task.urgency;
+  if (task.priority === 'high')   return 'tonight';
+  if (task.priority === 'low')    return 'whenever';
+  return 'thisweek';
+}
 
 const WORK_MINUTES = 25;
 const BREAK_MINUTES = 5;
@@ -278,33 +280,42 @@ const fS = StyleSheet.create({
 // ─── Main screen ──────────────────────────────────────────────
 export default function TasksScreen({ navigation }) {
   const {
-    tasks, deleteTask, updateTask, addTask, ndToggles, userOccupation,
+    tasks, deleteTask, updateTask, addTask,
     finishedTasks, finishTask, clearFinishedTask, points,
   } = useApp();
-  const SECTIONS = SECTION_BASE.map(s => s.key === 'high' ? { ...s, label: getHighLabel(userOccupation) } : s);
   const { colors: t } = useTheme();
 
-  const [focusMode,    setFocusMode]    = useState(false);
-  const [editTarget,   setEditTarget]   = useState(null);
-  const [editText,     setEditText]     = useState('');
-  const [editPrio,     setEditPrio]     = useState('medium');
-  const [deleteConfirm,setDeleteConfirm]= useState(null);
-  const [menuTarget,   setMenuTarget]   = useState(null);
-  const [showAddTask,  setShowAddTask]  = useState(false);
-  const [newTaskText,  setNewTaskText]  = useState('');
-  const [newTaskPrio,  setNewTaskPrio]  = useState('medium');
-  const [showFinished, setShowFinished] = useState(true);
+  const [editTarget,    setEditTarget]    = useState(null);
+  const [editText,      setEditText]      = useState('');
+  const [editUrgency,   setEditUrgency]   = useState('thisweek');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [menuTarget,    setMenuTarget]    = useState(null);
+  const [showAddTask,   setShowAddTask]   = useState(false);
+  const [newTaskText,   setNewTaskText]   = useState('');
+  const [newUrgency,    setNewUrgency]    = useState('thisweek');
+  const [showFinished,  setShowFinished]  = useState(true);
 
-  const openEdit = (task) => { setEditTarget(task); setEditText(task.text); setEditPrio(task.priority ?? 'medium'); };
-  const saveEdit = () => { if (!editText.trim()) return; updateTask(editTarget.id, { text: editText.trim(), priority: editPrio }); setEditTarget(null); };
-  const doAddTask = () => { if (!newTaskText.trim()) return; addTask(newTaskText.trim(), newTaskPrio); setNewTaskText(''); setNewTaskPrio('medium'); setShowAddTask(false); };
+  const openEdit = (task) => { setEditTarget(task); setEditText(task.text); setEditUrgency(getUrgency(task)); };
+  const saveEdit = () => {
+    if (!editText.trim()) return;
+    updateTask(editTarget.id, {
+      text: editText.trim(), urgency: editUrgency,
+      priority: editUrgency === 'tonight' ? 'high' : editUrgency === 'whenever' ? 'low' : 'medium',
+    });
+    setEditTarget(null);
+  };
+  const doAddTask = () => {
+    if (!newTaskText.trim()) return;
+    addTask(newTaskText.trim(), newUrgency === 'tonight' ? 'high' : newUrgency === 'whenever' ? 'low' : 'medium', 'task', newUrgency);
+    setNewTaskText(''); setNewUrgency('thisweek'); setShowAddTask(false);
+  };
 
   const activeTasks = tasks.filter(tk => !tk.done);
 
   const TaskCard = ({ task, sec }) => (
-    <View style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border, borderLeftColor: sec?.pillText ?? t.border, borderLeftWidth: 3 }]}>
+    <View style={[ss.taskCard, { backgroundColor: t.card, borderColor: t.border, borderLeftColor: sec?.color ?? t.border, borderLeftWidth: 3 }]}>
       <TouchableOpacity style={ss.doneBtn} onPress={() => finishTask(task.id)} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}>
-        <View style={[ss.checkCircle, { borderColor: sec?.pillText ?? t.border }]} />
+        <View style={[ss.checkCircle, { borderColor: sec?.color ?? t.border }]} />
       </TouchableOpacity>
       <TouchableOpacity style={ss.taskBody} onPress={() => navigation.navigate('TaskGuide', { task })} activeOpacity={0.72}>
         <Text style={[ss.taskText, { color: t.text }]} numberOfLines={2}>{task.text}</Text>
@@ -343,27 +354,13 @@ export default function TasksScreen({ navigation }) {
       )}
 
       <View style={[ss.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-        <Text style={[ss.title, { color: t.text }]}>Tasks</Text>
-        <View style={ss.headerRight}>
-          {points > 0 && (
-            <View style={[ss.pointsBadge, { backgroundColor: t.accentPale }]}>
-              <Text style={[ss.pointsText, { color: t.accent }]}>{points} pts</Text>
-            </View>
-          )}
-          {/* Focus Mode button */}
-          {activeTasks.length > 0 && (
-            <TouchableOpacity
-              style={[ss.focusBtn, { backgroundColor: t.accentPale }]}
-              onPress={() => setFocusMode(true)}
-            >
-              <Icon name="target" size={14} color={t.accent} />
-              <Text style={[ss.focusBtnText, { color: t.accent }]}>Focus</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: t.accent }]} onPress={() => setShowAddTask(true)}>
-            <Icon name="plus" size={14} color="#FFF" />
-          </TouchableOpacity>
+        <View>
+          <Text style={[ss.title, { color: t.text }]}>Plan</Text>
+          {points > 0 && <Text style={[ss.pointsInline, { color: t.muted }]}>{points} pts earned</Text>}
         </View>
+        <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: t.accent }]} onPress={() => setShowAddTask(true)}>
+          <Icon name="plus" size={16} color="#FFF" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
@@ -393,12 +390,12 @@ export default function TasksScreen({ navigation }) {
             )}
 
             {SECTIONS.map(sec => {
-              const items = activeTasks.filter(tk => tk.priority === sec.key);
+              const items = activeTasks.filter(tk => getUrgency(tk) === sec.key);
               if (!items.length) return null;
               return (
                 <View key={sec.key} style={ss.group}>
                   <View style={ss.sectionPill}>
-                    <Text style={[ss.sectionLabel, { color: sec.pillText }]}>{sec.label.toUpperCase()}</Text>
+                    <Text style={[ss.sectionLabel, { color: sec.color }]}>{sec.label.toUpperCase()}</Text>
                   </View>
                   {items.map(task => (
                     <TaskCard key={task.id} task={task} sec={sec} />
@@ -462,9 +459,9 @@ export default function TasksScreen({ navigation }) {
             <View style={ss.prioRow}>
               {SECTIONS.map(sec => (
                 <TouchableOpacity key={sec.key}
-                  style={[ss.prioChip, { backgroundColor: newTaskPrio === sec.key ? sec.pillBg : t.bg, borderColor: newTaskPrio === sec.key ? sec.pillText : t.border, borderWidth: 2 }]}
-                  onPress={() => setNewTaskPrio(sec.key)}>
-                  <Text style={[ss.prioChipText, { color: newTaskPrio === sec.key ? sec.pillText : t.subtext }]}>{sec.label}</Text>
+                  style={[ss.prioChip, { backgroundColor: newUrgency === sec.key ? sec.paleBg : t.bg, borderColor: newUrgency === sec.key ? sec.color : t.border, borderWidth: 2 }]}
+                  onPress={() => setNewUrgency(sec.key)}>
+                  <Text style={[ss.prioChipText, { color: newUrgency === sec.key ? sec.color : t.subtext }]}>{sec.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -490,13 +487,13 @@ export default function TasksScreen({ navigation }) {
               value={editText} onChangeText={setEditText} autoFocus multiline
               placeholderTextColor={t.subtext}
             />
-            <Text style={[ss.modalLabel, { color: t.subtext }]}>PRIORITY</Text>
+            <Text style={[ss.modalLabel, { color: t.subtext }]}>WHEN</Text>
             <View style={ss.prioRow}>
               {SECTIONS.map(sec => (
                 <TouchableOpacity key={sec.key}
-                  style={[ss.prioChip, { backgroundColor: editPrio === sec.key ? sec.pillBg : t.bg, borderColor: editPrio === sec.key ? sec.pillText : t.border, borderWidth: 2 }]}
-                  onPress={() => setEditPrio(sec.key)}>
-                  <Text style={[ss.prioChipText, { color: editPrio === sec.key ? sec.pillText : t.subtext }]}>{sec.label}</Text>
+                  style={[ss.prioChip, { backgroundColor: editUrgency === sec.key ? sec.paleBg : t.bg, borderColor: editUrgency === sec.key ? sec.color : t.border, borderWidth: 2 }]}
+                  onPress={() => setEditUrgency(sec.key)}>
+                  <Text style={[ss.prioChipText, { color: editUrgency === sec.key ? sec.color : t.subtext }]}>{sec.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -543,16 +540,10 @@ const ss = StyleSheet.create({
     fontSize: 28, fontWeight: '600', letterSpacing: -0.5,
     fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
+  pointsInline: { fontSize: 11, fontWeight: '600', marginTop: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pointsBadge: { borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
-  pointsText:  { fontSize: 12, fontWeight: '800' },
-  focusBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
-  },
-  focusBtnText: { fontSize: 13, fontWeight: '700' },
   addTaskBtn: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 38, height: 38, borderRadius: 19,
     alignItems: 'center', justifyContent: 'center',
   },
 

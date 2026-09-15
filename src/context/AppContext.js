@@ -6,11 +6,25 @@ const AppContext = createContext(null);
 const STORAGE_KEY = '@bloom_v3';
 
 const uid = () => Date.now() + Math.floor(Math.random() * 10000);
-const makeTask = (text, priority, category) => ({
+
+const makeTask = (text, priority = 'medium', category, urgency) => ({
   id: uid(), text, priority, done: false,
-  category: category ?? priorityToCategory(priority),
+  urgency: urgency ?? priorityToUrgency(priority),
+  category: category ?? 'task',
 });
+
 const makeGoal = (text, firstAction) => ({ id: uid(), text, currentAction: firstAction ?? '', completedActions: [] });
+
+const makeProject = (name, guidance = '', category = 'general') => ({
+  id: uid(), name, guidance, category,
+  notes: [], createdAt: Date.now(),
+});
+
+function priorityToUrgency(p) {
+  if (p === 'high')   return 'tonight';
+  if (p === 'low')    return 'whenever';
+  return 'thisweek';
+}
 
 function priorityToCategory(p) {
   if (p === 'high') return 'school';
@@ -60,6 +74,7 @@ export function AppProvider({ children }) {
   const [points, setPoints]             = useState(0);
   const [hobbies, setHobbies]           = useState([]);
   const [goals, setGoals]               = useState([]);
+  const [lifeProjects, setLifeProjects] = useState([]);
   const [userName, setUserName]         = useState('');
   const [userAge, setUserAge]           = useState('');
   const [userOccupation, setUserOccupation] = useState('');
@@ -148,6 +163,7 @@ export function AppProvider({ children }) {
             if (s.points)          setPoints(s.points);
             if (s.hobbies)         setHobbies(s.hobbies.map(migrateHobby));
             if (s.goals)           setGoals(s.goals);
+            if (s.lifeProjects)    setLifeProjects(s.lifeProjects);
             if (s.userName)        setUserName(s.userName);
             if (s.userAge)         setUserAge(s.userAge);
             if (s.userOccupation)  setUserOccupation(s.userOccupation);
@@ -173,13 +189,13 @@ export function AppProvider({ children }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-        hasOnboarded, tasks, hobbies, goals,
+        hasOnboarded, tasks, hobbies, goals, lifeProjects,
         userName, userAge, userOccupation, lastDumpDate,
         ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
         screenTimeLogs, screenTimeGoal, bloomTimeLogs,
       })).catch(() => {});
     }, 600);
-  }, [loaded, hasOnboarded, tasks, hobbies, goals,
+  }, [loaded, hasOnboarded, tasks, hobbies, goals, lifeProjects,
       userName, userAge, userOccupation, lastDumpDate,
       ndSupport, ndToggles, tutorialSeen, finishedTasks, points,
       screenTimeLogs, screenTimeGoal, bloomTimeLogs]);
@@ -254,18 +270,21 @@ export function AppProvider({ children }) {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
   }, []);
 
-  const processBrainDump = useCallback((items, goalActions = {}) => {
-    const taskItems = items.filter(i => i.category !== 'goal');
-    const goalItems = items.filter(i => i.category === 'goal');
-    const newTasks  = taskItems.map(({ text, priority }) => makeTask(text, priority ?? 'medium'));
+  const processBrainDump = useCallback((taskItems = [], projectItems = []) => {
+    const newTasks = taskItems.map(({ text, priority, urgency }) =>
+      makeTask(text, priority ?? 'medium', 'task', urgency)
+    );
     if (newTasks.length > 0) setTasks(newTasks);
-    goalItems.forEach(g => {
-      const firstAction = goalActions[g.text] ?? '';
-      setGoals(prev => {
-        if (prev.some(x => x.text.toLowerCase() === g.text.toLowerCase())) return prev;
-        return [...prev, makeGoal(g.text, firstAction)];
+
+    // Add life projects (deduplicate by name)
+    projectItems.forEach(p => {
+      if (!p.name) return;
+      setLifeProjects(prev => {
+        if (prev.some(x => x.name.toLowerCase() === p.name.toLowerCase())) return prev;
+        return [...prev, makeProject(p.name, p.guidance ?? '')];
       });
     });
+
     setLastDumpDate(todayStr());
     return newTasks;
   }, []);
@@ -305,6 +324,17 @@ export function AppProvider({ children }) {
       }
       return updated;
     }));
+  }, []);
+
+  // Life projects
+  const addLifeProject = useCallback((name, guidance = '', category = 'general') => {
+    const p = makeProject(name, guidance, category);
+    setLifeProjects(prev => [...prev, p]);
+    return p;
+  }, []);
+  const removeLifeProject = useCallback((id) => setLifeProjects(prev => prev.filter(p => p.id !== id)), []);
+  const updateLifeProject = useCallback((id, changes) => {
+    setLifeProjects(prev => prev.map(p => p.id === id ? { ...p, ...changes } : p));
   }, []);
 
   // Goals
@@ -369,6 +399,7 @@ export function AppProvider({ children }) {
       finishedTasks, finishTask, clearFinishedTask, points,
       hobbies, addHobby, completeMilestone, removeHobby, updateHobby,
       goals, addGoal, advanceGoalAction, deleteGoal, updateGoal,
+      lifeProjects, addLifeProject, removeLifeProject, updateLifeProject,
       userName, setUserName,
       userAge, setUserAge,
       userOccupation, setUserOccupation,

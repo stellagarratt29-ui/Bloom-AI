@@ -81,38 +81,35 @@ function stripMarkdown(text) {
     .trim();
 }
 
-export function buildBloomSystem({ userName, goals, tasks, ndToggles, checkIn }) {
+export function buildBloomSystem({ userName, tasks, lifeProjects, ndToggles, checkIn }) {
   const name = userName || 'there';
   const pendingTasks = (tasks || []).filter(t => !t.done);
-  const topTask = pendingTasks.find(t => t.priority === 'high') || pendingTasks[0];
+  const urgentTasks  = pendingTasks.filter(t => (t.urgency ?? 'whenever') === 'tonight');
+  const topTask = urgentTasks[0] || pendingTasks[0];
 
   const taskSummary = pendingTasks.length > 0
-    ? `Current tasks (${pendingTasks.length} pending): ${pendingTasks.slice(0, 6).map(t => `"${t.text}" [${t.priority}]`).join(', ')}${pendingTasks.length > 6 ? ` + ${pendingTasks.length - 6} more` : ''}`
+    ? `Tasks (${pendingTasks.length} pending): ${pendingTasks.slice(0, 6).map(t => `"${t.text}" [${t.urgency ?? t.priority}]`).join(', ')}${pendingTasks.length > 6 ? ` +${pendingTasks.length - 6} more` : ''}`
     : 'No tasks yet.';
 
-  const goalSummary = (goals || []).length > 0
-    ? `Goals: ${goals.slice(0, 3).map(g => `"${g.text}"`).join(', ')}`
+  const projectSummary = (lifeProjects || []).length > 0
+    ? `Life projects: ${lifeProjects.slice(0, 4).map(p => `"${p.name}"`).join(', ')}`
     : '';
 
-  const moodLine = checkIn?.mood ? `User's mood today: ${checkIn.mood}.` : '';
+  return `You are Bloom — a sharp, warm personal assistant. You help ${name} think clearly and make progress, like a knowledgeable friend who actually listens.
 
-  return `You are Bloom — a sharp, warm, zero-fluff productivity companion. You exist because ${name} keeps losing hours to scrolling. Your job is to redirect that energy into real progress.
-
-RULES (absolute):
-- Be specific. Reference EXACT tasks, EXACT goals, EXACT numbers from the context.
-- Never use generic filler ("sounds great!", "I understand"). Every word earns its place.
-- Keep responses SHORT: 2–4 sentences max for conversation; 3–6 steps max for how-to.
-- Never use markdown formatting — no **bold**, no bullet points starting with -, no headers.
-- No guilt, no shame, no streaks. Pure forward momentum.
-- If someone dumps a list of tasks, acknowledge what you actually parsed specifically.
+RULES:
+- Be specific. Reference exact task names, exact details from the context.
+- Sound like a real person, not a productivity app. No generic filler.
+- Keep responses SHORT: 2–4 sentences for conversation, 3–6 steps for how-to.
+- No markdown — no **bold**, no bullet points, no headers.
+- No guilt, no shame. Just forward momentum.
+- When someone asks about a life project (skin, hair, wardrobe, etc.), give real, specific advice — not generic tips.
 
 CONTEXT:
 User: ${name}
-${moodLine}
 ${taskSummary}
-${goalSummary}
-${topTask ? `Most pressing task: "${topTask.text}"` : ''}
-${ndToggles?.dyslexia ? 'Note: user has dyslexia — keep sentences short and clear.' : ''}`;
+${projectSummary}
+${topTask ? `Most urgent: "${topTask.text}"` : ''}`;
 }
 
 // ─── Brain dump parser ───────────────────────────────
@@ -120,21 +117,33 @@ export async function parseBrainDump(text, userName, ndToggles, userOccupation) 
   const key = await getApiKey();
   if (!key) return parseBrainDumpLocal(text);
 
-  const system = `You are Bloom's task parser. Extract every distinct actionable item from the user's message.
+  const system = `You are Bloom — a sharp, warm personal assistant. Read the user's message and extract everything in it.
 
-For each item, output a JSON object with:
-- text: the task text (clean, concise, actionable — max 10 words)
-- priority: "high" (urgent/deadline/health) | "medium" (regular work) | "low" (nice-to-have/leisure)
-- category: "task" | "goal" (if it's large and not doable in one sitting, like "get fit" or "make $10k")
-- buyReminder: if the task involves buying/ordering/picking up something, set this to a short note about when/where to buy (e.g. "Order online before Thursday" or "Pick up from pharmacy today") — otherwise null
+Classify each item as either a TASK or a LIFE PROJECT:
 
-Output ONLY a JSON object like:
+TASK — has a clear end state (do homework, wash leotard, make cookies, write a wishlist):
+- text: short and actionable, max 10 words
+- urgency: "tonight" (urgent, due today or tomorrow, time pressure), "thisweek" (due or relevant this week), or "whenever" (no time pressure, ongoing project)
+
+LIFE PROJECT — an ongoing area without a single endpoint (skin problems, hair styling, wardrobe issues, learning something, ongoing creative project, mental health, relationships):
+- name: short label (e.g. "Skincare routine", "Hair styling", "Wardrobe")
+- guidance: 2–3 sentences of genuinely useful, specific advice about this exact issue. Sound like a knowledgeable friend who actually thought about this. Not generic tips — real insight.
+
+Output ONLY valid JSON, nothing else:
 {
-  "items": [...],
-  "response": "A warm 1-2 sentence reply that names 2-3 specific things you extracted, then says they're in their Today tab."
-}
-
-Do NOT add any text before or after the JSON.`;
+  "tasks": [
+    {"text": "Do homework", "urgency": "tonight"},
+    {"text": "Wash leotard", "urgency": "tonight"},
+    {"text": "Make cookies for bake sale", "urgency": "thisweek"},
+    {"text": "Write birthday wishlist", "urgency": "thisweek"},
+    {"text": "Finish app", "urgency": "whenever"}
+  ],
+  "projects": [
+    {"name": "Skincare routine", "guidance": "The pattern of products working then stopping usually means your skin barrier is getting compromised — likely from over-exfoliating or rotating too many actives. A stripped barrier makes everything feel irritating. Start with the basics only: gentle cleanser, moisturiser, SPF. Give it 4 weeks before adding anything else."},
+    {"name": "Hair styling", "guidance": "Most people fight their hair texture instead of working with it. The key is knowing whether your hair is fine, medium, or coarse, and whether it's straight, wavy, or curly — because the right technique is completely different for each. Tell me more about your hair and we'll find what actually works for you."}
+  ],
+  "response": "Warm, specific 2–4 sentences. Sound like a real friend, not a task manager. Name the most urgent things specifically. Tell them the ongoing stuff is now in their Life tab."
+}`;
 
   try {
     const res = await fetch(AI_URL, {
@@ -147,7 +156,7 @@ Do NOT add any text before or after the JSON.`;
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 1200,
+        max_tokens: 1400,
         system,
         messages: [{ role: 'user', content: text }],
       }),
@@ -156,37 +165,39 @@ Do NOT add any text before or after the JSON.`;
     if (!res.ok) return parseBrainDumpLocal(text);
     const data = await res.json();
     const raw = data.content?.[0]?.text?.trim() ?? '';
-    // Extract JSON from response
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return parseBrainDumpLocal(text);
     const parsed = JSON.parse(jsonMatch[0]);
-    return {
-      items: (parsed.items || []).map((item, i) => ({
-        id: Date.now() + i,
-        text: item.text || '',
-        priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium',
-        category: item.category === 'goal' ? 'goal' : 'task',
-        buyReminder: item.buyReminder || null,
-      })),
-      response: parsed.response || null,
-    };
+
+    const tasks = (parsed.tasks || []).map((item, i) => ({
+      id: Date.now() + i,
+      text: item.text || '',
+      urgency: ['tonight', 'thisweek', 'whenever'].includes(item.urgency) ? item.urgency : 'whenever',
+      // keep priority for backward compat
+      priority: item.urgency === 'tonight' ? 'high' : item.urgency === 'thisweek' ? 'medium' : 'low',
+      category: 'task',
+    }));
+
+    const projects = (parsed.projects || []).map((p, i) => ({
+      id: Date.now() + 10000 + i,
+      name: p.name || '',
+      guidance: p.guidance || '',
+    }));
+
+    return { tasks, projects, response: parsed.response || null };
   } catch {
     return parseBrainDumpLocal(text);
   }
 }
 
 function parseBrainDumpLocal(text) {
-  // Naive split for when there's no API key
   const delimiters = /[,\n;]+/;
   const parts = text.split(delimiters).map(s => s.trim()).filter(s => s.length > 3 && s.length < 120);
-  const items = parts.map((text, i) => ({
-    id: Date.now() + i,
-    text,
-    priority: 'medium',
-    category: 'task',
-    buyReminder: null,
+  const tasks = parts.map((t, i) => ({
+    id: Date.now() + i, text: t,
+    urgency: 'whenever', priority: 'medium', category: 'task',
   }));
-  return { items, response: null };
+  return { tasks, projects: [], response: null };
 }
 
 // ─── Goal action generator ───────────────────────────

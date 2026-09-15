@@ -157,7 +157,7 @@ const mc = StyleSheet.create({
 });
 
 export default function BloomChatScreen() {
-  const { userName, userOccupation, goals, tasks, addTask, processBrainDump, ndToggles, checkIn } = useApp();
+  const { userName, userOccupation, tasks, lifeProjects, addTask, processBrainDump, ndToggles, checkIn } = useApp();
   const { colors: t } = useTheme();
 
   const [messages, setMessages] = useState([
@@ -219,22 +219,16 @@ export default function BloomChatScreen() {
     try {
       // Brain dump path
       if (!isConversationalOrQuestion(trimmed) && looksLikeTaskDump(trimmed)) {
-        const { items, response } = await parseBrainDump(trimmed, userName, ndToggles, userOccupation);
-        if (items.length > 0) {
-          const goalItems = items.filter(i => i.category === 'goal');
-          const goalActionsMap = {};
-          await Promise.all(
-            goalItems.map(async g => {
-              goalActionsMap[g.text] = await generateGoalAction({ goalText: g.text });
-            })
-          );
-          processBrainDump(items, goalActionsMap);
-          const taskCount = items.filter(i => i.category !== 'goal').length;
-          const goalCount = goalItems.length;
-          const parts = [];
-          if (taskCount > 0) parts.push(`${taskCount} task${taskCount !== 1 ? 's' : ''}`);
-          if (goalCount > 0) parts.push(`${goalCount} goal${goalCount !== 1 ? 's' : ''}`);
-          bloomReply(response ?? `Sorted ${parts.join(' and ')} — tap Tasks to see them.`);
+        const { tasks: parsedTasks = [], projects = [], response } = await parseBrainDump(trimmed, userName, ndToggles, userOccupation);
+        if (parsedTasks.length > 0 || projects.length > 0) {
+          processBrainDump(parsedTasks, projects);
+          const taskCount    = parsedTasks.length;
+          const projectCount = projects.length;
+          const fallback = [
+            taskCount    ? `Sorted ${taskCount} task${taskCount !== 1 ? 's' : ''} into your Plan` : '',
+            projectCount ? `added ${projectCount} life project${projectCount !== 1 ? 's' : ''} to Life` : '',
+          ].filter(Boolean).join(', ') + '.';
+          bloomReply(response ?? fallback);
           setThinking(false);
           scrollToEnd();
           return;
@@ -258,16 +252,16 @@ export default function BloomChatScreen() {
 
       // AI chat
       if (hasKey) {
-        const system = buildBloomSystem({ userName, goals, tasks, ndToggles, checkIn });
+        const system = buildBloomSystem({ userName, tasks, lifeProjects, ndToggles, checkIn });
         const reply = await callClaude({ system, messages: historyRef.current, maxTokens: 350 });
         bloomReply(reply);
       } else {
-        bloomReply(getFallback(trimmed, { userName, goals, tasks }));
+        bloomReply(getFallback(trimmed, { userName, tasks }));
       }
     } catch (e) {
       const err = e.code === 'AUTH'
-        ? "That key didn't work — go to You tab and paste your Claude key (starts with sk-ant-). Get one at console.anthropic.com → API Keys."
-        : getFallback(trimmed, { userName, goals, tasks });
+        ? "That key didn't work — go to Settings and paste your Claude key (starts with sk-ant-). Get one at console.anthropic.com → API Keys."
+        : getFallback(trimmed, { userName, tasks });
       bloomReply(err);
     } finally {
       setThinking(false);
