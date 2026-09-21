@@ -65,12 +65,17 @@ export default function LifeScreen({ navigation }) {
             <Text style={[s.title, { color: t.text }]}>Life</Text>
             <Text style={[s.sub, { color: t.subtext }]}>Ongoing things Bloom is helping with</Text>
           </View>
-          <TouchableOpacity
-            style={[s.addBtn, { backgroundColor: t.accent }]}
-            onPress={() => setShowAdd(v => !v)}
-          >
-            <Icon name="plus" size={16} color="#FFF" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              style={[s.addBtn, { backgroundColor: t.accent }]}
+              onPress={() => setShowAdd(v => !v)}
+            >
+              <Icon name="plus" size={16} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={s.gearBtn} onPress={() => navigation.navigate('Settings')}>
+              <Icon name="settings" size={20} color={t.subtext} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Add project input */}
@@ -215,6 +220,7 @@ const s = StyleSheet.create({
   },
   sub: { fontSize: 13, marginTop: 2, fontWeight: '400' },
   addBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  gearBtn: { padding: 6, marginTop: 4 },
 
   addCard: { borderRadius: 16, borderWidth: 1.5, padding: 16, marginBottom: 20, gap: 10 },
   addInput: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, fontSize: 15 },

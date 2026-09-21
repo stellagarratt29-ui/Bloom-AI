@@ -346,9 +346,14 @@ export default function TasksScreen({ navigation }) {
           <Text style={[ss.title, { color: t.text }]}>Plan</Text>
           {points > 0 && <Text style={[ss.pointsInline, { color: t.muted }]}>{points} pts earned</Text>}
         </View>
-        <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: t.accent }]} onPress={() => setShowAddTask(true)}>
-          <Icon name="plus" size={16} color="#FFF" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity style={[ss.addTaskBtn, { backgroundColor: t.accent }]} onPress={() => setShowAddTask(true)}>
+            <Icon name="plus" size={16} color="#FFF" />
+          </TouchableOpacity>
+          <TouchableOpacity style={ss.gearBtn} onPress={() => navigation.navigate('Settings')}>
+            <Icon name="settings" size={20} color={t.subtext} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
@@ -520,6 +525,7 @@ const ss = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19,
     alignItems: 'center', justifyContent: 'center',
   },
+  gearBtn: { padding: 6 },
 
   scroll: { paddingHorizontal: 18, paddingTop: 16 },
 

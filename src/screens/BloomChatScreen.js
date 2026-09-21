@@ -58,8 +58,9 @@ function looksLikeTaskDump(text) {
   if (/here'?s? (what i|my) (need|have|want|tasks|list|to.?do)/i.test(text)) return true;
   if (/i (need|have|gotta|want) to .{5,} and (i )?(also )?(need|have|gotta|want)/i.test(t)) return true;
   if (text.includes('\n') && text.trim().split('\n').length >= 2) return true;
-  if ((text.match(/\band\b/gi) || []).length >= 2 && text.length > 40) return true;
-  if ((text.match(/,/g) || []).length >= 2 && text.length > 30) return true;
+  if ((text.match(/\band\b/gi) || []).length >= 2 && text.length > 30) return true;
+  if ((text.match(/,/g) || []).length >= 1 && text.length > 20) return true;
+  if (text.length > 80) return true; // long messages are almost always brain dumps
   return false;
 }
 
@@ -110,7 +111,7 @@ function getFallback(msg, { userName, goals, tasks }) {
   const keyWord = m.match(/\b(essay|homework|test|exam|dentist|doctor|appointment|project|presentation|email|call|meeting|gym|run|cook|clean)\b/)?.[0];
   if (keyWord) return `Got it — "${keyWord}" noted. Tell me everything else on your mind and I'll sort it all at once.`;
   if (isConversationalOrQuestion(msg)) {
-    return `To answer that properly, add a Claude key in the You tab (console.anthropic.com → API Keys, starts with sk-ant-). Until then I can sort tasks from anything you dump here.`;
+    return `Tell me what's on your mind — tasks, worries, plans — and I'll sort it all out.`;
   }
   return `Got it${name}. Tell me everything that's on your mind and I'll turn it into a plan.`;
 }
@@ -156,7 +157,7 @@ const mc = StyleSheet.create({
   dismissText: { fontSize: 12 },
 });
 
-export default function BloomChatScreen() {
+export default function BloomChatScreen({ navigation }) {
   const { userName, userOccupation, tasks, lifeProjects, addTask, processBrainDump, ndToggles, checkIn } = useApp();
   const { colors: t } = useTheme();
 
@@ -259,10 +260,7 @@ export default function BloomChatScreen() {
         bloomReply(getFallback(trimmed, { userName, tasks }));
       }
     } catch (e) {
-      const err = e.code === 'AUTH'
-        ? "That key didn't work — go to Settings and paste your Claude key (starts with sk-ant-). Get one at console.anthropic.com → API Keys."
-        : getFallback(trimmed, { userName, tasks });
-      bloomReply(err);
+      bloomReply(getFallback(trimmed, { userName, tasks }));
     } finally {
       setThinking(false);
       scrollToEnd();
@@ -273,22 +271,23 @@ export default function BloomChatScreen() {
     <SafeAreaView style={[s.safe, { backgroundColor: t.bg }]}>
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        {/* Header — minimal */}
+        {/* Header */}
         <View style={[s.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
           <Text style={[s.headerTitle, { color: t.text }]}>Chat</Text>
-          {hasTTS() && (
-            <TouchableOpacity
-              onPress={() => {
-                const next = !voiceMode;
-                setVoiceMode(next);
-                if (!next) stopSpeaking();
-              }}
-              style={[s.voiceToggle, { borderColor: t.border }]}
-              activeOpacity={0.7}
-            >
-              <Icon name={voiceMode ? 'volume-2' : 'volume-x'} size={14} color={t.subtext} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {hasTTS() && (
+              <TouchableOpacity
+                onPress={() => { const next = !voiceMode; setVoiceMode(next); if (!next) stopSpeaking(); }}
+                style={s.gearBtn}
+                activeOpacity={0.7}
+              >
+                <Icon name={voiceMode ? 'volume-2' : 'volume-x'} size={18} color={t.subtext} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={s.gearBtn} onPress={() => navigation.navigate('Settings')}>
+              <Icon name="settings" size={20} color={t.subtext} />
             </TouchableOpacity>
-          )}
+          </View>
         </View>
 
         {/* Messages */}
@@ -327,15 +326,6 @@ export default function BloomChatScreen() {
             </View>
           )}
 
-          {hasKey === false && (
-            <View style={[s.keyBanner, { backgroundColor: t.accentPale, borderColor: t.accentLight }]}>
-              <Text style={[s.keyBannerText, { color: t.text }]}>
-                Add your Claude key in the{' '}
-                <Text style={{ fontWeight: '600' }}>You</Text>
-                {' '}tab for full AI — free key at console.anthropic.com
-              </Text>
-            </View>
-          )}
         </ScrollView>
 
         {/* Input bar */}
@@ -378,18 +368,14 @@ const s = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14,
+    paddingHorizontal: 22, paddingTop: 20, paddingBottom: 14,
     borderBottomWidth: 0.5,
   },
   headerTitle: {
-    fontSize: 17, fontWeight: '600', letterSpacing: -0.2,
+    fontSize: 28, fontWeight: '700', letterSpacing: -0.5,
     fontFamily: Platform.OS === 'web' ? '"Plus Jakarta Sans", system-ui, sans-serif' : undefined,
   },
-  voiceToggle: {
-    width: 34, height: 34, borderRadius: 17,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1,
-  },
+  gearBtn: { padding: 6 },
 
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingVertical: 18, gap: 4 },
