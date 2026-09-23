@@ -9,6 +9,7 @@ import {
   buildPlan, behind, weekOf, prettyDate, todayIso, isValidDate,
 } from './src/plan';
 import { importCurriculum } from './src/ai';
+import DatePicker from './src/DatePicker';
 
 const KEY = 'curric:v1';
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -156,7 +157,7 @@ function SetupTab({ data, update }) {
   };
 
   const addHoliday = () => {
-    if (!hol.name || !isValidDate(hol.start) || !isValidDate(hol.end)) return;
+    if (!hol.name || !isValidDate(hol.start) || !isValidDate(hol.end) || hol.end < hol.start) return;
     update({ ...data, holidays: [...data.holidays, { id: uid(), ...hol }] });
     setHol({ name: '', start: '', end: '' });
   };
@@ -183,8 +184,14 @@ function SetupTab({ data, update }) {
         ))}
         <TextInput style={s.input} placeholder="Name (e.g. Half term)" value={hol.name} onChangeText={(name) => setHol({ ...hol, name })} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <TextInput style={[s.input, { flex: 1, minWidth: 0 }]} placeholder="Start YYYY-MM-DD" value={hol.start} onChangeText={(start) => setHol({ ...hol, start })} />
-          <TextInput style={[s.input, { flex: 1, minWidth: 0 }]} placeholder="End YYYY-MM-DD" value={hol.end} onChangeText={(end) => setHol({ ...hol, end })} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={s.muted}>From</Text>
+            <DatePicker value={hol.start} placeholder="Start" onChange={(start) => setHol({ ...hol, start })} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={s.muted}>To</Text>
+            <DatePicker value={hol.end} placeholder="End" onChange={(end) => setHol({ ...hol, end })} />
+          </View>
         </View>
         <TouchableOpacity style={s.btn} onPress={addHoliday}><Text style={s.btnText}>Add holiday</Text></TouchableOpacity>
       </View>
@@ -216,13 +223,10 @@ function SetupTab({ data, update }) {
 }
 
 function DateField({ label, value, onSave }) {
-  const [text, setText] = useState(value);
-  const ok = isValidDate(text);
   return (
     <View style={{ marginBottom: 8 }}>
       <Text style={s.muted}>{label}</Text>
-      <TextInput style={[s.input, !ok && s.inputBad]} value={text} placeholder="YYYY-MM-DD"
-        onChangeText={setText} onBlur={() => ok && text !== value && onSave(text)} />
+      <DatePicker value={value} onChange={onSave} />
     </View>
   );
 }
@@ -261,7 +265,6 @@ const s = StyleSheet.create({
   doneText: { color: '#8A94A8', textDecorationLine: 'line-through' },
   muted: { fontSize: 13, color: '#8A94A8' },
   input: { borderWidth: 1, borderColor: '#D5DCE8', borderRadius: 8, padding: 10, backgroundColor: '#fff', textAlignVertical: 'top' },
-  inputBad: { borderColor: '#E11D48' },
   btn: { backgroundColor: BLUE, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '700' },
   item: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EEF1F6' },
