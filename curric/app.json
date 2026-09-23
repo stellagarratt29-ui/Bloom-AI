@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Curric",
+    "slug": "curric",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": { "bundleIdentifier": "com.stellagarratt29.curric" },
+    "android": { "package": "com.stellagarratt29.curric" },
+    "web": { "name": "Curric", "shortName": "Curric", "themeColor": "#3B6FB6" }
+  }
+}
