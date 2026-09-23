@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --test src/plan.test.mjs"
+    "test": "node --test src/plan.test.mjs src/ai.test.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~56.0.15",

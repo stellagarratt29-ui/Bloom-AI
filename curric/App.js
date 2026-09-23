@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   buildPlan, behind, weekOf, prettyDate, todayIso, isValidDate,
 } from './src/plan';
+import { importCurriculum } from './src/ai';
 
 const KEY = 'curric:v1';
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -134,6 +135,25 @@ function PlanTab({ data, update }) {
 function SetupTab({ data, update }) {
   const [hol, setHol] = useState({ name: '', start: '', end: '' });
   const [sub, setSub] = useState({ name: '', topics: '' });
+  const [paste, setPaste] = useState('');
+  const [ai, setAi] = useState({ busy: false, msg: '' });
+
+  const runImport = async () => {
+    if (!paste.trim() || ai.busy) return;
+    setAi({ busy: true, msg: '' });
+    try {
+      const found = await importCurriculum(paste);
+      update({
+        ...data,
+        subjects: [...data.subjects, ...found.map((f) => ({ id: uid(), name: f.name, topics: topics(f.topics) }))],
+      });
+      const n = found.reduce((sum, f) => sum + f.topics.length, 0);
+      setPaste('');
+      setAi({ busy: false, msg: `Added ${found.length} subject${found.length > 1 ? 's' : ''} (${n} topics).` });
+    } catch (e) {
+      setAi({ busy: false, msg: e.message, error: true });
+    }
+  };
 
   const addHoliday = () => {
     if (!hol.name || !isValidDate(hol.start) || !isValidDate(hol.end)) return;
@@ -167,6 +187,17 @@ function SetupTab({ data, update }) {
           <TextInput style={[s.input, { flex: 1, minWidth: 0 }]} placeholder="End YYYY-MM-DD" value={hol.end} onChangeText={(end) => setHol({ ...hol, end })} />
         </View>
         <TouchableOpacity style={s.btn} onPress={addHoliday}><Text style={s.btnText}>Add holiday</Text></TouchableOpacity>
+      </View>
+
+      <View style={s.card}>
+        <Text style={s.cardTitle}>✨ Import with AI</Text>
+        <Text style={s.muted}>Paste your school's curriculum or scheme of work. AI will pull out the subjects and topics in teaching order.</Text>
+        <TextInput style={[s.input, { height: 140 }]} multiline placeholder="Paste curriculum text here…"
+          value={paste} onChangeText={setPaste} />
+        <TouchableOpacity style={[s.btn, ai.busy && { opacity: 0.6 }]} onPress={runImport} disabled={ai.busy}>
+          {ai.busy ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>Import</Text>}
+        </TouchableOpacity>
+        {!!ai.msg && <Text style={ai.error ? s.error : s.success}>{ai.msg}</Text>}
       </View>
 
       <View style={s.card}>
@@ -234,5 +265,7 @@ const s = StyleSheet.create({
   btn: { backgroundColor: BLUE, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '700' },
   item: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EEF1F6' },
+  error: { color: '#E11D48' },
+  success: { color: '#15803D' },
   remove: { color: '#8A94A8', fontSize: 16, paddingHorizontal: 8 },
 });
