@@ -6,14 +6,16 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  buildPlan, behind, weekOf, prettyDate, todayIso, isValidDate,
+  buildPlan, behind, weekOf, prettyDate, todayIso, isValidDate, lessonsOf, parseTopicLine,
 } from './src/plan';
 import { importCurriculum } from './src/ai';
 import DatePicker from './src/DatePicker';
 
 const KEY = 'curric:v1';
 const uid = () => Math.random().toString(36).slice(2, 10);
-const topics = (list) => list.map((title) => ({ id: uid(), title, done: false }));
+const topics = (list) => list.map((t) => ({
+  id: uid(), done: false, ...(typeof t === 'string' ? { title: t, lessons: 1 } : t),
+}));
 
 const SAMPLE = {
   start: '2026-09-07',
@@ -24,7 +26,7 @@ const SAMPLE = {
     { id: uid(), name: 'Easter', start: '2027-03-29', end: '2027-04-09' },
   ],
   subjects: [
-    { id: uid(), name: 'Maths', topics: topics(['Place value', 'Fractions', 'Decimals', 'Percentages', 'Algebra basics', 'Geometry', 'Statistics']) },
+    { id: uid(), name: 'Maths', topics: topics(['Place value', 'Fractions x3', 'Decimals x2', 'Percentages x2', 'Algebra basics x3', 'Geometry x2', 'Statistics'].map(parseTopicLine)) },
     { id: uid(), name: 'Science', topics: topics(['Cells', 'Forces', 'Electricity', 'Light', 'Earth & space']) },
   ],
   planFrom: null,
@@ -106,12 +108,16 @@ function PlanTab({ data, update }) {
       {weeks.map(({ wk, items }) => (
         <View key={wk} style={s.card}>
           <Text style={s.cardTitle}>{wk === 'none' ? 'Unscheduled' : `Week of ${prettyDate(wk)}`}</Text>
-          {items.map(({ subject, topic, date }) => (
+          {items.map(({ subject, topic, date, endDate }) => (
             <TouchableOpacity key={topic.id} style={s.row} onPress={() => toggle(subject.id, topic.id)}>
               <View style={s.box} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.topic, date && date < today && s.late]}>{topic.title}</Text>
-                <Text style={s.muted}>{subject.name}{date ? ` · ${prettyDate(date)}` : ''}</Text>
+                <Text style={[s.topic, endDate && endDate < today && s.late]}>{topic.title}</Text>
+                <Text style={s.muted}>
+                  {subject.name}
+                  {lessonsOf(topic) > 1 ? ` · ${lessonsOf(topic)} lessons` : ''}
+                  {date ? ` · ${prettyDate(date)}${endDate !== date ? ` – ${prettyDate(endDate)}` : ''}` : ''}
+                </Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -162,7 +168,7 @@ function SetupTab({ data, update }) {
     setHol({ name: '', start: '', end: '' });
   };
   const addSubject = () => {
-    const list = sub.topics.split('\n').map((t) => t.trim()).filter(Boolean);
+    const list = sub.topics.split('\n').filter((t) => t.trim()).map(parseTopicLine);
     if (!sub.name || !list.length) return;
     update({ ...data, subjects: [...data.subjects, { id: uid(), name: sub.name, topics: topics(list) }] });
     setSub({ name: '', topics: '' });
@@ -210,11 +216,12 @@ function SetupTab({ data, update }) {
       <View style={s.card}>
         <Text style={s.cardTitle}>Subjects & topics</Text>
         {data.subjects.map((x) => (
-          <Item key={x.id} text={`${x.name} (${x.topics.length} topics)`}
+          <SubjectItem key={x.id} subject={x}
+            onChange={(next) => update({ ...data, subjects: data.subjects.map((y) => y.id === x.id ? next : y) })}
             onRemove={() => update({ ...data, subjects: data.subjects.filter((y) => y.id !== x.id) })} />
         ))}
         <TextInput style={s.input} placeholder="Subject (e.g. History)" value={sub.name} onChangeText={(name) => setSub({ ...sub, name })} />
-        <TextInput style={[s.input, { height: 110 }]} multiline placeholder={'Topics, one per line, in teaching order'}
+        <TextInput style={[s.input, { height: 110 }]} multiline placeholder={'Topics, one per line, in teaching order.\nAdd x3 for a topic that takes 3 lessons.'}
           value={sub.topics} onChangeText={(t) => setSub({ ...sub, topics: t })} />
         <TouchableOpacity style={s.btn} onPress={addSubject}><Text style={s.btnText}>Add subject</Text></TouchableOpacity>
       </View>
@@ -227,6 +234,34 @@ function DateField({ label, value, onSave }) {
     <View style={{ marginBottom: 8 }}>
       <Text style={s.muted}>{label}</Text>
       <DatePicker value={value} onChange={onSave} />
+    </View>
+  );
+}
+
+// A subject you can tap open to set how many lessons each topic takes.
+function SubjectItem({ subject, onChange, onRemove }) {
+  const [open, setOpen] = useState(false);
+  const lessons = subject.topics.reduce((n, t) => n + lessonsOf(t), 0);
+  const setLessons = (id, n) => onChange({
+    ...subject,
+    topics: subject.topics.map((t) => t.id === id ? { ...t, lessons: Math.min(Math.max(n, 1), 99) } : t),
+  });
+  return (
+    <View>
+      <View style={s.item}>
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => setOpen(!open)}>
+          <Text>{open ? '▾' : '▸'} {subject.name} <Text style={s.muted}>({subject.topics.length} topics, {lessons} lessons)</Text></Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onRemove}><Text style={s.remove}>✕</Text></TouchableOpacity>
+      </View>
+      {open && subject.topics.map((t) => (
+        <View key={t.id} style={s.lessonRow}>
+          <Text style={{ flex: 1 }} numberOfLines={1}>{t.title}</Text>
+          <TouchableOpacity style={s.step} onPress={() => setLessons(t.id, lessonsOf(t) - 1)}><Text style={s.stepText}>−</Text></TouchableOpacity>
+          <Text style={s.lessonCount}>{lessonsOf(t)}</Text>
+          <TouchableOpacity style={s.step} onPress={() => setLessons(t.id, lessonsOf(t) + 1)}><Text style={s.stepText}>+</Text></TouchableOpacity>
+        </View>
+      ))}
     </View>
   );
 }
@@ -270,5 +305,9 @@ const s = StyleSheet.create({
   item: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EEF1F6' },
   error: { color: '#E11D48' },
   success: { color: '#15803D' },
+  lessonRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, paddingLeft: 18 },
+  step: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E3E8F0', alignItems: 'center', justifyContent: 'center' },
+  stepText: { fontSize: 16, fontWeight: '700', color: BLUE },
+  lessonCount: { width: 24, textAlign: 'center', fontWeight: '600' },
   remove: { color: '#8A94A8', fontSize: 16, paddingHorizontal: 8 },
 });

@@ -44,25 +44,44 @@ export function schoolDays(start, end, holidays = []) {
   return days;
 }
 
-// Spread each subject's topics evenly over the school days from `planFrom`
-// (set when rescheduling) or the term start. Topics covered before that date
-// are left out, so ticking a topic off never moves the others.
+export const lessonsOf = (topic) => Math.max(1, Math.round(Number(topic.lessons) || 1));
+
+// "Fractions x3", "Fractions ×3" or "Fractions (3)" -> a 3-lesson topic.
+export function parseTopicLine(line) {
+  const m = line.match(/^(.*?)\s*(?:[x×]\s*(\d+)|\((\d+)\))\s*$/i);
+  const title = (m ? m[1] : line).trim();
+  const lessons = m ? Number(m[2] || m[3]) : 1;
+  return { title: title || line.trim(), lessons: Math.min(Math.max(lessons, 1), 99) };
+}
+
+// Spread each subject's topics over the school days from `planFrom` (set when
+// rescheduling) or the term start, giving each topic time in proportion to its
+// lessons. Topics covered before that date are left out, so ticking a topic
+// off never moves the others.
 export function buildPlan(data) {
   const from = data.planFrom && data.planFrom > data.start ? data.planFrom : data.start;
   const days = schoolDays(from, data.end, data.holidays);
   const items = [];
   for (const subject of data.subjects) {
     const pool = subject.topics.filter((t) => !t.done || (t.doneOn && t.doneOn >= from));
-    pool.forEach((topic, i) => {
-      if (topic.done) return;
-      const date = days.length ? days[Math.floor((i * days.length) / pool.length)] : null;
-      items.push({ subject, topic, date });
-    });
+    const total = pool.reduce((n, t) => n + lessonsOf(t), 0);
+    let used = 0;
+    for (const topic of pool) {
+      const first = Math.floor((used * days.length) / total);
+      used += lessonsOf(topic);
+      const last = Math.max(first, Math.floor((used * days.length) / total) - 1);
+      if (topic.done) continue;
+      items.push({
+        subject, topic,
+        date: days.length ? days[first] : null,
+        endDate: days.length ? days[last] : null,
+      });
+    }
   }
   items.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
   return { items, schoolDayCount: days.length };
 }
 
-// Uncovered topics that were planned before today.
+// Uncovered topics that should have been finished before today.
 export const behind = (plan, today) =>
-  plan.items.filter((it) => it.date && it.date < today);
+  plan.items.filter((it) => it.endDate && it.endDate < today);

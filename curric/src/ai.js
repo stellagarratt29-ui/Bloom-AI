@@ -5,13 +5,14 @@ const KEY = process.env.EXPO_PUBLIC_GROQ_KEY ?? '';
 
 const SYSTEM = `You turn school curriculum documents into a teaching plan.
 Return JSON only, in this exact shape:
-{"subjects":[{"name":"Maths","topics":["Place value","Fractions"]}]}
+{"subjects":[{"name":"Maths","topics":[{"title":"Place value","lessons":2},{"title":"Fractions","lessons":4}]}]}
 Rules:
 - One entry per subject. Keep topics in the order they should be taught.
-- Each topic is a short title (under 8 words), roughly one lesson's worth.
+- Each topic has a short title (under 8 words) and an estimate of how many lessons it needs.
+- If the document says how long a topic takes, use that.
 - Ignore dates, holidays, admin notes and anything that isn't teachable content.`;
 
-// Pull a clean [{ name, topics: [string] }] list out of the model's reply.
+// Pull a clean [{ name, topics: [{ title, lessons }] }] list out of the model's reply.
 export function parseSubjects(raw) {
   const match = String(raw).match(/\{[\s\S]*\}/);
   if (!match) return [];
@@ -21,8 +22,11 @@ export function parseSubjects(raw) {
     .map((sub) => ({
       name: String(sub?.name ?? '').trim(),
       topics: (Array.isArray(sub?.topics) ? sub.topics : [])
-        .map((t) => String(t).trim())
-        .filter(Boolean),
+        .map((t) => ({
+          title: String(typeof t === 'object' ? t?.title ?? '' : t).trim(),
+          lessons: Math.min(Math.max(Math.round(Number(t?.lessons) || 1), 1), 99),
+        }))
+        .filter((t) => t.title),
     }))
     .filter((sub) => sub.name && sub.topics.length);
 }
